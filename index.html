@@ -41,12 +41,18 @@
         let gameActive = false;
         let stake, token, userId;
 
-        // Parse initial data from URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const gameData = JSON.parse(urlParams.get('data'));
-        userId = gameData.user_id;
-        document.getElementById('bnbBalance').textContent = gameData.bnb_balance.toFixed(4);
-        document.getElementById('nimsBalance').textContent = gameData.nims_balance.toFixed(4);
+        // Get user ID from Telegram Web App
+        const initData = Telegram.WebApp.initDataUnsafe;
+        userId = initData.user ? initData.user.id : null;
+        if (!userId) {
+            resultDiv.textContent = "Error: Unable to get user ID from Telegram.";
+        }
+
+        // Placeholder balances (updated server-side via bot)
+        let bnbBalance = 0.0;
+        let nimsBalance = 0.0;
+        document.getElementById('bnbBalance').textContent = bnbBalance.toFixed(4);
+        document.getElementById('nimsBalance').textContent = nimsBalance.toFixed(4);
 
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -94,7 +100,7 @@
         startBtn.addEventListener('click', () => {
             token = document.getElementById('tokenSelect').value;
             stake = parseFloat(document.getElementById('stakeInput').value);
-            const balance = token === 'BNB' ? gameData.bnb_balance : gameData.nims_balance;
+            const balance = token === 'BNB' ? bnbBalance : nimsBalance;
 
             if (stake < 0.01 || stake > balance) {
                 resultDiv.textContent = `Invalid stake! Must be 0.01 to ${balance.toFixed(4)} ${token}`;
