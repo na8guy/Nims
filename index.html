@@ -22,8 +22,8 @@
                 <option value="NIMS">NIMS</option>
             </select>
         </label><br>
-        <label>Stake: 
-            <input type="number" id="stakeInput" step="0.01" min="0.01" max="1.0" value="0.01">
+        <label>Stake (0.1–10): 
+            <input type="number" id="stakeInput" step="0.01" min="0.1" max="10" value="0.1">
         </label><br>
         <button id="startBtn">Start Climbing</button>
         <button id="cashoutBtn" style="display: none;">Cash Out</button>
@@ -41,18 +41,18 @@
         let gameActive = false;
         let stake, token, userId;
 
-        // Get user ID from Telegram Web App
-        const initData = Telegram.WebApp.initDataUnsafe;
-        userId = initData.user ? initData.user.id : null;
-        if (!userId) {
-            resultDiv.textContent = "Error: Unable to get user ID from Telegram.";
-        }
-
-        // Placeholder balances (updated server-side via bot)
-        let bnbBalance = 0.0;
-        let nimsBalance = 0.0;
+        // Parse initial data from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const gameData = JSON.parse(urlParams.get('data') || '{}');
+        userId = gameData.user_id || (Telegram.WebApp.initDataUnsafe.user ? Telegram.WebApp.initDataUnsafe.user.id : null);
+        const bnbBalance = gameData.bnb_balance || 0.0;
+        const nimsBalance = gameData.nims_balance || 0.0;
         document.getElementById('bnbBalance').textContent = bnbBalance.toFixed(4);
         document.getElementById('nimsBalance').textContent = nimsBalance.toFixed(4);
+
+        if (!userId) {
+            resultDiv.textContent = "Error: Unable to get user ID.";
+        }
 
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -102,8 +102,12 @@
             stake = parseFloat(document.getElementById('stakeInput').value);
             const balance = token === 'BNB' ? bnbBalance : nimsBalance;
 
-            if (stake < 0.01 || stake > balance) {
-                resultDiv.textContent = `Invalid stake! Must be 0.01 to ${balance.toFixed(4)} ${token}`;
+            if (stake < 0.1 || stake > 10) {
+                resultDiv.textContent = `Stake must be between 0.1 and 10 ${token}!`;
+                return;
+            }
+            if (stake > balance) {
+                resultDiv.textContent = `Insufficient balance! Max: ${balance.toFixed(4)} ${token}`;
                 return;
             }
 
