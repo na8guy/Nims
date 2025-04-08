@@ -10,6 +10,7 @@
         button { padding: 10px 20px; margin: 5px; font-size: 16px; cursor: pointer; }
         select, input { padding: 5px; font-size: 16px; margin: 5px; }
         #result { font-size: 18px; margin-top: 10px; }
+        #cashoutBtn { font-size: 24px; font-weight: bold; padding: 15px 30px; } /* Big and bold */
     </style>
 </head>
 <body>
@@ -59,8 +60,9 @@
             ctx.fillStyle = '#808080';
             ctx.fillRect(0, 0, canvas.width, canvas.height); // Mountain
             ctx.fillStyle = 'white';
-            ctx.fillText(`Height: ${height}m | Multiplier: ${multiplier.toFixed(2)}x`, 10, 20);
-            ctx.fillText(`Winnings: ${(stake * multiplier).toFixed(4)} ${token}`, 10, 40);
+            ctx.font = 'bold 30px Arial'; // Big and bold
+            ctx.fillText(`Multiplier: ${multiplier.toFixed(2)}x`, 10, 40);
+            ctx.fillText(`Winnings: ${(stake * multiplier).toFixed(4)} ${token}`, 10, 80);
             ctx.fillStyle = 'red';
             ctx.fillRect(180, 580 - height * 2, 40, 40); // Climber
         }
