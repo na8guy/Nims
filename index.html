@@ -4,38 +4,61 @@
     <title>Nims Climb</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { font-family: Arial; text-align: center; background: #87CEEB; margin: 0; padding: 20px; }
-        canvas { border: 1px solid black; background: #808080; display: none; }
+        body { font-family: Arial; text-align: center; background: #87CEEB; margin: 0; padding: 20px; font-size: 20px; }
+        canvas { border: 1px solid black; background: #808080; display: none; width: 600px; height: 800px; }
         #ui { margin-bottom: 20px; }
-        button { padding: 10px 20px; margin: 5px; font-size: 16px; cursor: pointer; }
-        select, input { padding: 5px; font-size: 16px; margin: 5px; }
-        #result { font-size: 18px; margin-top: 10px; }
-        #cashoutBtn { font-size: 24px; font-weight: bold; padding: 15px 30px; } /* Big and bold */
+        button { padding: 15px 30px; margin: 10px; font-size: 24px; cursor: pointer; }
+        select, input { padding: 10px; font-size: 24px; margin: 10px; }
+        #result { font-size: 24px; margin-top: 20px; }
+        #cashoutBtn { font-size: 36px; font-weight: bold; padding: 20px 40px; }
+        h2 { font-size: 36px; }
+        p { font-size: 28px; }
     </style>
 </head>
 <body>
     <div id="ui">
         <h2>🏔 Nims Climb</h2>
         <p>Balance: <span id="bnbBalance">0</span> BNB | <span id="nimsBalance">0</span> NIMS</p>
-        <label>Token: 
-            <select id="tokenSelect">
-                <option value="BNB">BNB</option>
-                <option value="NIMS">NIMS</option>
-            </select>
-        </label><br>
-        <label>Stake (0.1–10): 
-            <input type="number" id="stakeInput" step="0.01" min="0.1" max="10" value="0.1">
-        </label><br>
-        <button id="startBtn">Start Climbing</button>
-        <button id="cashoutBtn" style="display: none;">Cash Out</button>
+        
+        <!-- Game Controls -->
+        <div id="gameControls">
+            <label>Token: 
+                <select id="tokenSelect">
+                    <option value="BNB">BNB</option>
+                    <option value="NIMS">NIMS</option>
+                </select>
+            </label><br>
+            <label>Stake (0.1–10): 
+                <input type="number" id="stakeInput" step="0.01" min="0.1" max="10" value="0.1">
+            </label><br>
+            <button id="startBtn">Start Climbing</button>
+            <button id="cashoutBtn" style="display: none;">Cash Out</button>
+        </div>
+
+        <!-- Wallet Actions -->
+        <div id="walletActions">
+            <h3>Wallet</h3>
+            <label>Amount: <input type="number" id="amountInput" step="0.01" min="0.1" value="0.1"></label><br>
+            <button id="depositBtn">Deposit</button>
+            <button id="withdrawBtn">Withdraw</button>
+        </div>
+
+        <!-- Raffle -->
+        <div id="raffleActions">
+            <h3>Raffle (1 NIMS/ticket)</h3>
+            <button id="buyRaffleBtn">Buy Raffle Ticket</button>
+        </div>
     </div>
-    <canvas id="gameCanvas" width="400" height="600"></canvas>
+    <canvas id="gameCanvas" width="600" height="800"></canvas>
     <div id="result"></div>
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const startBtn = document.getElementById('startBtn');
         const cashoutBtn = document.getElementById('cashoutBtn');
+        const depositBtn = document.getElementById('depositBtn');
+        const withdrawBtn = document.getElementById('withdrawBtn');
+        const buyRaffleBtn = document.getElementById('buyRaffleBtn');
         const resultDiv = document.getElementById('result');
         let height = 0;
         let multiplier = 1.0;
@@ -60,11 +83,11 @@
             ctx.fillStyle = '#808080';
             ctx.fillRect(0, 0, canvas.width, canvas.height); // Mountain
             ctx.fillStyle = 'white';
-            ctx.font = 'bold 30px Arial'; // Big and bold
-            ctx.fillText(`Multiplier: ${multiplier.toFixed(2)}x`, 10, 40);
-            ctx.fillText(`Winnings: ${(stake * multiplier).toFixed(4)} ${token}`, 10, 80);
+            ctx.font = 'bold 40px Arial';
+            ctx.fillText(`Multiplier: ${multiplier.toFixed(2)}x`, 20, 60);
+            ctx.fillText(`Winnings: ${(stake * multiplier).toFixed(4)} ${token}`, 20, 110);
             ctx.fillStyle = 'red';
-            ctx.fillRect(180, 580 - height * 2, 40, 40); // Climber
+            ctx.fillRect(280, 760 - height * 2, 40, 40); // Climber
         }
 
         function gameLoop() {
@@ -75,7 +98,7 @@
 
             if (Math.random() < height / 1000) { // Avalanche
                 gameActive = false;
-                ctx.fillText("Avalanche! You lost!", 100, 300);
+                ctx.fillText("Avalanche! You lost!", 150, 400);
                 resultDiv.textContent = `Lost ${stake} ${token}!`;
                 Telegram.WebApp.sendData(JSON.stringify({
                     action: 'lost',
@@ -85,7 +108,7 @@
                 setTimeout(() => Telegram.WebApp.close(), 2000);
             } else if (height >= 250) { // Summit
                 gameActive = false;
-                ctx.fillText("Summit Reached!", 100, 300);
+                ctx.fillText("Summit Reached!", 150, 400);
                 resultDiv.textContent = `Won ${(stake * multiplier).toFixed(4)} ${token}!`;
                 Telegram.WebApp.sendData(JSON.stringify({
                     action: 'cashout',
@@ -138,6 +161,48 @@
                 }));
                 setTimeout(() => Telegram.WebApp.close(), 2000);
             }
+        });
+
+        depositBtn.addEventListener('click', () => {
+            const amount = parseFloat(document.getElementById('amountInput').value);
+            const token = document.getElementById('tokenSelect').value;
+            if (amount < 0.1) {
+                resultDiv.textContent = `Deposit must be at least 0.1 ${token}!`;
+                return;
+            }
+            Telegram.WebApp.sendData(JSON.stringify({
+                action: 'deposit',
+                amount: amount,
+                token: token
+            }));
+            setTimeout(() => Telegram.WebApp.close(), 1000);
+        });
+
+        withdrawBtn.addEventListener('click', () => {
+            const amount = parseFloat(document.getElementById('amountInput').value);
+            const token = document.getElementById('tokenSelect').value;
+            const balance = token === 'BNB' ? bnbBalance : nimsBalance;
+            if (amount < 0.1) {
+                resultDiv.textContent = `Withdrawal must be at least 0.1 ${token}!`;
+                return;
+            }
+            if (amount > balance) {
+                resultDiv.textContent = `Insufficient balance! Max: ${balance.toFixed(4)} ${token}`;
+                return;
+            }
+            Telegram.WebApp.sendData(JSON.stringify({
+                action: 'withdraw',
+                amount: amount,
+                token: token
+            }));
+            setTimeout(() => Telegram.WebApp.close(), 1000);
+        });
+
+        buyRaffleBtn.addEventListener('click', () => {
+            Telegram.WebApp.sendData(JSON.stringify({
+                action: 'buy_raffle_ticket'
+            }));
+            setTimeout(() => Telegram.WebApp.close(), 1000);
         });
 
         Telegram.WebApp.ready();
