@@ -4,96 +4,13 @@
     <title>Nims Climb</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { font-family: Arial; text-align: center; background: #87CEEB; margin: 0; padding: 20px; font-size: 20px; }
-        canvas { border: 1px solid black; background: #808080; display: none; width: 600px; height: 800px; margin: 0 auto; }
-        #ui { margin-bottom: 20px; }
-        button { padding: 15px 30px; margin: 10px; font-size: 24px; cursor: pointer; background-color: #4CAF50; color: white; border: none; border-radius: 5px; }
-        select, input { padding: 10px; font-size: 24px; margin: 10px; }
-        #result { font-size: 24px; margin-top: 20px; color: #ff4444; }
-        #cashoutBtn { font-size: 36px; font-weight: bold; padding: 20px 40px; background-color: #FFD700; color: black; position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%); }
-        h2 { font-size: 36px; }
-        h3 { font-size: 28px; }
-        p { font-size: 28px; }
-        .section { margin: 20px 0; padding: 15px; background: rgba(255, 255, 255, 0.8); border-radius: 10px; }
-        #depositAddress { font-size: 20px; word-wrap: break-word; margin-top: 10px; }
+        /* ... (keep existing styles the same) ... */
     </style>
 </head>
 <body>
-    <div id="ui">
-        <h2>🏔 Nims Climb</h2>
-        <p>Balance: <span id="bnbBalance">0</span> BNB | <span id="nimsBalance">0</span> NIMS</p>
-        <button id="refreshBtn">Refresh Balance</button>
-
-        <div class="section" id="gameControls">
-            <h3>Play Game</h3>
-            <label>Token: 
-                <select id="tokenSelect">
-                    <option value="BNB">BNB</option>
-                    <option value="NIMS">NIMS</option>
-                </select>
-            </label><br>
-            <label>Stake (0.1–10): 
-                <input type="number" id="stakeInput" step="0.01" min="0.1" max="10" value="0.1">
-            </label><br>
-            <button id="startBtn">Start Climbing</button>
-        </div>
-
-        <div class="section" id="walletActions">
-            <h3>Wallet</h3>
-            <label>Amount: <input type="number" id="amountInput" step="0.01" min="0.1" value="0.1"></label><br>
-            <label>Token: <select id="walletTokenSelect">
-                <option value="BNB">BNB</option>
-                <option value="NIMS">NIMS</option>
-            </select></label><br>
-            <button id="depositBtn">Deposit</button>
-            <button id="withdrawBtn">Withdraw</button>
-            <div id="depositAddress" style="display: none;">
-                <p id="addressText"></p>
-                <button id="copyAddressBtn">Copy Address</button>
-            </div>
-        </div>
-
-        <div class="section" id="raffleActions">
-            <h3>Raffle (1 NIMS/ticket)</h3>
-            <button id="buyRaffleBtn">Buy Raffle Ticket</button>
-        </div>
-    </div>
-    <canvas id="gameCanvas" width="600" height="800"></canvas>
-    <button id="cashoutBtn" style="display: none;">Cash Out</button>
-    <div id="result"></div>
+    <!-- ... (keep existing HTML structure the same) ... -->
     <script>
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        const startBtn = document.getElementById('startBtn');
-        const cashoutBtn = document.getElementById('cashoutBtn');
-        const depositBtn = document.getElementById('depositBtn');
-        const withdrawBtn = document.getElementById('withdrawBtn');
-        const buyRaffleBtn = document.getElementById('buyRaffleBtn');
-        const refreshBtn = document.getElementById('refreshBtn');
-        const resultDiv = document.getElementById('result');
-        const depositAddressDiv = document.getElementById('depositAddress');
-        const addressText = document.getElementById('addressText');
-        const copyAddressBtn = document.getElementById('copyAddressBtn');
-        let height = 0;
-        let multiplier = 1.0;
-        let gameActive = false;
-        let stake, token, userId;
-        let bnbBalance, nimsBalance, bnbAddress, nimsAddress;
-
-        // Parse initial data from URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const gameData = JSON.parse(urlParams.get('data') || '{}');
-        userId = gameData.user_id || (Telegram.WebApp.initDataUnsafe.user ? Telegram.WebApp.initDataUnsafe.user.id : null);
-        bnbBalance = gameData.bnb_balance || 0.0;
-        nimsBalance = gameData.nims_balance || 0.0;
-        bnbAddress = gameData.bnb_address;
-        nimsAddress = gameData.nims_address;
-        document.getElementById('bnbBalance').textContent = bnbBalance.toFixed(4);
-        document.getElementById('nimsBalance').textContent = nimsBalance.toFixed(4);
-
-        if (!userId) {
-            resultDiv.textContent = "Error: Unable to get user ID.";
-        }
+        // ... (keep existing variable declarations the same) ...
 
         function updateBalances(newBnbBalance, newNimsBalance, newBnbAddress, newNimsAddress) {
             bnbBalance = newBnbBalance;
@@ -102,83 +19,21 @@
             nimsAddress = newNimsAddress;
             document.getElementById('bnbBalance').textContent = bnbBalance.toFixed(4);
             document.getElementById('nimsBalance').textContent = nimsBalance.toFixed(4);
-            alert(`Updated Balance:\nBNB: ${bnbBalance.toFixed(4)}\nNIMS: ${nimsBalance.toFixed(4)}`);
         }
 
-        function draw() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = '#808080';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = 'white';
-            ctx.font = 'bold 40px Arial';
-            ctx.fillText(`Multiplier: ${multiplier.toFixed(2)}x`, 20, 60);
-            ctx.fillText(`Winnings: ${(stake * multiplier).toFixed(4)} ${token}`, 20, 110);
-            ctx.fillStyle = 'red';
-            ctx.fillRect(280, 760 - height * 2, 40, 40);
+        function showGameUI(show) {
+            document.getElementById('ui').style.display = show ? 'block' : 'none';
+            canvas.style.display = show ? 'none' : 'block';
+            cashoutBtn.style.display = show ? 'none' : 'block';
         }
 
-        function gameLoop() {
-            if (!gameActive) return;
-            height += 5;
-            multiplier += Math.random() * 0.1;
-            draw();
-
-            if (Math.random() < height / 1000) { // Avalanche
-                gameActive = false;
-                ctx.fillText("Avalanche! You lost!", 150, 400);
-                resultDiv.textContent = `Lost ${stake} ${token}!`;
-                Telegram.WebApp.sendData(JSON.stringify({
-                    action: 'lost',
-                    stake: stake,
-                    token: token
-                }));
-            } else if (height >= 250) { // Summit
-                gameActive = false;
-                ctx.fillText("Summit Reached!", 150, 400);
-                resultDiv.textContent = `Won ${(stake * multiplier).toFixed(4)} ${token}!`;
-                Telegram.WebApp.sendData(JSON.stringify({
-                    action: 'cashout',
-                    stake: stake,
-                    token: token,
-                    multiplier: multiplier
-                }));
-            } else {
-                setTimeout(gameLoop, 500);
-            }
-        }
-
-        startBtn.addEventListener('click', () => {
-            token = document.getElementById('tokenSelect').value;
-            stake = parseFloat(document.getElementById('stakeInput').value);
-            const balance = token === 'BNB' ? bnbBalance : nimsBalance;
-
-            if (stake < 0.1 || stake > 10) {
-                resultDiv.textContent = `Stake must be between 0.1 and 10 ${token}!`;
-                return;
-            }
-            if (stake > balance) {
-                resultDiv.textContent = `Insufficient balance! Max: ${balance.toFixed(4)} ${token}`;
-                return;
-            }
-
-            Telegram.WebApp.sendData(JSON.stringify({
-                action: 'start_game',
-                stake: stake,
-                token: token
-            }));
-            document.getElementById('ui').style.display = 'none';
-            canvas.style.display = 'block';
-            cashoutBtn.style.display = 'block';
-            gameActive = true;
-            draw();
-            gameLoop();
-        });
+        // ... (keep existing draw() and gameLoop() functions the same) ...
 
         cashoutBtn.addEventListener('click', () => {
             if (gameActive) {
                 gameActive = false;
+                showGameUI(true);
                 const winnings = stake * multiplier;
-                resultDiv.textContent = `Cashed out ${winnings.toFixed(4)} ${token}!`;
                 Telegram.WebApp.sendData(JSON.stringify({
                     action: 'cashout',
                     stake: stake,
@@ -188,14 +43,38 @@
             }
         });
 
+        // Modified message handler
+        Telegram.WebApp.onEvent('message', (event) => {
+            const message = event.data.text;
+            if (message.startsWith('Balance update: ')) {
+                try {
+                    const balanceData = JSON.parse(message.split('Balance update: ')[1]);
+                    if (balanceData.action === 'update_balance') {
+                        updateBalances(
+                            balanceData.bnb_balance,
+                            balanceData.nims_balance,
+                            balanceData.bnb_address,
+                            balanceData.nims_address
+                        );
+                        document.getElementById('result').textContent = "Balances updated!";
+                    }
+                } catch(e) {
+                    console.error("Balance update error:", e);
+                }
+            }
+        });
+
+        // Modified deposit handler
         depositBtn.addEventListener('click', () => {
             const amount = parseFloat(document.getElementById('amountInput').value);
             const token = document.getElementById('walletTokenSelect').value;
-            if (amount < 0.1) {
-                resultDiv.textContent = `Deposit must be at least 0.1 ${token}!`;
+            const depositAddress = token === 'BNB' ? bnbAddress : nimsAddress;
+            
+            if (!depositAddress) {
+                document.getElementById('result').textContent = "Address not found! Please restart the bot.";
                 return;
             }
-            const depositAddress = token === 'BNB' ? bnbAddress : nimsAddress;
+
             addressText.textContent = `Send ${amount} ${token} to: ${depositAddress}`;
             depositAddressDiv.style.display = 'block';
             Telegram.WebApp.sendData(JSON.stringify({
@@ -203,62 +82,9 @@
                 amount: amount,
                 token: token
             }));
-            resultDiv.textContent = "Deposit requested. Check Telegram for confirmation.";
         });
 
-        copyAddressBtn.addEventListener('click', () => {
-            const text = addressText.textContent.split(': ')[1];
-            navigator.clipboard.writeText(text).then(() => {
-                resultDiv.textContent = "Address copied to clipboard!";
-            });
-        });
-
-        withdrawBtn.addEventListener('click', () => {
-            const amount = parseFloat(document.getElementById('amountInput').value);
-            const token = document.getElementById('walletTokenSelect').value;
-            const balance = token === 'BNB' ? bnbBalance : nimsBalance;
-            if (amount < 0.1) {
-                resultDiv.textContent = `Withdrawal must be at least 0.1 ${token}!`;
-                return;
-            }
-            if (amount > balance) {
-                resultDiv.textContent = `Insufficient balance! Max: ${balance.toFixed(4)} ${token}`;
-                return;
-            }
-            Telegram.WebApp.sendData(JSON.stringify({
-                action: 'withdraw',
-                amount: amount,
-                token: token
-            }));
-            resultDiv.textContent = `Withdrawal of ${amount} ${token} requested. Check Telegram for confirmation.`;
-        });
-
-        buyRaffleBtn.addEventListener('click', () => {
-            Telegram.WebApp.sendData(JSON.stringify({
-                action: 'buy_raffle_ticket'
-            }));
-            resultDiv.textContent = "Purchasing raffle ticket... Check Telegram for confirmation.";
-        });
-
-        refreshBtn.addEventListener('click', () => {
-            Telegram.WebApp.sendData(JSON.stringify({
-                action: 'refresh_balance'
-            }));
-            resultDiv.textContent = "Refreshing balances... Check Telegram for update.";
-        });
-
-        // Listen for balance updates from Telegram
-        Telegram.WebApp.onEvent('message', (event) => {
-            const message = event.data.text;
-            if (message && message.includes('Balance update:')) {
-                const balanceDataStr = message.split('Balance update: ')[1];
-                const balanceData = JSON.parse(balanceDataStr);
-                if (balanceData.action === 'update_balance') {
-                    updateBalances(balanceData.bnb_balance, balanceData.nims_balance, balanceData.bnb_address, balanceData.nims_address);
-                    resultDiv.textContent = "Balances updated!";
-                }
-            }
-        });
+        // ... (keep other event listeners the same) ...
 
         Telegram.WebApp.ready();
     </script>
