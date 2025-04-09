@@ -141,6 +141,52 @@
                 gameState.addresses.bnb && gameState.addresses.nims ? 'block' : 'none';
         }
 
+
+    function handleIncomingMessage(event) {
+    try {
+        const message = event.data.text;
+        if (message.startsWith('Balance update: ')) {
+            const balanceData = JSON.parse(message.split('Balance update: ')[1]);
+            
+            // Validate numbers
+            gameState.balances.bnb = typeof balanceData.bnb_balance === 'number' ? balanceData.bnb_balance : 0;
+            gameState.balances.nims = typeof balanceData.nims_balance === 'number' ? balanceData.nims_balance : 0;
+            
+            // Validate addresses
+            gameState.addresses.bnb = typeof balanceData.bnb_address === 'string' ? 
+                (balanceData.bnb_address.startsWith('0x') ? balanceData.bnb_address : 'Invalid address') : 
+                'Not available';
+            
+            gameState.addresses.nims = typeof balanceData.nims_address === 'string' ? 
+                (balanceData.nims_address.startsWith('0x') ? balanceData.nims_address : 'Invalid address') : 
+                'Not available';
+
+            updateDisplay();
+        }
+    } catch (error) {
+        console.error('Message handling error:', error);
+    }
+}
+
+function updateDisplay() {
+    // Format numbers properly
+    document.getElementById('bnbBalance').textContent = gameState.balances.bnb.toLocaleString('en', {
+        minimumFractionDigits: 4,
+        maximumFractionDigits: 4
+    });
+    
+    document.getElementById('nimsBalance').textContent = gameState.balances.nims.toLocaleString('en', {
+        minimumFractionDigits: 4,
+        maximumFractionDigits: 4
+    });
+
+    // Update addresses with validation
+    elements.bnbAddress.textContent = gameState.addresses.bnb;
+    elements.bnbAddress.style.color = gameState.addresses.bnb.startsWith('0x') ? 'green' : 'red';
+    
+    elements.nimsAddress.textContent = gameState.addresses.nims;
+    elements.nimsAddress.style.color = gameState.addresses.nims.startsWith('0x') ? 'green' : 'red';
+}
         // Modified message handler
         Telegram.WebApp.onEvent('message', (event) => {
             try {
