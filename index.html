@@ -27,11 +27,10 @@
         <p>Balance: <span id="bnbBalance">0</span> BNB | <span id="nimsBalance">0</span> NIMS</p>
         <button id="refreshBtn">Refresh Balance</button>
 
-        <!-- Wallet Address Display -->
         <div class="section wallet-info">
             <h3>Wallet Addresses</h3>
-            <p>BNB Address: <span class="address-display" data-token="bnb" id="bnbAddress"></span></p>
-            <p>NIMS Address: <span class="address-display" data-token="nims" id="nimsAddress"></span></p>
+            <p>BNB Address: <span class="address-display" id="bnbAddress"></span></p>
+            <p>NIMS Address: <span class="address-display" id="nimsAddress"></span></p>
         </div>
 
         <div class="section" id="gameControls">
@@ -105,14 +104,15 @@
             token: '',
             userId: null,
             balances: { bnb: 0, nims: 0 },
-            addresses: { bnb: null, nims: null }
+            addresses: { bnb: null, nims: null },
+            animationFrame: null
         };
 
         function initializeGame() {
             log('Initializing game...');
             try {
                 const urlParams = new URLSearchParams(window.location.search);
-                const gameData = JSON.parse(urlParams.get('data') || '{}');
+                const gameData = JSON.parse(decodeURIComponent(urlParams.get('data') || '{}'));
                 
                 gameState.userId = gameData.user_id || Telegram.WebApp.initDataUnsafe.user?.id;
                 gameState.balances.bnb = parseFloat(gameData.bnb_balance) || 0;
@@ -128,92 +128,144 @@
         }
 
         function updateDisplay() {
-            // Update balances
             document.getElementById('bnbBalance').textContent = gameState.balances.bnb.toFixed(4);
             document.getElementById('nimsBalance').textContent = gameState.balances.nims.toFixed(4);
-            
-            // Update addresses
             elements.bnbAddress.textContent = gameState.addresses.bnb;
             elements.nimsAddress.textContent = gameState.addresses.nims;
-            
-            // Update deposit address visibility
-            elements.depositAddressDiv.style.display = 
-                gameState.addresses.bnb && gameState.addresses.nims ? 'block' : 'none';
+            elements.depositAddressDiv.style.display = gameState.addresses.bnb ? 'block' : 'none';
         }
 
-
-    function handleIncomingMessage(event) {
-    try {
-        const message = event.data.text;
-        if (message.startsWith('Balance update: ')) {
-            const balanceData = JSON.parse(message.split('Balance update: ')[1]);
-            
-            // Validate numbers
-            gameState.balances.bnb = typeof balanceData.bnb_balance === 'number' ? balanceData.bnb_balance : 0;
-            gameState.balances.nims = typeof balanceData.nims_balance === 'number' ? balanceData.nims_balance : 0;
-            
-            // Validate addresses
-            gameState.addresses.bnb = typeof balanceData.bnb_address === 'string' ? 
-                (balanceData.bnb_address.startsWith('0x') ? balanceData.bnb_address : 'Invalid address') : 
-                'Not available';
-            
-            gameState.addresses.nims = typeof balanceData.nims_address === 'string' ? 
-                (balanceData.nims_address.startsWith('0x') ? balanceData.nims_address : 'Invalid address') : 
-                'Not available';
-
-            updateDisplay();
+        function drawGame() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#87CEEB';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'white';
+            ctx.fillRect(200, 800 - gameState.height, 200, gameState.height); // Climber
+            ctx.fillStyle = 'black';
+            ctx.font = '30px Arial';
+            ctx.fillText(`Multiplier: ${gameState.multiplier.toFixed(2)}x`, 20, 50);
+            ctx.fillText(`Height: ${gameState.height.toFixed(0)}m`, 20, 100);
         }
-    } catch (error) {
-        console.error('Message handling error:', error);
-    }
-}
 
+        function gameLoop() {
+            if (!gameState.gameActive) return;
 
-        // Example JavaScript for the Web UI
-function updateUIFromQueryParams() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const data = JSON.parse(decodeURIComponent(urlParams.get('data')));
-    
-    document.getElementById('bnb-balance').textContent = data.bnb_balance.toFixed(4);
-    document.getElementById('nims-balance').textContent = data.nims_balance.toFixed(4);
-    document.getElementById('bnb-address').textContent = data.bnb_address;
-    document.getElementById('nims-address').textContent = data.nims_address;
-}
+            gameState.height += 2; // Climb speed
+            gameState.multiplier = 1 + (gameState.height / 1000); // Multiplier increases with height
 
-// Call on page load and listen for updates
-window.onload = updateUIFromQueryParams;
+            // Random avalanche chance (e.g., 1% per frame)
+            if (Math.random() < 0.01) {
+                endGame('avalanche');
+                return;
+            }
 
-function updateDisplay() {
-    // Format numbers properly
-    document.getElementById('bnbBalance').textContent = gameState.balances.bnb.toLocaleString('en', {
-        minimumFractionDigits: 4,
-        maximumFractionDigits: 4
-    });
-    
-    document.getElementById('nimsBalance').textContent = gameState.balances.nims.toLocaleString('en', {
-        minimumFractionDigits: 4,
-        maximumFractionDigits: 4
-    });
+            drawGame();
+            gameState.animationFrame = requestAnimationFrame(gameLoop);
+        }
 
-    // Update addresses with validation
-    elements.bnbAddress.textContent = gameState.addresses.bnb;
-    elements.bnbAddress.style.color = gameState.addresses.bnb.startsWith('0x') ? 'green' : 'red';
-    
-    elements.nimsAddress.textContent = gameState.addresses.nims;
-    elements.nimsAddress.style.color = gameState.addresses.nims.startsWith('0x') ? 'green' : 'red';
-}
-        // Modified message handler
+        function startGame() {
+            if (gameState.gameActive) return;
+            
+            const stake = parseFloat(document.getElementById('stakeInput').value);
+            const token = document.getElementById('tokenSelect').value;
+
+            Telegram.WebApp.sendData(JSON.stringify({
+                action: 'start_game',
+                token: token,
+                stake: stake
+            }));
+
+            gameState.stake = stake;
+            gameState.token = token;
+            gameState.height = 0;
+            gameState.multiplier = 1.0;
+            gameState.gameActive = true;
+
+            document.getElementById('gameControls').classList.add('hidden');
+            canvas.style.display = 'block';
+            elements.cashoutBtn.classList.remove('hidden');
+            drawGame();
+            gameState.animationFrame = requestAnimationFrame(gameLoop);
+        }
+
+        function endGame(result) {
+            gameState.gameActive = false;
+            cancelAnimationFrame(gameState.animationFrame);
+            canvas.style.display = 'none';
+            elements.cashoutBtn.classList.add('hidden');
+            document.getElementById('gameControls').classList.remove('hidden');
+
+            if (result === 'cashout') {
+                Telegram.WebApp.sendData(JSON.stringify({
+                    action: 'cashout',
+                    stake: gameState.stake,
+                    multiplier: gameState.multiplier,
+                    token: gameState.token
+                }));
+            } else if (result === 'avalanche') {
+                Telegram.WebApp.sendData(JSON.stringify({
+                    action: 'lost',
+                    stake: gameState.stake,
+                    token: gameState.token
+                }));
+            }
+        }
+
+        function setupEventListeners() {
+            elements.startBtn.onclick = startGame;
+
+            elements.cashoutBtn.onclick = () => {
+                if (gameState.gameActive) {
+                    endGame('cashout');
+                }
+            };
+
+            elements.refreshBtn.onclick = () => {
+                Telegram.WebApp.sendData(JSON.stringify({ action: 'refresh_balance' }));
+            };
+
+            elements.depositBtn.onclick = () => {
+                const amount = parseFloat(document.getElementById('amountInput').value);
+                const token = document.getElementById('walletTokenSelect').value;
+                elements.addressText.textContent = gameState.addresses[token.toLowerCase()];
+                elements.depositAddressDiv.style.display = 'block';
+                Telegram.WebApp.sendData(JSON.stringify({
+                    action: 'deposit',
+                    amount: amount,
+                    token: token
+                }));
+            };
+
+            elements.withdrawBtn.onclick = () => {
+                const amount = parseFloat(document.getElementById('amountInput').value);
+                const token = document.getElementById('walletTokenSelect').value;
+                Telegram.WebApp.sendData(JSON.stringify({
+                    action: 'withdraw',
+                    amount: amount,
+                    token: token,
+                    address: gameState.addresses[token.toLowerCase()]
+                }));
+            };
+
+            elements.buyRaffleBtn.onclick = () => {
+                Telegram.WebApp.sendData(JSON.stringify({ action: 'buy_raffle_ticket' }));
+            };
+
+            elements.copyAddressBtn.onclick = () => {
+                navigator.clipboard.writeText(elements.addressText.textContent);
+                log('Address copied to clipboard');
+            };
+        }
+
         Telegram.WebApp.onEvent('message', (event) => {
             try {
                 const message = event.data.text;
                 if (message.startsWith('Balance update: ')) {
                     const balanceData = JSON.parse(message.split('Balance update: ')[1]);
-                    
                     gameState.balances.bnb = parseFloat(balanceData.bnb_balance) || 0;
                     gameState.balances.nims = parseFloat(balanceData.nims_balance) || 0;
                     gameState.addresses.bnb = balanceData.bnb_address || "Address not available";
                     gameState.addresses.nims = balanceData.nims_address || "Address not available";
-                    
                     updateDisplay();
                     elements.resultDiv.textContent = "Balances updated!";
                 }
@@ -222,9 +274,6 @@ function updateDisplay() {
             }
         });
 
-        // Rest of the game logic remains the same...
-
-        // Start the application
         Telegram.WebApp.ready();
         Telegram.WebApp.expand();
         initializeGame();
