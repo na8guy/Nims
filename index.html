@@ -294,35 +294,7 @@
             gameState.sessionId = null;
         }
 
-        function handleBackendMessage(data) {
-            try {
-                if (data.action === 'balance_update') {
-                    gameState.balances.bnb = parseFloat(data.bnb_balance) || 0;
-                    gameState.balances.nims = parseFloat(data.nims_balance) || 0;
-                    gameState.addresses.bnb = data.bnb_address || "Address not available";
-                    gameState.addresses.nims = data.nims_address || "Address not available";
-                    updateDisplay();
-                    elements.resultDiv.textContent = data.message || "Balances updated!";
-                }
-                else if (data.action === 'game_started' && data.session_id) {
-                    log(`Game started with session ID: ${data.session_id}`);
-                    gameState.sessionId = data.session_id;
-                    gameState.gameActive = true;
-                    gameState.animationFrame = requestAnimationFrame(gameLoop);
-                    elements.resultDiv.textContent = data.message || "Game started!";
-                }
-                else if (data.action === 'avalanche' && data.session_id === gameState.sessionId) {
-                    endGame('avalanche');
-                    elements.resultDiv.textContent = data.message || "❌ Avalanche! You lost your stake.";
-                }
-                else if (data.action === 'cashout_success') {
-                    elements.resultDiv.textContent = `💰 Cashed out ${data.amount} ${data.token} at ${data.multiplier}x!`;
-                }
-            } catch (error) {
-                log(`Message handling error: ${error.message}`);
-            }
-        }
-
+  
 
 
 
@@ -383,18 +355,38 @@
         }
 
         // Handle messages from the Telegram bot
-        Telegram.WebApp.onEvent('message', (event) => {
-            try {
-                const message = event.data.text;
-                if (message.startsWith('{') && message.endsWith('}')) {
-                    handleBackendMessage(JSON.parse(message));
-                } else {
-                    elements.resultDiv.textContent = message;
-                }
-            } catch (error) {
-                log(`Message parsing error: ${error.message}`);
-            }
-        });
+       Telegram.WebApp.onEvent('message', (event) => {
+    try {
+        const message = event.data.text;
+        log(`Received message from bot: ${message}`);
+        if (message.startsWith('{') && message.endsWith('}')) {
+            const data = JSON.parse(message);
+            log(`Parsed message data: ${JSON.stringify(data)}`);
+            handleBackendMessage(data);
+        } else {
+            elements.resultDiv.textContent = message;
+        }
+    } catch (error) {
+        log(`Message parsing error: ${error.message}`);
+    }
+});
+
+
+           function handleBackendMessage(data) {
+    try {
+        if (data.action === 'game_started' && data.session_id) {
+            log(`Game started with session ID: ${data.session_id}`);
+            gameState.sessionId = data.session_id;
+            gameState.gameActive = true;
+            gameState.animationFrame = requestAnimationFrame(gameLoop);
+            elements.resultDiv.textContent = data.message || "Game started!";
+            log(`Game loop started for session ${data.session_id}`);
+        }
+    } catch (error) {
+        log(`Message handling error: ${error.message}`);
+    }
+}
+
 
         // Initialize the app
         Telegram.WebApp.ready();
