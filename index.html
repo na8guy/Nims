@@ -323,6 +323,19 @@
             }
         }
 
+        if (data.action === 'game_update') {
+    gameState.multiplier = data.multiplier;
+    gameState.duration = data.duration;
+    updateGameDisplay();
+}
+
+if (data.action === 'game_started') {
+    gameState.sessionId = data.session_id;
+    gameState.stake = data.stake;
+    gameState.token = data.currency;
+    startGameVisuals();
+}
+
         function setupEventListeners() {
             elements.startBtn.onclick = startGame;
 
