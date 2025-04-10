@@ -225,6 +225,12 @@
         }
 
         function startGame() {
+            const payload = {
+        action: 'start_game',
+        token: selectedToken,
+        stake: stakeAmount
+    };
+             console.log("Sending game start:", JSON.stringify(payload));
             if (gameState.gameActive) return;
 
             const stake = parseFloat(document.getElementById('stakeInput').value);
