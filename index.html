@@ -247,18 +247,20 @@
                 stake: stake
             }));
 
-            // These will be updated when we get the session ID from the backend
+            // Set initial game state but don’t start the loop yet
             gameState.stake = stake;
             gameState.token = token;
             gameState.height = 0;
             gameState.multiplier = 1.0;
             gameState.lastUpdate = performance.now();
+            gameState.gameActive = false; // Wait for backend confirmation
 
             document.getElementById('gameControls').classList.add('hidden');
             canvas.style.display = 'block';
             elements.gameStats.classList.remove('hidden');
             elements.cashoutBtn.classList.remove('hidden');
-            drawGame();
+            drawGame(); // Draw initial state
+            log("Waiting for game to start...");
         }
 
         function endGame(result) {
@@ -303,13 +305,15 @@
                     elements.resultDiv.textContent = data.message || "Balances updated!";
                 }
                 else if (data.action === 'game_started' && data.session_id) {
+                    log(`Game started with session ID: ${data.session_id}`);
                     gameState.sessionId = data.session_id;
                     gameState.gameActive = true;
                     gameState.animationFrame = requestAnimationFrame(gameLoop);
+                    elements.resultDiv.textContent = data.message || "Game started!";
                 }
                 else if (data.action === 'avalanche' && data.session_id === gameState.sessionId) {
                     endGame('avalanche');
-                    elements.resultDiv.textContent = "❌ Avalanche! You lost your stake.";
+                    elements.resultDiv.textContent = data.message || "❌ Avalanche! You lost your stake.";
                 }
                 else if (data.action === 'cashout_success') {
                     elements.resultDiv.textContent = `💰 Cashed out ${data.amount} ${data.token} at ${data.multiplier}x!`;
