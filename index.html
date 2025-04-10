@@ -151,14 +151,14 @@
 
         function drawGame() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
+
             // Draw sky gradient
             const skyGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
             skyGradient.addColorStop(0, '#87CEEB');
             skyGradient.addColorStop(1, '#1E90FF');
             ctx.fillStyle = skyGradient;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
+
             // Draw mountain
             ctx.fillStyle = '#8B4513';
             ctx.beginPath();
@@ -167,7 +167,7 @@
             ctx.lineTo(canvas.width, canvas.height);
             ctx.closePath();
             ctx.fill();
-            
+
             // Draw snow cap
             ctx.fillStyle = 'white';
             ctx.beginPath();
@@ -176,13 +176,13 @@
             ctx.lineTo(canvas.width/2 + 100, canvas.height/3 + 50);
             ctx.closePath();
             ctx.fill();
-            
+
             // Draw climber
             ctx.fillStyle = 'red';
             ctx.beginPath();
             ctx.arc(300, 700 - gameState.height, 15, 0, Math.PI * 2);
             ctx.fill();
-            
+
             // Draw rope
             ctx.strokeStyle = 'black';
             ctx.lineWidth = 2;
@@ -190,7 +190,7 @@
             ctx.moveTo(300, 700 - gameState.height + 15);
             ctx.lineTo(300, 800);
             ctx.stroke();
-            
+
             // Update stats display
             elements.currentMultiplier.textContent = gameState.multiplier.toFixed(2);
             elements.currentHeight.textContent = Math.floor(gameState.height);
@@ -204,7 +204,7 @@
             // Update game state
             gameState.height += 1; // Climb speed
             gameState.multiplier = 1 + (gameState.height / 500); // Multiplier increases with height
-            
+
             // Check for periodic updates to the backend
             if (timestamp - gameState.lastUpdate > gameState.updateInterval) {
                 sendGameUpdate();
@@ -247,24 +247,25 @@
                 stake: stake
             }));
 
-            // These will be updated when we get the session ID from the backend
+            // Set initial game state but don’t start the loop yet
             gameState.stake = stake;
             gameState.token = token;
             gameState.height = 0;
             gameState.multiplier = 1.0;
             gameState.lastUpdate = performance.now();
+            gameState.gameActive = false; // Wait for backend confirmation
 
             document.getElementById('gameControls').classList.add('hidden');
             canvas.style.display = 'block';
             elements.gameStats.classList.remove('hidden');
             elements.cashoutBtn.classList.remove('hidden');
-            drawGame();
-
+            drawGame(); // Draw initial state
+            log("Waiting for game to start...");
         }
 
         function endGame(result) {
             if (!gameState.gameActive) return;
-            
+
             cancelAnimationFrame(gameState.animationFrame);
             gameState.gameActive = false;
             canvas.style.display = 'none';
@@ -288,7 +289,7 @@
                     token: gameState.token
                 }));
             }
-            
+
             // Reset session
             gameState.sessionId = null;
         }
@@ -304,13 +305,15 @@
                     elements.resultDiv.textContent = data.message || "Balances updated!";
                 }
                 else if (data.action === 'game_started' && data.session_id) {
+                    log(`Game started with session ID: ${data.session_id}`);
                     gameState.sessionId = data.session_id;
                     gameState.gameActive = true;
                     gameState.animationFrame = requestAnimationFrame(gameLoop);
+                    elements.resultDiv.textContent = data.message || "Game started!";
                 }
                 else if (data.action === 'avalanche' && data.session_id === gameState.sessionId) {
                     endGame('avalanche');
-                    elements.resultDiv.textContent = "❌ Avalanche! You lost your stake.";
+                    elements.resultDiv.textContent = data.message || "❌ Avalanche! You lost your stake.";
                 }
                 else if (data.action === 'cashout_success') {
                     elements.resultDiv.textContent = `💰 Cashed out ${data.amount} ${data.token} at ${data.multiplier}x!`;
@@ -319,6 +322,19 @@
                 log(`Message handling error: ${error.message}`);
             }
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         function setupEventListeners() {
             elements.startBtn.onclick = startGame;
@@ -374,10 +390,6 @@
                     handleBackendMessage(JSON.parse(message));
                 } else {
                     elements.resultDiv.textContent = message;
-
-
-
-
                 }
             } catch (error) {
                 log(`Message parsing error: ${error.message}`);
