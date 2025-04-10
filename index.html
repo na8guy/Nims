@@ -19,6 +19,7 @@
         .hidden { display: none; }
         .address-display { word-break: break-all; font-size: 18px; margin: 10px 0; }
         .wallet-info { margin-top: 20px; padding: 15px; background: rgba(255, 255, 255, 0.9); border-radius: 8px; }
+        .game-stats { position: absolute; top: 20px; left: 20px; background: rgba(0,0,0,0.7); color: white; padding: 10px; border-radius: 5px; }
     </style>
 </head>
 <body>
@@ -69,6 +70,11 @@
     </div>
     
     <canvas id="gameCanvas" width="600" height="800"></canvas>
+    <div class="game-stats hidden" id="gameStats">
+        <div>Multiplier: <span id="currentMultiplier">1.0</span>x</div>
+        <div>Height: <span id="currentHeight">0</span>m</div>
+        <div>Potential Win: <span id="potentialWin">0</span> <span id="potentialToken"></span></div>
+    </div>
     <button id="cashoutBtn" class="hidden">Cash Out</button>
     <div id="result"></div>
 
@@ -93,7 +99,12 @@
             addressText: document.getElementById('addressText'),
             copyAddressBtn: document.getElementById('copyAddressBtn'),
             bnbAddress: document.getElementById('bnbAddress'),
-            nimsAddress: document.getElementById('nimsAddress')
+            nimsAddress: document.getElementById('nimsAddress'),
+            gameStats: document.getElementById('gameStats'),
+            currentMultiplier: document.getElementById('currentMultiplier'),
+            currentHeight: document.getElementById('currentHeight'),
+            potentialWin: document.getElementById('potentialWin'),
+            potentialToken: document.getElementById('potentialToken')
         };
 
         let gameState = {
@@ -105,7 +116,10 @@
             userId: null,
             balances: { bnb: 0, nims: 0 },
             addresses: { bnb: null, nims: null },
-            animationFrame: null
+            animationFrame: null,
+            sessionId: null,
+            lastUpdate: 0,
+            updateInterval: 2000 // Update every 2 seconds
         };
 
         function initializeGame() {
@@ -137,30 +151,77 @@
 
         function drawGame() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = '#87CEEB';
+            
+            // Draw sky gradient
+            const skyGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            skyGradient.addColorStop(0, '#87CEEB');
+            skyGradient.addColorStop(1, '#1E90FF');
+            ctx.fillStyle = skyGradient;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw mountain
+            ctx.fillStyle = '#8B4513';
+            ctx.beginPath();
+            ctx.moveTo(0, canvas.height);
+            ctx.lineTo(canvas.width/2, canvas.height/3);
+            ctx.lineTo(canvas.width, canvas.height);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Draw snow cap
             ctx.fillStyle = 'white';
-            ctx.fillRect(200, 800 - gameState.height, 200, gameState.height); // Climber
-            ctx.fillStyle = 'black';
-            ctx.font = '30px Arial';
-            ctx.fillText(`Multiplier: ${gameState.multiplier.toFixed(2)}x`, 20, 50);
-            ctx.fillText(`Height: ${gameState.height.toFixed(0)}m`, 20, 100);
+            ctx.beginPath();
+            ctx.moveTo(canvas.width/2 - 100, canvas.height/3 + 50);
+            ctx.lineTo(canvas.width/2, canvas.height/3);
+            ctx.lineTo(canvas.width/2 + 100, canvas.height/3 + 50);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Draw climber
+            ctx.fillStyle = 'red';
+            ctx.beginPath();
+            ctx.arc(300, 700 - gameState.height, 15, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Draw rope
+            ctx.strokeStyle = 'black';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(300, 700 - gameState.height + 15);
+            ctx.lineTo(300, 800);
+            ctx.stroke();
+            
+            // Update stats display
+            elements.currentMultiplier.textContent = gameState.multiplier.toFixed(2);
+            elements.currentHeight.textContent = Math.floor(gameState.height);
+            elements.potentialWin.textContent = (gameState.stake * gameState.multiplier).toFixed(4);
+            elements.potentialToken.textContent = gameState.token;
         }
 
-        function gameLoop() {
+        function gameLoop(timestamp) {
             if (!gameState.gameActive) return;
 
-            gameState.height += 2; // Climb speed
-            gameState.multiplier = 1 + (gameState.height / 1000); // Multiplier increases with height
-
-            // Random avalanche chance (e.g., 1% per frame)
-            if (Math.random() < 0.01) {
-                endGame('avalanche');
-                return;
+            // Update game state
+            gameState.height += 1; // Climb speed
+            gameState.multiplier = 1 + (gameState.height / 500); // Multiplier increases with height
+            
+            // Check for periodic updates to the backend
+            if (timestamp - gameState.lastUpdate > gameState.updateInterval) {
+                sendGameUpdate();
+                gameState.lastUpdate = timestamp;
             }
 
             drawGame();
             gameState.animationFrame = requestAnimationFrame(gameLoop);
+        }
+
+        function sendGameUpdate() {
+            Telegram.WebApp.sendData(JSON.stringify({
+                action: 'game_update',
+                session_id: gameState.sessionId,
+                height: gameState.height,
+                multiplier: gameState.multiplier
+            }));
         }
 
         function startGame() {
@@ -169,35 +230,51 @@
             const stake = parseFloat(document.getElementById('stakeInput').value);
             const token = document.getElementById('tokenSelect').value;
 
+            if (stake < 0.1 || stake > 10) {
+                log("Stake amount must be between 0.1 and 10");
+                return;
+            }
+
+            if ((token === 'BNB' && stake > gameState.balances.bnb) || 
+                (token === 'NIMS' && stake > gameState.balances.nims)) {
+                log("Insufficient balance for this stake");
+                return;
+            }
+
             Telegram.WebApp.sendData(JSON.stringify({
                 action: 'start_game',
                 token: token,
                 stake: stake
             }));
 
+            // These will be updated when we get the session ID from the backend
             gameState.stake = stake;
             gameState.token = token;
             gameState.height = 0;
             gameState.multiplier = 1.0;
-            gameState.gameActive = true;
+            gameState.lastUpdate = performance.now();
 
             document.getElementById('gameControls').classList.add('hidden');
             canvas.style.display = 'block';
+            elements.gameStats.classList.remove('hidden');
             elements.cashoutBtn.classList.remove('hidden');
             drawGame();
-            gameState.animationFrame = requestAnimationFrame(gameLoop);
         }
 
         function endGame(result) {
-            gameState.gameActive = false;
+            if (!gameState.gameActive) return;
+            
             cancelAnimationFrame(gameState.animationFrame);
+            gameState.gameActive = false;
             canvas.style.display = 'none';
+            elements.gameStats.classList.add('hidden');
             elements.cashoutBtn.classList.add('hidden');
             document.getElementById('gameControls').classList.remove('hidden');
 
             if (result === 'cashout') {
                 Telegram.WebApp.sendData(JSON.stringify({
                     action: 'cashout',
+                    session_id: gameState.sessionId,
                     stake: gameState.stake,
                     multiplier: gameState.multiplier,
                     token: gameState.token
@@ -205,9 +282,40 @@
             } else if (result === 'avalanche') {
                 Telegram.WebApp.sendData(JSON.stringify({
                     action: 'lost',
+                    session_id: gameState.sessionId,
                     stake: gameState.stake,
                     token: gameState.token
                 }));
+            }
+            
+            // Reset session
+            gameState.sessionId = null;
+        }
+
+        function handleBackendMessage(data) {
+            try {
+                if (data.action === 'balance_update') {
+                    gameState.balances.bnb = parseFloat(data.bnb_balance) || 0;
+                    gameState.balances.nims = parseFloat(data.nims_balance) || 0;
+                    gameState.addresses.bnb = data.bnb_address || "Address not available";
+                    gameState.addresses.nims = data.nims_address || "Address not available";
+                    updateDisplay();
+                    elements.resultDiv.textContent = data.message || "Balances updated!";
+                }
+                else if (data.action === 'game_started' && data.session_id) {
+                    gameState.sessionId = data.session_id;
+                    gameState.gameActive = true;
+                    gameState.animationFrame = requestAnimationFrame(gameLoop);
+                }
+                else if (data.action === 'avalanche' && data.session_id === gameState.sessionId) {
+                    endGame('avalanche');
+                    elements.resultDiv.textContent = "❌ Avalanche! You lost your stake.";
+                }
+                else if (data.action === 'cashout_success') {
+                    elements.resultDiv.textContent = `💰 Cashed out ${data.amount} ${data.token} at ${data.multiplier}x!`;
+                }
+            } catch (error) {
+                log(`Message handling error: ${error.message}`);
             }
         }
 
@@ -257,23 +365,21 @@
             };
         }
 
+        // Handle messages from the Telegram bot
         Telegram.WebApp.onEvent('message', (event) => {
             try {
                 const message = event.data.text;
-                if (message.startsWith('Balance update: ')) {
-                    const balanceData = JSON.parse(message.split('Balance update: ')[1]);
-                    gameState.balances.bnb = parseFloat(balanceData.bnb_balance) || 0;
-                    gameState.balances.nims = parseFloat(balanceData.nims_balance) || 0;
-                    gameState.addresses.bnb = balanceData.bnb_address || "Address not available";
-                    gameState.addresses.nims = balanceData.nims_address || "Address not available";
-                    updateDisplay();
-                    elements.resultDiv.textContent = "Balances updated!";
+                if (message.startsWith('{') && message.endsWith('}')) {
+                    handleBackendMessage(JSON.parse(message));
+                } else {
+                    elements.resultDiv.textContent = message;
                 }
             } catch (error) {
-                log(`Message error: ${error.message}`);
+                log(`Message parsing error: ${error.message}`);
             }
         });
 
+        // Initialize the app
         Telegram.WebApp.ready();
         Telegram.WebApp.expand();
         initializeGame();
