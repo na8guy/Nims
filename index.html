@@ -68,7 +68,7 @@
             <button id="buyRaffleBtn">Buy Raffle Ticket</button>
         </div>
     </div>
-    
+
     <canvas id="gameCanvas" width="600" height="800"></canvas>
     <div class="game-stats hidden" id="gameStats">
         <div>Multiplier: <span id="currentMultiplier">1.0</span>x</div>
@@ -127,7 +127,7 @@
             try {
                 const urlParams = new URLSearchParams(window.location.search);
                 const gameData = JSON.parse(decodeURIComponent(urlParams.get('data') || '{}'));
-                
+
                 gameState.userId = gameData.user_id || Telegram.WebApp.initDataUnsafe.user?.id;
                 gameState.balances.bnb = parseFloat(gameData.bnb_balance) || 0;
                 gameState.balances.nims = parseFloat(gameData.nims_balance) || 0;
@@ -226,7 +226,7 @@
 
         function startGame() {
             if (gameState.gameActive) return;
-            
+
             const stake = parseFloat(document.getElementById('stakeInput').value);
             const token = document.getElementById('tokenSelect').value;
 
@@ -247,20 +247,19 @@
                 stake: stake
             }));
 
-            // Set initial game state but don’t start the loop yet
+            // These will be updated when we get the session ID from the backend
             gameState.stake = stake;
             gameState.token = token;
             gameState.height = 0;
             gameState.multiplier = 1.0;
             gameState.lastUpdate = performance.now();
-            gameState.gameActive = false; // Wait for backend confirmation
 
             document.getElementById('gameControls').classList.add('hidden');
             canvas.style.display = 'block';
             elements.gameStats.classList.remove('hidden');
             elements.cashoutBtn.classList.remove('hidden');
-            drawGame(); // Draw initial state
-            log("Waiting for game to start...");
+            drawGame();
+
         }
 
         function endGame(result) {
@@ -305,15 +304,13 @@
                     elements.resultDiv.textContent = data.message || "Balances updated!";
                 }
                 else if (data.action === 'game_started' && data.session_id) {
-                    log(`Game started with session ID: ${data.session_id}`);
                     gameState.sessionId = data.session_id;
                     gameState.gameActive = true;
                     gameState.animationFrame = requestAnimationFrame(gameLoop);
-                    elements.resultDiv.textContent = data.message || "Game started!";
                 }
                 else if (data.action === 'avalanche' && data.session_id === gameState.sessionId) {
                     endGame('avalanche');
-                    elements.resultDiv.textContent = data.message || "❌ Avalanche! You lost your stake.";
+                    elements.resultDiv.textContent = "❌ Avalanche! You lost your stake.";
                 }
                 else if (data.action === 'cashout_success') {
                     elements.resultDiv.textContent = `💰 Cashed out ${data.amount} ${data.token} at ${data.multiplier}x!`;
@@ -322,19 +319,6 @@
                 log(`Message handling error: ${error.message}`);
             }
         }
-
-        if (data.action === 'game_update') {
-    gameState.multiplier = data.multiplier;
-    gameState.duration = data.duration;
-    updateGameDisplay();
-}
-
-if (data.action === 'game_started') {
-    gameState.sessionId = data.session_id;
-    gameState.stake = data.stake;
-    gameState.token = data.currency;
-    startGameVisuals();
-}
 
         function setupEventListeners() {
             elements.startBtn.onclick = startGame;
@@ -390,6 +374,10 @@ if (data.action === 'game_started') {
                     handleBackendMessage(JSON.parse(message));
                 } else {
                     elements.resultDiv.textContent = message;
+
+
+
+
                 }
             } catch (error) {
                 log(`Message parsing error: ${error.message}`);
