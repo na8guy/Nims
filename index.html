@@ -15,14 +15,8 @@
         select, input, button { padding: 10px; font-size: 16px; border: 1px solid #ccc; border-radius: 4px; }
         button { background-color: #007bff; color: white; border: none; cursor: pointer; }
         button:hover { background-color: #0056b3; }
-        #game-area { margin-top: 20px; text-align: center; }
         #status { margin-top: 10px; font-weight: bold; }
         .error { color: red; }
-        #climbing-area { display: none; margin-top: 20px; }
-        #altitude { font-size: 24px; color: #007bff; }
-        #multiplier { font-size: 20px; color: #28a745; }
-        #mountain { width: 100%; height: 200px; background: linear-gradient(to top, #d2b48c, #fff); position: relative; overflow: hidden; }
-        #nims { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); font-size: 30px; }
         #log-panel { margin-top: 20px; padding: 10px; background-color: #f9f9f9; border: 1px solid #ddd; max-height: 150px; overflow-y: auto; font-size: 12px; text-align: left; }
         .log-entry { margin: 2px 0; }
         .log-info { color: #333; }
@@ -44,63 +38,16 @@
             </select>
             <input type="number" id="stake-input" placeholder="Enter stake (0.1 - 10)" step="0.1" min="0.1" max="10">
             <button id="start-button">Start Climbing</button>
-            <button id="refresh-button">Refresh Balance</button>
         </div>
-        <div id="game-area">
-            <p id="status">Ready to climb with Nims!</p>
-            <div id="climbing-area">
-                <div id="mountain">
-                    <span id="nims">🏋️‍♂️</span>
-                </div>
-                <p>Altitude: <span id="altitude">0m</span></p>
-                <p>Multiplier: <span id="multiplier">1.00x</span></p>
-                <button id="cashout-button">Cash Out</button>
-            </div>
-        </div>
+        <p id="status">Loading...</p>
         <div id="log-panel"></div>
     </div>
 
     <script>
-        function initializeWebApp() {
-            const WebApp = window.Telegram?.WebApp;
-            if (!WebApp) {
-                logToUI('ERROR', 'Telegram WebApp not available on page load');
-                alert("This page must be opened in Telegram WebApp");
-                document.getElementById('status').textContent = 'Error: Not in Telegram WebApp';
-                document.getElementById('status').classList.add('error');
-                return null;
-            }
-            WebApp.ready();
-            WebApp.expand();
-            logToUI('INFO', 'Telegram WebApp initialized successfully');
-            return WebApp;
-        }
-
-        let WebApp = initializeWebApp();
-
-        // Elements
-        const bnbBalanceElement = document.getElementById('bnb-balance');
-        const nimsBalanceElement = document.getElementById('nims-balance');
-        const tokenSelect = document.getElementById('token-select');
-        const stakeInput = document.getElementById('stake-input');
-        const startButton = document.getElementById('start-button');
-        const refreshButton = document.getElementById('refresh-button');
-        const statusElement = document.getElementById('status');
-        const climbingArea = document.getElementById('climbing-area');
-        const altitudeElement = document.getElementById('altitude');
-        const multiplierElement = document.getElementById('multiplier');
-        const cashoutButton = document.getElementById('cashout-button');
-        const nimsElement = document.getElementById('nims');
-        const logPanel = document.getElementById('log-panel');
-
-        // Game state
-        let gameData = { user_id: null, bnb_balance: 0.0, nims_balance: 0.0, bnb_address: '', nims_address: '', timestamp: 0 };
-        let gameActive = false;
-        let currentStake = 0;
-        let currentToken = '';
-        let climbInterval = null;
+        let WebApp;
 
         function logToUI(level, message) {
+            const logPanel = document.getElementById('log-panel');
             const entry = document.createElement('div');
             entry.className = `log-entry log-${level.toLowerCase()}`;
             entry.textContent = `[${new Date().toISOString().slice(11, 19)}] ${level}: ${message}`;
@@ -108,215 +55,86 @@
             logPanel.scrollTop = logPanel.scrollHeight;
         }
 
-        function logToBackend(level, message) {
-            logToUI(level, message);
-            WebApp = window.Telegram?.WebApp || WebApp; // Reattempt to get WebApp
-            logToUI('DEBUG', `WebApp status: ${WebApp ? 'defined' : 'undefined'}`);
-            if (WebApp) {
-                try {
-                    const logData = { action: 'log', level: level, message: message, timestamp: new Date().toISOString() };
-                    WebApp.sendData(JSON.stringify(logData));
-                    logToUI('DEBUG', `Sent log to backend: ${JSON.stringify(logData)}`);
-                } catch (e) {
-                    logToUI('ERROR', `Failed to send log to backend: ${e.message}`);
-                }
-            } else {
-                logToUI('ERROR', 'WebApp is undefined, cannot send log to backend');
+        function initializeWebApp() {
+            logToUI('INFO', 'Attempting to initialize Telegram WebApp');
+            WebApp = window.Telegram?.WebApp;
+            if (!WebApp) {
+                logToUI('ERROR', 'Telegram WebApp not available');
+                document.getElementById('status').textContent = 'Error: Not in Telegram WebApp';
+                document.getElementById('status').classList.add('error');
+                alert('Please open this app in Telegram');
+                return false;
             }
+            WebApp.ready();
+            WebApp.expand();
+            logToUI('INFO', 'Telegram WebApp initialized successfully');
+            return true;
         }
 
         function loadGameData() {
+            logToUI('DEBUG', 'Starting loadGameData');
             const urlParams = new URLSearchParams(window.location.search);
-            const dataParam = urlParams.get('data');
             logToUI('DEBUG', `URL search params: ${window.location.search}`);
-            try {
-                if (dataParam) {
-                    gameData = JSON.parse(decodeURIComponent(dataParam));
-                    logToBackend('INFO', `Web UI received data from backend: ${JSON.stringify(gameData)}`);
-                    updateUI();
-                } else {
-                    logToBackend('WARN', 'No data parameter found in URL');
-                }
-                const hash = window.location.hash.slice(1);
-                logToUI('DEBUG', `URL hash: ${hash}`);
-                if (hash.startsWith('start=')) {
-                    const startData = JSON.parse(hash.slice(6));
-                    logToBackend('INFO', `Web UI received game start confirmation: ${JSON.stringify(startData)}`);
-                    startClimbing(startData);
-                }
-            } catch (e) {
-                logToBackend('ERROR', `Web UI failed to parse data: ${e.message}`);
-                statusElement.textContent = 'Error loading data.';
-                statusElement.classList.add('error');
+            const dataParam = urlParams.get('data');
+            if (!dataParam) {
+                logToUI('WARN', 'No data parameter in URL');
+                document.getElementById('status').textContent = 'No game data received';
+                return;
             }
-        }
-
-        function updateUI() {
-            bnbBalanceElement.textContent = parseFloat(gameData.bnb_balance || 0).toFixed(4);
-            nimsBalanceElement.textContent = parseFloat(gameData.nims_balance || 0).toFixed(4);
-            statusElement.textContent = gameActive ? 'Nims is climbing!' : 'Ready to climb with Nims!';
-            statusElement.classList.remove('error');
-            climbingArea.style.display = gameActive ? 'block' : 'none';
-            startButton.disabled = gameActive;
-            stakeInput.disabled = gameActive;
-            tokenSelect.disabled = gameActive;
-            logToBackend('DEBUG', `UI updated: gameActive=${gameActive}, balances=${gameData.bnb_balance}/${gameData.nims_balance}`);
+            logToUI('DEBUG', `Raw data param: ${dataParam}`);
+            try {
+                const gameData = JSON.parse(decodeURIComponent(dataParam));
+                logToUI('INFO', `Parsed game data: ${JSON.stringify(gameData)}`);
+                document.getElementById('bnb-balance').textContent = parseFloat(gameData.bnb_balance || 0).toFixed(4);
+                document.getElementById('nims-balance').textContent = parseFloat(gameData.nims_balance || 0).toFixed(4);
+                document.getElementById('status').textContent = 'Ready to climb with Nims!';
+                return gameData;
+            } catch (e) {
+                logToUI('ERROR', `Failed to parse game data: ${e.message}`);
+                document.getElementById('status').textContent = 'Error loading game data';
+                document.getElementById('status').classList.add('error');
+            }
         }
 
         function startGame() {
-            if (gameActive) {
-                statusElement.textContent = 'Nims is already climbing!';
-                logToBackend('WARN', 'Attempted to start game while already active');
-                return;
-            }
-
-            const token = tokenSelect.value;
-            const stake = parseFloat(stakeInput.value);
-            logToBackend('DEBUG', `startGame called with token=${token}, stake=${stake}`);
-
-            if (!token || !['BNB', 'NIMS'].includes(token)) {
-                statusElement.textContent = 'Please select a valid token.';
-                statusElement.classList.add('error');
-                logToBackend('WARN', `Invalid token selected: ${token}`);
-                return;
-            }
-            if (isNaN(stake) || stake < 0.1 || stake > 10) {
-                statusElement.textContent = 'Stake must be between 0.1 and 10.';
-                statusElement.classList.add('error');
-                logToBackend('WARN', `Invalid stake entered: ${stakeInput.value}`);
-                return;
-            }
-
-            const balance = token === 'BNB' ? parseFloat(gameData.bnb_balance) : parseFloat(gameData.nims_balance);
-            logToBackend('DEBUG', `Checking balance: ${token}=${balance}`);
-            if (isNaN(balance)) {
-                statusElement.textContent = 'Balance data invalid. Please refresh.';
-                statusElement.classList.add('error');
-                logToBackend('ERROR', 'Invalid balance data in Web UI');
-                return;
-            }
-            if (stake > balance) {
-                statusElement.textContent = `Insufficient ${token} balance: ${balance.toFixed(4)}.`;
-                statusElement.classList.add('error');
-                logToBackend('WARN', `Insufficient ${token} balance: ${balance} < ${stake}`);
-                return;
-            }
-
-            const data = { action: 'start_game', token: token, stake: stake };
-            logToBackend('INFO', `Preparing to send action to backend: ${JSON.stringify(data)}`);
-            statusElement.textContent = 'Starting Game...';
-            WebApp = window.Telegram?.WebApp || WebApp;
-            logToBackend('DEBUG', `WebApp status before sendData: ${WebApp ? 'defined' : 'undefined'}`);
+            logToUI('DEBUG', 'startGame triggered');
+            const token = document.getElementById('token-select').value;
+            const stake = parseFloat(document.getElementById('stake-input').value);
+            logToUI('DEBUG', `Token: ${token}, Stake: ${stake}`);
+            document.getElementById('status').textContent = 'Starting Game...';
             if (WebApp) {
                 try {
+                    const data = { action: 'start_game', token: token, stake: stake };
+                    logToUI('INFO', `Sending to backend: ${JSON.stringify(data)}`);
                     WebApp.sendData(JSON.stringify(data));
-                    logToBackend('INFO', 'WebApp.sendData executed successfully');
+                    logToUI('INFO', 'WebApp.sendData executed');
                     setTimeout(() => {
                         WebApp.close();
-                        logToBackend('INFO', 'WebApp closed to trigger backend processing');
+                        logToUI('INFO', 'WebApp closed');
                     }, 1000);
                 } catch (e) {
-                    logToBackend('ERROR', `WebApp.sendData failed: ${e.message}`);
-                    statusElement.textContent = 'Failed to start game. Please try again.';
-                    statusElement.classList.add('error');
-                    alert(`Failed to start game: ${e.message}`);
+                    logToUI('ERROR', `WebApp.sendData failed: ${e.message}`);
+                    document.getElementById('status').textContent = 'Failed to start game';
+                    document.getElementById('status').classList.add('error');
                 }
             } else {
-                logToBackend('ERROR', 'WebApp is undefined, cannot start game');
-                statusElement.textContent = 'Failed to start game: Telegram WebApp not available. Please reopen.';
-                statusElement.classList.add('error');
-                alert('Telegram WebApp is not available. Please reopen the app from Telegram.');
+                logToUI('ERROR', 'WebApp unavailable');
+                document.getElementById('status').textContent = 'Telegram WebApp not available';
+                document.getElementById('status').classList.add('error');
             }
         }
 
-        function startClimbing(startData) {
-            if (gameActive) return;
-            logToBackend('INFO', `Starting climb with data: ${JSON.stringify(startData)}`);
-            currentStake = startData.stake;
-            currentToken = startData.token;
-            gameActive = true;
-            let altitude = 0;
-            let multiplier = 1.0;
-            updateUI();
-            altitudeElement.textContent = `${altitude}m`;
-            multiplierElement.textContent = `${multiplier.toFixed(2)}x`;
-            nimsElement.style.bottom = '10px';
-
-            climbInterval = setInterval(() => {
-                altitude += 50;
-                multiplier = 1.0 + (altitude / 1000);
-                altitudeElement.textContent = `${altitude}m`;
-                multiplierElement.textContent = `${multiplier.toFixed(2)}x`;
-                nimsElement.style.bottom = `${10 + (altitude / 10)}px`;
-                logToBackend('DEBUG', `Climbing: altitude=${altitude}m, multiplier=${multiplier.toFixed(2)}x`);
-
-                const avalancheChance = Math.min(0.02 + (altitude / 50000), 0.1);
-                if (Math.random() < avalancheChance) {
-                    clearInterval(climbInterval);
-                    gameActive = false;
-                    const data = { action: 'lost', stake: currentStake, token: currentToken };
-                    logToBackend('INFO', `Avalanche occurred, sending action to backend: ${JSON.stringify(data)}`);
-                    WebApp.sendData(JSON.stringify(data));
-                    statusElement.textContent = 'Avalanche! Nims fell!';
-                    statusElement.classList.add('error');
-                    updateUI();
-                }
-            }, 500);
-        }
-
-        function cashOut() {
-            if (!gameActive) {
-                statusElement.textContent = 'No active climb to cash out.';
-                logToBackend('WARN', 'Attempted cashout with no active game');
-                return;
-            }
-            clearInterval(climbInterval);
-            const multiplier = parseFloat(multiplierElement.textContent);
-            const data = { action: 'cashout', stake: currentStake, multiplier: multiplier, token: currentToken };
-            logToBackend('INFO', `Preparing to send cashout to backend: ${JSON.stringify(data)}`);
-            WebApp = window.Telegram?.WebApp || WebApp;
-            if (WebApp) {
-                try {
-                    WebApp.sendData(JSON.stringify(data));
-                    logToBackend('INFO', 'Cashout WebApp.sendData executed successfully');
-                } catch (e) {
-                    logToBackend('ERROR', `Cashout WebApp.sendData failed: ${e.message}`);
-                    statusElement.textContent = 'Failed to cash out. Please try again.';
-                    statusElement.classList.add('error');
-                }
+        // Initialize and load data
+        if (initializeWebApp()) {
+            const gameData = loadGameData();
+            const startButton = document.getElementById('start-button');
+            if (startButton) {
+                logToUI('DEBUG', 'Attaching event listener to start button');
+                startButton.addEventListener('click', startGame);
             } else {
-                logToBackend('ERROR', 'WebApp is undefined, cannot send cashout');
+                logToUI('ERROR', 'Start button not found in DOM');
             }
-            gameActive = false;
-            statusElement.textContent = `Cashed out at ${multiplier.toFixed(2)}x!`;
-            updateUI();
         }
-
-        function refreshBalance() {
-            const data = { action: 'refresh_balance' };
-            logToBackend('INFO', `Preparing to send refresh_balance to backend: ${JSON.stringify(data)}`);
-            WebApp = window.Telegram?.WebApp || WebApp;
-            if (WebApp) {
-                try {
-                    WebApp.sendData(JSON.stringify(data));
-                    logToBackend('INFO', 'Refresh WebApp.sendData executed successfully');
-                } catch (e) {
-                    logToBackend('ERROR', `Refresh WebApp.sendData failed: ${e.message}`);
-                    statusElement.textContent = 'Failed to refresh balance. Please try again.';
-                    statusElement.classList.add('error');
-                }
-            } else {
-                logToBackend('ERROR', 'WebApp is undefined, cannot send refresh');
-            }
-            statusElement.textContent = 'Requesting balance update...';
-            statusElement.classList.remove('error');
-        }
-
-        startButton.addEventListener('click', startGame);
-        cashoutButton.addEventListener('click', cashOut);
-        refreshButton.addEventListener('click', refreshBalance);
-
-        loadGameData();
     </script>
 </body>
 </html>
