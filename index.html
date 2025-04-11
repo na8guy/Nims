@@ -5,102 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nims Climb</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background-color: #f0f0f0;
-            color: #333;
-        }
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        }
-        h1 {
-            text-align: center;
-            color: #007bff;
-        }
-        .balance {
-            margin-bottom: 20px;
-        }
-        .balance p {
-            margin: 5px 0;
-            font-size: 16px;
-        }
-        .controls {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        select, input, button {
-            padding: 10px;
-            font-size: 16px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-        button {
-            background-color: #007bff;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-        #game-area {
-            margin-top: 20px;
-            text-align: center;
-        }
-        #status {
-            margin-top: 10px;
-            font-weight: bold;
-        }
-        .error {
-            color: red;
-        }
-        #climbing-area {
-            display: none;
-            margin-top: 20px;
-        }
-        #altitude {
-            font-size: 24px;
-            color: #007bff;
-        }
-        #multiplier {
-            font-size: 20px;
-            color: #28a745;
-        }
-        #mountain {
-            width: 100%;
-            height: 200px;
-            background: linear-gradient(to top, #d2b48c, #fff);
-            position: relative;
-            overflow: hidden;
-        }
-        #nims {
-            position: absolute;
-            bottom: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 30px;
-        }
-        #log-panel {
-            margin-top: 20px;
-            padding: 10px;
-            background-color: #f9f9f9;
-            border: 1px solid #ddd;
-            max-height: 150px;
-            overflow-y: auto;
-            font-size: 12px;
-            text-align: left;
-        }
-        .log-entry {
-            margin: 2px 0;
-        }
+        /* [Previous styles unchanged] */
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f0f0f0; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #007bff; }
+        .balance { margin-bottom: 20px; }
+        .balance p { margin: 5px 0; font-size: 16px; }
+        .controls { display: flex; flex-direction: column; gap: 10px; }
+        select, input, button { padding: 10px; font-size: 16px; border: 1px solid #ccc; border-radius: 4px; }
+        button { background-color: #007bff; color: white; border: none; cursor: pointer; }
+        button:hover { background-color: #0056b3; }
+        #game-area { margin-top: 20px; text-align: center; }
+        #status { margin-top: 10px; font-weight: bold; }
+        .error { color: red; }
+        #climbing-area { display: none; margin-top: 20px; }
+        #altitude { font-size: 24px; color: #007bff; }
+        #multiplier { font-size: 20px; color: #28a745; }
+        #mountain { width: 100%; height: 200px; background: linear-gradient(to top, #d2b48c, #fff); position: relative; overflow: hidden; }
+        #nims { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); font-size: 30px; }
+        #log-panel { margin-top: 20px; padding: 10px; background-color: #f9f9f9; border: 1px solid #ddd; max-height: 150px; overflow-y: auto; font-size: 12px; text-align: left; }
+        .log-entry { margin: 2px 0; }
         .log-info { color: #333; }
         .log-warn { color: #ff8c00; }
         .log-error { color: #ff0000; }
@@ -137,7 +61,7 @@
     </div>
 
     <script>
-        const WebApp = window.Telegram?.WebApp;
+        let WebApp = window.Telegram?.WebApp;
         if (!WebApp) {
             alert("This page must be opened in Telegram WebApp");
             document.getElementById('status').textContent = 'Error: Not in Telegram WebApp';
@@ -176,11 +100,12 @@
             entry.className = `log-entry log-${level.toLowerCase()}`;
             entry.textContent = `[${new Date().toISOString().slice(11, 19)}] ${level}: ${message}`;
             logPanel.appendChild(entry);
-            logPanel.scrollTop = logPanel.scrollHeight; // Auto-scroll to latest log
+            logPanel.scrollTop = logPanel.scrollHeight;
         }
 
         function logToBackend(level, message) {
             logToUI(level, message);
+            WebApp = window.Telegram?.WebApp; // Reassign to ensure availability
             if (WebApp) {
                 try {
                     const logData = { action: 'log', level: level, message: message, timestamp: new Date().toISOString() };
@@ -190,6 +115,8 @@
                     logToUI('ERROR', `Failed to send log to backend: ${e.message}`);
                     alert(`Logging error: ${e.message}`);
                 }
+            } else {
+                logToUI('ERROR', 'WebApp is undefined, cannot send log to backend');
             }
         }
 
@@ -273,18 +200,27 @@
             const data = { action: 'start_game', token: token, stake: stake };
             logToBackend('INFO', `Preparing to send action to backend: ${JSON.stringify(data)}`);
             statusElement.textContent = 'Starting Game...';
-            try {
-                WebApp.sendData(JSON.stringify(data));
-                logToBackend('INFO', 'WebApp.sendData executed successfully');
-                setTimeout(() => {
-                    WebApp.close();
-                    logToBackend('INFO', 'WebApp closed to trigger backend processing');
-                }, 1000);
-            } catch (e) {
-                logToBackend('ERROR', `WebApp.sendData failed: ${e.message}`);
-                statusElement.textContent = 'Failed to start game. Please try again.';
+            WebApp = window.Telegram?.WebApp; // Reassign before use
+            if (WebApp) {
+                logToBackend('DEBUG', 'WebApp is defined, attempting sendData');
+                try {
+                    WebApp.sendData(JSON.stringify(data));
+                    logToBackend('INFO', 'WebApp.sendData executed successfully');
+                    setTimeout(() => {
+                        WebApp.close();
+                        logToBackend('INFO', 'WebApp closed to trigger backend processing');
+                    }, 1000);
+                } catch (e) {
+                    logToBackend('ERROR', `WebApp.sendData failed: ${e.message}`);
+                    statusElement.textContent = 'Failed to start game. Please try again.';
+                    statusElement.classList.add('error');
+                    alert(`Failed to start game: ${e.message}`);
+                }
+            } else {
+                logToBackend('ERROR', 'WebApp is undefined, cannot send data');
+                statusElement.textContent = 'Failed to start game: Telegram WebApp not available.';
                 statusElement.classList.add('error');
-                alert(`Failed to start game: ${e.message}`);
+                alert('Telegram WebApp is not available. Please reopen the app.');
             }
         }
 
@@ -333,13 +269,18 @@
             const multiplier = parseFloat(multiplierElement.textContent);
             const data = { action: 'cashout', stake: currentStake, multiplier: multiplier, token: currentToken };
             logToBackend('INFO', `Preparing to send cashout to backend: ${JSON.stringify(data)}`);
-            try {
-                WebApp.sendData(JSON.stringify(data));
-                logToBackend('INFO', 'Cashout WebApp.sendData executed successfully');
-            } catch (e) {
-                logToBackend('ERROR', `Cashout WebApp.sendData failed: ${e.message}`);
-                statusElement.textContent = 'Failed to cash out. Please try again.';
-                statusElement.classList.add('error');
+            WebApp = window.Telegram?.WebApp;
+            if (WebApp) {
+                try {
+                    WebApp.sendData(JSON.stringify(data));
+                    logToBackend('INFO', 'Cashout WebApp.sendData executed successfully');
+                } catch (e) {
+                    logToBackend('ERROR', `Cashout WebApp.sendData failed: ${e.message}`);
+                    statusElement.textContent = 'Failed to cash out. Please try again.';
+                    statusElement.classList.add('error');
+                }
+            } else {
+                logToBackend('ERROR', 'WebApp is undefined, cannot send cashout');
             }
             gameActive = false;
             statusElement.textContent = `Cashed out at ${multiplier.toFixed(2)}x!`;
@@ -349,13 +290,18 @@
         function refreshBalance() {
             const data = { action: 'refresh_balance' };
             logToBackend('INFO', `Preparing to send refresh_balance to backend: ${JSON.stringify(data)}`);
-            try {
-                WebApp.sendData(JSON.stringify(data));
-                logToBackend('INFO', 'Refresh WebApp.sendData executed successfully');
-            } catch (e) {
-                logToBackend('ERROR', `Refresh WebApp.sendData failed: ${e.message}`);
-                statusElement.textContent = 'Failed to refresh balance. Please try again.';
-                statusElement.classList.add('error');
+            WebApp = window.Telegram?.WebApp;
+            if (WebApp) {
+                try {
+                    WebApp.sendData(JSON.stringify(data));
+                    logToBackend('INFO', 'Refresh WebApp.sendData executed successfully');
+                } catch (e) {
+                    logToBackend('ERROR', `Refresh WebApp.sendData failed: ${e.message}`);
+                    statusElement.textContent = 'Failed to refresh balance. Please try again.';
+                    statusElement.classList.add('error');
+                }
+            } else {
+                logToBackend('ERROR', 'WebApp is undefined, cannot send refresh');
             }
             statusElement.textContent = 'Requesting balance update...';
             statusElement.classList.remove('error');
