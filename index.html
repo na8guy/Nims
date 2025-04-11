@@ -155,6 +155,7 @@
             if (WebApp) {
                 try {
                     const data = { action: 'start_game', token: token, stake: stake.toString() };
+                    alert(JSON.stringify(data));
                     logToUI('INFO', `Sending to backend: ${JSON.stringify(data)}`);
                     console.log('Sending data:', data);
                     WebApp.sendData(JSON.stringify(data));
@@ -162,6 +163,7 @@
                     console.log('WebApp.sendData called successfully');
                     document.getElementById('start-button').disabled = true;
                 } catch (e) {
+                  alert(e.message);
                     logToUI('ERROR', `WebApp.sendData failed: ${e.message}`);
                     console.error('WebApp.sendData error:', e);
                     document.getElementById('status').textContent = 'Failed to start game';
