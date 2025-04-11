@@ -120,7 +120,7 @@
             }
         }
 
-        function setupEventListeners() {
+       function setupEventListeners() {
         document.getElementById('start-climbing').addEventListener('click', () => {
             if (isGameActive) return;
             const stake = parseFloat(document.getElementById('stake-input').value);
@@ -150,11 +150,18 @@
             }
 
             const data = { action: 'start_game', token, stake: stake.toString() };
+            logToUI('INFO', `Preparing to send: ${JSON.stringify(data)}`);
+            if (!WebApp) {
+                logToUI('ERROR', 'WebApp not initialized');
+                document.getElementById('status').textContent = 'WebApp not available';
+                return;
+            }
             try {
                 WebApp.ready();
-                logToUI('INFO', `Sending start_game: ${JSON.stringify(data)}`);
+                logToUI('DEBUG', 'Calling WebApp.sendData');
                 WebApp.sendData(JSON.stringify(data));
                 logToUI('INFO', 'sendData executed successfully');
+                alert(JSON.stringify(data));
                 document.getElementById('start-climbing').disabled = true;
                 document.getElementById('status').textContent = 'Starting game...';
             } catch (e) {
