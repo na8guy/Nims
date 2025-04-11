@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nims Climb</title>
+    <script src="https://telegram.org/js/telegram-web-app.js" async></script>
     <style>
-        /* [Previous styles unchanged] */
         body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f0f0f0; color: #333; }
         .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
         h1 { text-align: center; color: #007bff; }
@@ -61,17 +61,22 @@
     </div>
 
     <script>
-        let WebApp = window.Telegram?.WebApp;
-        if (!WebApp) {
-            alert("This page must be opened in Telegram WebApp");
-            document.getElementById('status').textContent = 'Error: Not in Telegram WebApp';
-            document.getElementById('status').classList.add('error');
-        } else {
+        function initializeWebApp() {
+            const WebApp = window.Telegram?.WebApp;
+            if (!WebApp) {
+                logToUI('ERROR', 'Telegram WebApp not available on page load');
+                alert("This page must be opened in Telegram WebApp");
+                document.getElementById('status').textContent = 'Error: Not in Telegram WebApp';
+                document.getElementById('status').classList.add('error');
+                return null;
+            }
             WebApp.ready();
             WebApp.expand();
             logToUI('INFO', 'Telegram WebApp initialized successfully');
-            logToBackend('INFO', 'Telegram WebApp initialized successfully');
+            return WebApp;
         }
+
+        let WebApp = initializeWebApp();
 
         // Elements
         const bnbBalanceElement = document.getElementById('bnb-balance');
@@ -105,7 +110,8 @@
 
         function logToBackend(level, message) {
             logToUI(level, message);
-            WebApp = window.Telegram?.WebApp; // Reassign to ensure availability
+            WebApp = window.Telegram?.WebApp || WebApp; // Reattempt to get WebApp
+            logToUI('DEBUG', `WebApp status: ${WebApp ? 'defined' : 'undefined'}`);
             if (WebApp) {
                 try {
                     const logData = { action: 'log', level: level, message: message, timestamp: new Date().toISOString() };
@@ -113,7 +119,6 @@
                     logToUI('DEBUG', `Sent log to backend: ${JSON.stringify(logData)}`);
                 } catch (e) {
                     logToUI('ERROR', `Failed to send log to backend: ${e.message}`);
-                    alert(`Logging error: ${e.message}`);
                 }
             } else {
                 logToUI('ERROR', 'WebApp is undefined, cannot send log to backend');
@@ -200,9 +205,9 @@
             const data = { action: 'start_game', token: token, stake: stake };
             logToBackend('INFO', `Preparing to send action to backend: ${JSON.stringify(data)}`);
             statusElement.textContent = 'Starting Game...';
-            WebApp = window.Telegram?.WebApp; // Reassign before use
+            WebApp = window.Telegram?.WebApp || WebApp;
+            logToBackend('DEBUG', `WebApp status before sendData: ${WebApp ? 'defined' : 'undefined'}`);
             if (WebApp) {
-                logToBackend('DEBUG', 'WebApp is defined, attempting sendData');
                 try {
                     WebApp.sendData(JSON.stringify(data));
                     logToBackend('INFO', 'WebApp.sendData executed successfully');
@@ -217,10 +222,10 @@
                     alert(`Failed to start game: ${e.message}`);
                 }
             } else {
-                logToBackend('ERROR', 'WebApp is undefined, cannot send data');
-                statusElement.textContent = 'Failed to start game: Telegram WebApp not available.';
+                logToBackend('ERROR', 'WebApp is undefined, cannot start game');
+                statusElement.textContent = 'Failed to start game: Telegram WebApp not available. Please reopen.';
                 statusElement.classList.add('error');
-                alert('Telegram WebApp is not available. Please reopen the app.');
+                alert('Telegram WebApp is not available. Please reopen the app from Telegram.');
             }
         }
 
@@ -269,7 +274,7 @@
             const multiplier = parseFloat(multiplierElement.textContent);
             const data = { action: 'cashout', stake: currentStake, multiplier: multiplier, token: currentToken };
             logToBackend('INFO', `Preparing to send cashout to backend: ${JSON.stringify(data)}`);
-            WebApp = window.Telegram?.WebApp;
+            WebApp = window.Telegram?.WebApp || WebApp;
             if (WebApp) {
                 try {
                     WebApp.sendData(JSON.stringify(data));
@@ -290,7 +295,7 @@
         function refreshBalance() {
             const data = { action: 'refresh_balance' };
             logToBackend('INFO', `Preparing to send refresh_balance to backend: ${JSON.stringify(data)}`);
-            WebApp = window.Telegram?.WebApp;
+            WebApp = window.Telegram?.WebApp || WebApp;
             if (WebApp) {
                 try {
                     WebApp.sendData(JSON.stringify(data));
