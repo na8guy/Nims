@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nims Climb</title>
-    <script src="https://telegram.org/js/telegram-web-app.js" async></script>
+    <script src="https://telegram.org/js/telegram-web-app.js" async onload="onWebAppScriptLoaded()"></script>
     <style>
         body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f0f0f0; color: #333; }
         .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
@@ -45,6 +45,8 @@
 
     <script>
         let WebApp;
+        let initializationAttempts = 0;
+        const maxAttempts = 5;
 
         function logToUI(level, message) {
             const logPanel = document.getElementById('log-panel');
@@ -55,20 +57,36 @@
             logPanel.scrollTop = logPanel.scrollHeight;
         }
 
+        function onWebAppScriptLoaded() {
+            logToUI('INFO', 'Telegram WebApp SDK script loaded');
+            initializeWebApp();
+        }
+
         function initializeWebApp() {
-            logToUI('INFO', 'Attempting to initialize Telegram WebApp');
+            logToUI('INFO', `Attempting to initialize Telegram WebApp (attempt ${initializationAttempts + 1})`);
             WebApp = window.Telegram?.WebApp;
+            const urlHash = window.location.hash;
+            logToUI('DEBUG', `URL hash: ${urlHash}`);
+
             if (!WebApp) {
-                logToUI('ERROR', 'Telegram WebApp not available');
-                document.getElementById('status').textContent = 'Error: Not in Telegram WebApp';
-                document.getElementById('status').classList.add('error');
-                alert('Please open this app in Telegram');
-                return false;
+                initializationAttempts++;
+                if (initializationAttempts < maxAttempts) {
+                    logToUI('WARN', 'Telegram WebApp not yet available, retrying in 500ms');
+                    setTimeout(initializeWebApp, 500);
+                } else {
+                    logToUI('ERROR', 'Telegram WebApp not available after max attempts');
+                    document.getElementById('status').textContent = 'Error: Not in Telegram WebApp';
+                    document.getElementById('status').classList.add('error');
+                    alert('Please reopen this app from Telegram');
+                }
+                return;
             }
+
+            logToUI('INFO', 'Telegram WebApp initialized successfully');
             WebApp.ready();
             WebApp.expand();
-            logToUI('INFO', 'Telegram WebApp initialized successfully');
-            return true;
+            loadGameData();
+            setupEventListeners();
         }
 
         function loadGameData() {
@@ -88,7 +106,6 @@
                 document.getElementById('bnb-balance').textContent = parseFloat(gameData.bnb_balance || 0).toFixed(4);
                 document.getElementById('nims-balance').textContent = parseFloat(gameData.nims_balance || 0).toFixed(4);
                 document.getElementById('status').textContent = 'Ready to climb with Nims!';
-                return gameData;
             } catch (e) {
                 logToUI('ERROR', `Failed to parse game data: ${e.message}`);
                 document.getElementById('status').textContent = 'Error loading game data';
@@ -124,9 +141,7 @@
             }
         }
 
-        // Initialize and load data
-        if (initializeWebApp()) {
-            const gameData = loadGameData();
+        function setupEventListeners() {
             const startButton = document.getElementById('start-button');
             if (startButton) {
                 logToUI('DEBUG', 'Attaching event listener to start button');
@@ -134,6 +149,14 @@
             } else {
                 logToUI('ERROR', 'Start button not found in DOM');
             }
+        }
+
+        // Start initialization
+        if (!window.Telegram?.WebApp) {
+            logToUI('WARN', 'Telegram WebApp not immediately available, waiting for SDK');
+            setTimeout(initializeWebApp, 500); // Initial delay if SDK not loaded yet
+        } else {
+            initializeWebApp();
         }
     </script>
 </body>
