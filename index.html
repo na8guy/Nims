@@ -62,6 +62,14 @@
         .error {
             color: red;
         }
+        #climbing-area {
+            display: none;
+            margin-top: 20px;
+        }
+        #multiplier {
+            font-size: 24px;
+            color: #007bff;
+        }
     </style>
 </head>
 <body>
@@ -78,9 +86,14 @@
             </select>
             <input type="number" id="stake-input" placeholder="Enter stake (0.1 - 10)" step="0.1" min="0.1" max="10">
             <button id="start-button">Start Climbing</button>
+            <button id="refresh-button">Refresh Balance</button>
         </div>
         <div id="game-area">
             <p id="status">Ready to play!</p>
+            <div id="climbing-area">
+                <p>Multiplier: <span id="multiplier">1.00x</span></p>
+                <button id="cashout-button">Cash Out</button>
+            </div>
         </div>
     </div>
 
@@ -89,58 +102,122 @@
         const WebApp = window.Telegram?.WebApp;
         if (!WebApp) {
             alert("This page must be opened in Telegram WebApp");
+            document.getElementById('status').textContent = 'Error: Not in Telegram WebApp';
+            document.getElementById('status').classList.add('error');
         } else {
             WebApp.ready();
             WebApp.expand();
         }
 
-        // Parse URL parameters
-        const urlParams = new URLSearchParams(window.location.search);
-        const dataParam = urlParams.get('data');
-        let gameData = {};
-        try {
-            gameData = JSON.parse(decodeURIComponent(dataParam || '{}'));
-        } catch (e) {
-            console.error('Failed to parse game data:', e);
-        }
-
-        // Initialize UI with user data
+        // Elements
         const bnbBalanceElement = document.getElementById('bnb-balance');
         const nimsBalanceElement = document.getElementById('nims-balance');
         const tokenSelect = document.getElementById('token-select');
         const stakeInput = document.getElementById('stake-input');
         const startButton = document.getElementById('start-button');
+        const refreshButton = document.getElementById('refresh-button');
         const statusElement = document.getElementById('status');
+        const climbingArea = document.getElementById('climbing-area');
+        const multiplierElement = document.getElementById('multiplier');
+        const cashoutButton = document.getElementById('cashout-button');
 
-        if (gameData.bnb_balance !== undefined) {
-            bnbBalanceElement.textContent = parseFloat(gameData.bnb_balance).toFixed(4);
+        // Game state
+        let gameData = {
+            user_id: null,
+            bnb_balance: 0.0,
+            nims_balance: 0.0,
+            bnb_address: 'Not generated',
+            nims_address: 'Not generated',
+            timestamp: 0
+        };
+        let gameActive = false;
+        let currentStake = 0;
+        let currentToken = '';
+        let multiplierInterval = null;
+
+        // Log function to send messages to backend
+        function logToBackend(level, message) {
+            if (WebApp) {
+                const logData = {
+                    action: 'log',
+                    level: level,
+                    message: message,
+                    timestamp: new Date().toISOString()
+                };
+                WebApp.sendData(JSON.stringify(logData));
+            }
+            console.log(`${level}: ${message}`); // Also log to console for debugging
         }
-        if (gameData.nims_balance !== undefined) {
-            nimsBalanceElement.textContent = parseFloat(gameData.nims_balance).toFixed(4);
+
+        // Parse URL parameters
+        function loadGameData() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const dataParam = urlParams.get('data');
+            try {
+                if (dataParam) {
+                    gameData = JSON.parse(decodeURIComponent(dataParam));
+                    logToBackend('INFO', `Web UI received data from backend: ${JSON.stringify(gameData)}`);
+                    updateUI();
+                } else {
+                    logToBackend('WARN', 'Web UI received no data parameter in URL');
+                    statusElement.textContent = 'No balance data received. Try refreshing.';
+                    statusElement.classList.add('error');
+                }
+            } catch (e) {
+                logToBackend('ERROR', `Web UI failed to parse game data: ${e.message}`);
+                statusElement.textContent = 'Error loading balance data.';
+                statusElement.classList.add('error');
+            }
+        }
+
+        // Update UI with game data
+        function updateUI() {
+            bnbBalanceElement.textContent = parseFloat(gameData.bnb_balance || 0).toFixed(4);
+            nimsBalanceElement.textContent = parseFloat(gameData.nims_balance || 0).toFixed(4);
+            statusElement.textContent = gameActive ? 'Climbing...' : 'Ready to play!';
+            statusElement.classList.remove('error');
+            climbingArea.style.display = gameActive ? 'block' : 'none';
+            startButton.disabled = gameActive;
+            stakeInput.disabled = gameActive;
+            tokenSelect.disabled = gameActive;
         }
 
         // Start game logic
         function startGame() {
+            if (gameActive) {
+                statusElement.textContent = 'Game already in progress.';
+                return;
+            }
+
             const token = tokenSelect.value;
-            const stake = parseFloat(stakeInput.value);
+            let stake = parseFloat(stakeInput.value);
 
             // Validate inputs
             if (!token || !['BNB', 'NIMS'].includes(token)) {
                 statusElement.textContent = 'Please select a valid token.';
                 statusElement.classList.add('error');
+                logToBackend('WARN', 'Invalid token selected in Web UI');
                 return;
             }
             if (isNaN(stake) || stake < 0.1 || stake > 10) {
                 statusElement.textContent = 'Stake must be between 0.1 and 10.';
                 statusElement.classList.add('error');
+                logToBackend('WARN', `Invalid stake entered in Web UI: ${stakeInput.value}`);
                 return;
             }
 
             // Check balance
             const balance = token === 'BNB' ? parseFloat(gameData.bnb_balance) : parseFloat(gameData.nims_balance);
-            if (stake > balance) {
-                statusElement.textContent = `Insufficient ${token} balance.`;
+            if (isNaN(balance)) {
+                statusElement.textContent = 'Balance data invalid. Please refresh.';
                 statusElement.classList.add('error');
+                logToBackend('ERROR', 'Invalid balance data in Web UI');
+                return;
+            }
+            if (stake > balance) {
+                statusElement.textContent = `Insufficient ${token} balance: ${balance.toFixed(4)}.`;
+                statusElement.classList.add('error');
+                logToBackend('WARN', `Insufficient ${token} balance in Web UI: ${balance} < ${stake}`);
                 return;
             }
 
@@ -152,39 +229,78 @@
             };
             statusElement.textContent = 'Starting game...';
             statusElement.classList.remove('error');
+            logToBackend('INFO', `Web UI sending action to backend: ${JSON.stringify(data)}`);
             WebApp.sendData(JSON.stringify(data));
 
-            // Simulate game start (placeholder)
-            function startClimbing() {
-    let multiplier = 1.0;
-    const interval = setInterval(() => {
-        multiplier += 0.1;
-        statusElement.textContent = `Climbing... Multiplier: ${multiplier.toFixed(2)}x`;
-        // Check for crash condition
-        if (Math.random() < 0.05) { // 5% chance to crash
-            clearInterval(interval);
-            WebApp.sendData(JSON.stringify({ action: 'lost', stake: stake, token: token }));
-            statusElement.textContent = 'Crashed!';
+            // Store game state
+            currentStake = stake;
+            currentToken = token;
+            gameActive = true;
+            startClimbing();
         }
-    }, 1000);
-    // Add cashout button
-    const cashoutButton = document.createElement('button');
-    cashoutButton.textContent = 'Cash Out';
-    cashoutButton.onclick = () => {
-        clearInterval(interval);
-        WebApp.sendData(JSON.stringify({ action: 'cashout', stake: stake, multiplier: multiplier, token: token }));
-    };
-    document.getElementById('game-area').appendChild(cashoutButton);
-}
+
+        // Simulate climbing game
+        function startClimbing() {
+            let multiplier = 1.0;
+            updateUI();
+            multiplierElement.textContent = `${multiplier.toFixed(2)}x`;
+            multiplierInterval = setInterval(() => {
+                multiplier += 0.05;
+                multiplierElement.textContent = `${multiplier.toFixed(2)}x`;
+                if (Math.random() < 0.05) {
+                    clearInterval(multiplierInterval);
+                    gameActive = false;
+                    const data = {
+                        action: 'lost',
+                        stake: currentStake,
+                        token: currentToken
+                    };
+                    logToBackend('INFO', `Web UI sending action to backend: ${JSON.stringify(data)}`);
+                    WebApp.sendData(JSON.stringify(data));
+                    statusElement.textContent = 'Crashed!';
+                    statusElement.classList.add('error');
+                    updateUI();
+                }
+            }, 500);
+        }
+
+        // Cash out
+        function cashOut() {
+            if (!gameActive) {
+                statusElement.textContent = 'No active game to cash out.';
+                return;
+            }
+            clearInterval(multiplierInterval);
+            const multiplier = parseFloat(multiplierElement.textContent);
+            const data = {
+                action: 'cashout',
+                stake: currentStake,
+                multiplier: multiplier,
+                token: currentToken
+            };
+            logToBackend('INFO', `Web UI sending action to backend: ${JSON.stringify(data)}`);
+            WebApp.sendData(JSON.stringify(data));
+            gameActive = false;
+            statusElement.textContent = `Cashed out at ${multiplier.toFixed(2)}x!`;
+            updateUI();
+        }
+
+        // Refresh balance
+        function refreshBalance() {
+            const data = { action: 'refresh_balance' };
+            logToBackend('INFO', `Web UI sending action to backend: ${JSON.stringify(data)}`);
+            WebApp.sendData(JSON.stringify(data));
+            statusElement.textContent = 'Requesting balance update...';
+            statusElement.classList.remove('error');
+        }
 
         // Event listeners
         startButton.addEventListener('click', startGame);
+        cashoutButton.addEventListener('click', cashOut);
+        refreshButton.addEventListener('click', refreshBalance);
 
-        // Handle WebApp responses (optional, if bot sends updates)
-        WebApp.onEvent('webAppData', (data) => {
-            console.log('Received WebApp data:', data);
-            // Update UI if needed
-        });
+        // Initial load
+        loadGameData();
     </script>
 </body>
 </html>
