@@ -60,6 +60,7 @@
 
         function onWebAppScriptLoaded() {
             logToUI('INFO', 'Telegram WebApp SDK script loaded');
+            console.log('SDK loaded');
             if (!isInitialized) initializeWebApp();
         }
 
@@ -73,6 +74,7 @@
 
             if (!WebApp) {
                 logToUI('ERROR', 'Telegram WebApp not available');
+                console.error('Telegram WebApp not available');
                 document.getElementById('status').textContent = 'Error: Not in Telegram WebApp';
                 document.getElementById('status').classList.add('error');
                 alert('Please reopen this app from Telegram');
@@ -80,6 +82,7 @@
             }
 
             logToUI('INFO', 'Telegram WebApp initialized successfully');
+            console.log('WebApp initialized:', WebApp);
             WebApp.ready();
             WebApp.expand();
             isInitialized = true;
@@ -117,58 +120,61 @@
         }
 
         function startGame() {
-    logToUI('DEBUG', 'startGame triggered');
-    const token = document.getElementById('token-select').value;
-    const stake = parseFloat(document.getElementById('stake-input').value);
-    logToUI('DEBUG', `Token: ${token}, Stake: ${stake}`);
+            alert('Button clicked! Starting game...');
+            logToUI('DEBUG', 'startGame triggered');
+            console.log('startGame called');
+            const token = document.getElementById('token-select').value;
+            const stake = parseFloat(document.getElementById('stake-input').value);
+            logToUI('DEBUG', `Token: ${token}, Stake: ${stake}`);
+            console.log('Inputs:', { token, stake });
 
-    if (!token || !['BNB', 'NIMS'].includes(token)) {
-        logToUI('WARN', 'Invalid token selected');
-        document.getElementById('status').textContent = 'Please select a valid token';
-        document.getElementById('status').classList.add('error');
-        return;
-    }
-    if (isNaN(stake) || stake < 0.1 || stake > 10) {
-        logToUI('WARN', `Invalid stake: ${stake}`);
-        document.getElementById('status').textContent = 'Stake must be between 0.1 and 10';
-        document.getElementById('status').classList.add('error');
-        return;
-    }
+            if (!token || !['BNB', 'NIMS'].includes(token)) {
+                logToUI('WARN', 'Invalid token selected');
+                document.getElementById('status').textContent = 'Please select a valid token';
+                document.getElementById('status').classList.add('error');
+                return;
+            }
+            if (isNaN(stake) || stake < 0.1 || stake > 10) {
+                logToUI('WARN', `Invalid stake: ${stake}`);
+                document.getElementById('status').textContent = 'Stake must be between 0.1 and 10';
+                document.getElementById('status').classList.add('error');
+                return;
+            }
 
-    const currentBalance = token === 'BNB' ? 
-        parseFloat(document.getElementById('bnb-balance').textContent) :
-        parseFloat(document.getElementById('nims-balance').textContent);
-    if (stake > currentBalance) {
-        logToUI('WARN', `Insufficient ${token} balance: ${currentBalance}`);
-        document.getElementById('status').textContent = `Insufficient ${token} balance`;
-        document.getElementById('status').classList.add('error');
-        return;
-    }
+            const currentBalance = token === 'BNB' ? 
+                parseFloat(document.getElementById('bnb-balance').textContent) :
+                parseFloat(document.getElementById('nims-balance').textContent);
+            if (stake > currentBalance) {
+                logToUI('WARN', `Insufficient ${token} balance: ${currentBalance}`);
+                document.getElementById('status').textContent = `Insufficient ${token} balance`;
+                document.getElementById('status').classList.add('error');
+                return;
+            }
 
-    document.getElementById('status').textContent = 'Starting Game...';
-    if (WebApp) {
-        try {
-            const data = { action: 'start_game', token: token, stake: stake.toString() };
-            logToUI('INFO', `Sending to backend: ${JSON.stringify(data)}`);
-            console.log('Sending data:', data); // Browser console log
-            WebApp.sendData(JSON.stringify(data));
-            logToUI('INFO', 'WebApp.sendData executed');
-            console.log('WebApp.sendData called successfully'); // Browser console log
-            document.getElementById('start-button').disabled = true;
-        } catch (e) {
-            logToUI('ERROR', `WebApp.sendData failed: ${e.message}`);
-            console.error('WebApp.sendData error:', e); // Browser console log
-            document.getElementById('status').textContent = 'Failed to start game';
-            document.getElementById('status').classList.add('error');
-            document.getElementById('start-button').disabled = false;
+            document.getElementById('status').textContent = 'Starting Game...';
+            if (WebApp) {
+                try {
+                    const data = { action: 'start_game', token: token, stake: stake.toString() };
+                    logToUI('INFO', `Sending to backend: ${JSON.stringify(data)}`);
+                    console.log('Sending data:', data);
+                    WebApp.sendData(JSON.stringify(data));
+                    logToUI('INFO', 'WebApp.sendData executed');
+                    console.log('WebApp.sendData called successfully');
+                    document.getElementById('start-button').disabled = true;
+                } catch (e) {
+                    logToUI('ERROR', `WebApp.sendData failed: ${e.message}`);
+                    console.error('WebApp.sendData error:', e);
+                    document.getElementById('status').textContent = 'Failed to start game';
+                    document.getElementById('status').classList.add('error');
+                    document.getElementById('start-button').disabled = false;
+                }
+            } else {
+                logToUI('ERROR', 'WebApp unavailable');
+                console.error('WebApp is undefined');
+                document.getElementById('status').textContent = 'Telegram WebApp not available';
+                document.getElementById('status').classList.add('error');
+            }
         }
-    } else {
-        logToUI('ERROR', 'WebApp unavailable');
-        console.error('WebApp is undefined'); // Browser console log
-        document.getElementById('status').textContent = 'Telegram WebApp not available';
-        document.getElementById('status').classList.add('error');
-    }
-}
 
         function startClimbing(gameStartedData) {
             logToUI('INFO', `Climbing started with session: ${gameStartedData.session_id}`);
@@ -177,22 +183,23 @@
             document.getElementById('start-button').disabled = true;
             document.getElementById('status').textContent = `Game active! Stake: ${gameStartedData.stake} ${gameStartedData.token}`;
             document.getElementById('status').classList.remove('error');
-            // Here you could add game logic (e.g., multiplier increase)
         }
 
         function setupEventListeners() {
             const startButton = document.getElementById('start-button');
             if (startButton) {
                 logToUI('DEBUG', 'Attaching event listener to start button');
+                console.log('Attaching listener to start-button');
                 startButton.addEventListener('click', startGame);
             } else {
                 logToUI('ERROR', 'Start button not found in DOM');
+                console.error('Start button not found');
             }
         }
 
-        // Start initialization
         if (!window.Telegram?.WebApp) {
             logToUI('WARN', 'Telegram WebApp not immediately available, waiting for SDK');
+            console.log('Waiting for SDK');
             setTimeout(initializeWebApp, 500);
         } else {
             initializeWebApp();
