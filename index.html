@@ -76,8 +76,8 @@
         if (!isInitialized) initializeWebApp();
     }
 
-    function initializeWebApp() {
-        if (isInitialized) return;
+   function initializeWebApp() {
+    if (typeof Telegram !== 'undefined' && Telegram.WebApp.initData) {
         logToUI('INFO', 'Initializing Telegram WebApp');
         WebApp = window.Telegram?.WebApp;
 
@@ -106,7 +106,10 @@
 
         // Log WebApp version and platform for debugging
         logToUI('DEBUG', `WebApp version: ${WebApp.version}, platform: ${WebApp.platform}`);
+    }  else {
+        setTimeout(initializeWebApp, 500);
     }
+}
 
       
 
@@ -239,6 +242,12 @@
                 document.getElementById('status').classList.add('error');
             }
         }, 500);
+
+        document.getElementById('status').textContent = 'Processing...';
+setTimeout(() => {
+    if (WebApp.isClosingRequested) return;
+    WebApp.close();
+}, 2000);
     }
 
       Telegram.WebApp.ready();
