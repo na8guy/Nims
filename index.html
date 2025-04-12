@@ -2,53 +2,63 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nims Climb</title>
-    <script src="https://telegram.org/js/telegram-web-app.js" async onload="onWebAppScriptLoaded()"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"> <title>Nims Climb</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f0f0f0; color: #333; }
-        .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        h1 { text-align: center; color: #007bff; }
-        .balance { margin-bottom: 20px; }
-        .balance p { margin: 5px 0; font-size: 16px; }
-        .controls { display: flex; flex-direction: column; gap: 10px; }
-        select, input, button { padding: 10px; font-size: 16px; border: 1px solid #ccc; border-radius: 4px; }
-        button { background-color: #007bff; color: white; border: none; cursor: pointer; }
-        button:hover { background-color: #0056b3; }
-        button:disabled { background-color: #cccccc; cursor: not-allowed; }
-        #game-interface { display: none; margin-top: 20px; }
-        #multiplier { font-size: 18px; font-weight: bold; }
-        #status { margin-top: 10px; font-weight: bold; }
-        .error { color: red; }
-        #log-panel { margin-top: 20px; padding: 10px; background-color: #f9f9f9; border: 1px solid #ddd; max-height: 150px; overflow-y: auto; font-size: 12px; text-align: left; }
-        .log-entry { margin: 2px 0; }
-        .log-info { color: #333; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; margin: 0; padding: 15px; background-color: var(--tg-theme-bg-color, #f0f0f0); color: var(--tg-theme-text-color, #333); display: flex; flex-direction: column; min-height: 100vh; box-sizing: border-box;}
+        .container { width: 100%; max-width: 600px; margin: 0 auto; background: var(--tg-theme-secondary-bg-color, white); padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); flex-grow: 1; display: flex; flex-direction: column; box-sizing: border-box;}
+        h1 { text-align: center; color: var(--tg-theme-link-color, #007bff); margin-top: 0; margin-bottom: 15px; font-weight: 600; }
+        .balance { margin-bottom: 20px; background-color: rgba(0, 123, 255, 0.05); padding: 10px 15px; border-radius: 8px; border: 1px solid rgba(0, 123, 255, 0.1);}
+        .balance p { margin: 5px 0; font-size: 16px; display: flex; justify-content: space-between; }
+        .balance span { font-weight: 600; color: var(--tg-theme-link-color, #007bff); }
+        .controls, #game-interface { display: flex; flex-direction: column; gap: 12px; }
+        label { font-size: 14px; color: var(--tg-theme-hint-color, #6c757d); margin-bottom: -5px;}
+        select, input[type="number"] { padding: 12px; font-size: 16px; border: 1px solid var(--tg-theme-hint-color, #ccc); border-radius: 8px; background-color: var(--tg-theme-bg-color, #fff); color: var(--tg-theme-text-color, #333); width: 100%; box-sizing: border-box;}
+        input[type="number"] { -moz-appearance: textfield; appearance: textfield; } /* Better number input styling */
+        button { padding: 14px; font-size: 17px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: background-color 0.2s ease, transform 0.1s ease; }
+        button#start-climbing { background-color: var(--tg-theme-button-color, #28a745); color: var(--tg-theme-button-text-color, white); }
+        button#start-climbing:hover { background-color: #218838; } /* Adjust hover color if needed */
+        button#cashout-button { background-color: var(--tg-theme-button-color, #007bff); color: var(--tg-theme-button-text-color, white); }
+        button#cashout-button:hover { background-color: #0056b3; } /* Adjust hover color if needed */
+        button:active { transform: scale(0.98); }
+        button:disabled { background-color: var(--tg-theme-hint-color, #cccccc); cursor: not-allowed; color: rgba(255, 255, 255, 0.7); }
+        #game-interface { display: none; margin-top: 20px; align-items: center; }
+        #multiplier-display { font-size: 28px; font-weight: bold; color: var(--tg-theme-link-color, #007bff); text-align: center; margin-bottom: 15px; background: #eef; padding: 10px; border-radius: 8px;}
+        #status { margin-top: 15px; font-weight: 500; text-align: center; font-size: 15px; }
+        .error { color: var(--tg-theme-destructive-text-color, red); font-weight: bold;}
+        #log-panel { margin-top: 20px; padding: 10px; background-color: rgba(0,0,0,0.03); border: 1px solid var(--tg-theme-hint-color, #ddd); border-radius: 8px; max-height: 100px; overflow-y: auto; font-size: 11px; text-align: left; line-height: 1.4; font-family: monospace; color: var(--tg-theme-hint-color); }
+        .log-entry { margin: 2px 0; word-break: break-all; }
+        .log-info { color: var(--tg-theme-text-color); }
         .log-warn { color: #ff8c00; }
-        .log-error { color: #ff0000; }
+        .log-error { color: var(--tg-theme-destructive-text-color, #ff0000); font-weight: bold;}
     </style>
 </head>
 
 <body>
     <div class="container">
-        <h1>Nims Climb</h1>
+        <h1>🧗 Nims Climb</h1>
         <div class="balance">
             <p>BNB Balance: <span id="bnb-balance">0.0000</span></p>
             <p>NIMS Balance: <span id="nims-balance">0.0000</span></p>
-        </div>
+            </div>
+
         <div class="controls" id="start-controls">
-            <select id="token-select">
-                <option value="BNB">BNB</option>
-                <option value="NIMS">NIMS</option>
-            </select>
-            <input type="number" id="stake-input" placeholder="Enter stake (0.1 - 10)" step="0.1" min="0.1" max="10" value="0.1">
-            <button id="start-climbing">Start Climbing</button>
-       
+             <label for="token-select">Currency:</label>
+             <select id="token-select">
+                 <option value="BNB">BNB</option>
+                 <option value="NIMS">NIMS</option>
+             </select>
+             <label for="stake-input">Stake Amount:</label>
+             <input type="number" id="stake-input" placeholder="Enter stake (0.1 - 10)" step="0.1" min="0.1" max="10" value="0.1">
+             <button id="start-climbing">Start Climbing</button>
         </div>
+
         <div id="game-interface">
-            <p>Multiplier: <span id="multiplier">1.00x</span></p>
+            <p id="multiplier-display">Multiplier: <span id="multiplier">1.00x</span></p>
             <button id="cashout-button">Cash Out</button>
         </div>
-        <p id="status">Loading...</p>
+
+        <p id="status">Initializing...</p>
         <div id="log-panel"></div>
     </div>
 
@@ -58,219 +68,411 @@
     let isGameActive = false;
     let currentStake = 0;
     let currentToken = '';
+    let currentSessionId = null; // ** Added to store session ID
     let multiplier = 1.0;
     let gameInterval;
+    const crashProbability = 0.03; // Chance to crash each interval (3%)
+    const intervalTime = 400; // ms between multiplier increases
+    const multiplierIncrement = 0.05; // How much multiplier increases each interval
+
+    const statusEl = document.getElementById('status');
+    const logPanel = document.getElementById('log-panel');
+    const startControls = document.getElementById('start-controls');
+    const gameInterface = document.getElementById('game-interface');
+    const startButton = document.getElementById('start-climbing');
+    const cashoutButton = document.getElementById('cashout-button');
+    const multiplierEl = document.getElementById('multiplier');
+    const bnbBalanceEl = document.getElementById('bnb-balance');
+    const nimsBalanceEl = document.getElementById('nims-balance');
+    const stakeInput = document.getElementById('stake-input');
+    const tokenSelect = document.getElementById('token-select');
 
     function logToUI(level, message) {
-        const logPanel = document.getElementById('log-panel');
+        if (!logPanel) return;
         const entry = document.createElement('div');
         entry.className = `log-entry log-${level.toLowerCase()}`;
         entry.textContent = `[${new Date().toISOString().slice(11, 19)}] ${level}: ${message}`;
         logPanel.appendChild(entry);
-        logPanel.scrollTop = logPanel.scrollHeight;
-        console.log(`[${level}] ${message}`); // Also log to browser console
+        logPanel.scrollTop = logPanel.scrollHeight; // Auto-scroll
+        console.log(`[${level}] ${message}`);
+    }
+
+    function updateStatus(message, isError = false) {
+        if (!statusEl) return;
+        statusEl.textContent = message;
+        statusEl.classList.toggle('error', isError);
     }
 
     function onWebAppScriptLoaded() {
-        logToUI('INFO', 'Telegram WebApp SDK loaded');
-        if (!isInitialized) initializeWebApp();
+        logToUI('INFO', 'Telegram WebApp SDK script loaded');
+        if (!isInitialized) {
+             initializeWebApp();
+        }
     }
 
-   function initializeWebApp() {
-    if (typeof Telegram !== 'undefined' && Telegram.WebApp.initData) {
-        logToUI('INFO', 'Initializing Telegram WebApp');
+    function initializeWebApp() {
+        if (isInitialized) return;
+        logToUI('INFO', 'Attempting to initialize Telegram WebApp...');
         WebApp = window.Telegram?.WebApp;
 
-        if (!WebApp) {
-            logToUI('ERROR', 'Telegram WebApp SDK not available');
-            document.getElementById('status').textContent = 'Error: WebApp SDK not loaded';
-            document.getElementById('status').classList.add('error');
+        if (!WebApp || !WebApp.initData) {
+            logToUI('ERROR', 'Telegram WebApp SDK not available or not in TG context.');
+            updateStatus('Error: Must be opened within Telegram.', true);
+            // Disable controls if SDK fails
+            if(startButton) startButton.disabled = true;
+            if(stakeInput) stakeInput.disabled = true;
+            if(tokenSelect) tokenSelect.disabled = true;
+            // Optionally show a more prominent error message or hide the container
             return;
         }
 
-        if (!WebApp.initData) {
-            logToUI('ERROR', 'Not running in Telegram WebApp context');
-            document.getElementById('status').textContent = 'Error: Open via Telegram';
-            document.getElementById('status').classList.add('error');
-            alert('Please open this app via Telegram');
-            return;
+        try {
+            logToUI('INFO', `WebApp Raw initData: ${WebApp.initData.substring(0, 60)}...`);
+            WebApp.ready(); // Inform Telegram app UI is ready
+            WebApp.expand(); // Expand the Web App to full height
+            WebApp.enableClosingConfirmation(); // Ask user before closing if game running?
+
+            // Set background based on theme
+            document.body.style.backgroundColor = WebApp.themeParams.bg_color || '#f0f0f0';
+            document.body.style.color = WebApp.themeParams.text_color || '#333';
+
+            isInitialized = true;
+            logToUI('INFO', 'WebApp initialized successfully.');
+            logToUI('DEBUG', `Version: ${WebApp.version}, Platform: ${WebApp.platform}, Color Scheme: ${WebApp.colorScheme}`);
+            updateStatus('Loading your data...');
+            loadGameDataFromUrl(); // Parse URL data first
+            setupEventListeners(); // Setup buttons etc.
+
+        } catch (e) {
+            logToUI('ERROR', `WebApp initialization failed: ${e.message}`);
+            updateStatus('Error initializing WebApp interface.', true);
+            if(startButton) startButton.disabled = true;
         }
-
-        logToUI('INFO', `WebApp initData: ${WebApp.initData.substring(0, 50)}...`); // Truncate for readability
-        WebApp.ready();
-        WebApp.expand();
-        isInitialized = true;
-        loadGameData();
-        setupEventListeners();
-        logToUI('INFO', 'WebApp initialized successfully');
-
-        // Log WebApp version and platform for debugging
-        logToUI('DEBUG', `WebApp version: ${WebApp.version}, platform: ${WebApp.platform}`);
-    }  else {
-        setTimeout(initializeWebApp, 500);
     }
-}
 
-      
-
-    function loadGameData() {
+    function loadGameDataFromUrl() {
         const urlParams = new URLSearchParams(window.location.search);
         const dataParam = urlParams.get('data');
         if (!dataParam) {
-            logToUI('WARN', 'No data parameter in URL');
-            document.getElementById('status').textContent = 'Ready to climb with Nims!';
+            logToUI('WARN', 'No initial data parameter found in URL.');
+            updateStatus('Ready to climb!'); // Default status if no data
+            // Maybe request data from bot explicitly?
+            // sendBotData({ action: 'request_initial_data' });
             return;
         }
         try {
-            const gameData = JSON.parse(decodeURIComponent(dataParam));
-            logToUI('INFO', `Loaded game data: ${JSON.stringify(gameData)}`);
-            document.getElementById('bnb-balance').textContent = parseFloat(gameData.bnb_balance || 0).toFixed(4);
-            document.getElementById('nims-balance').textContent = parseFloat(gameData.nims_balance || 0).toFixed(4);
-            if (gameData.game_started) {
-                logToUI('INFO', `Game started: ${JSON.stringify(gameData.game_started)}`);
+            const decodedData = decodeURIComponent(dataParam);
+            // Log first part of decoded data for security/privacy if needed
+            logToUI('DEBUG', `Decoded URL data (start): ${decodedData.substring(0, 100)}...`);
+            const gameData = JSON.parse(decodedData);
+            logToUI('INFO', `Parsed initial game data from URL.`); // Avoid logging full data directly
+
+            // Update balances display
+            bnbBalanceEl.textContent = parseFloat(gameData.bnb_balance || 0).toFixed(4);
+            nimsBalanceEl.textContent = parseFloat(gameData.nims_balance || 0).toFixed(4);
+            logToUI('INFO', `Balances updated: BNB=${gameData.bnb_balance || 0}, NIMS=${gameData.nims_balance || 0}`);
+
+
+            if (gameData.game_started && gameData.game_started.session_id) {
+                logToUI('INFO', `Found active game session in URL data: session_id=${gameData.game_started.session_id}`);
+                // Start or resume the climbing animation based on received data
                 startClimbing(gameData.game_started);
             } else {
-                document.getElementById('status').textContent = 'Ready to climb with Nims!';
+                 logToUI('INFO', 'No active game session found in URL data.');
+                 resetToStartScreen(); // Ensure UI is in the 'start' state
+                 updateStatus('Ready to climb!');
             }
         } catch (e) {
-            logToUI('ERROR', `Failed to parse game data: ${e.message}`);
-            document.getElementById('status').textContent = 'Error loading game data';
-            document.getElementById('status').classList.add('error');
+            logToUI('ERROR', `Failed to parse game data from URL: ${e.message}`);
+            updateStatus('Error loading data from Telegram.', true);
         }
     }
+
+     function sendBotData(data) {
+         if (!WebApp || !isInitialized) {
+             logToUI('ERROR', 'WebApp not initialized, cannot send data.');
+             updateStatus('Error: Cannot communicate with Telegram.', true);
+             return;
+         }
+         if (!WebApp.isVersionAtLeast('6.1')) {
+              logToUI('WARN', 'WebApp version might be too old for reliable sendData.');
+              // alert('Your Telegram app might be outdated. Please update for the best experience.');
+              // We can still try to send, but it might fail silently on very old clients
+         }
+
+         try {
+             const dataString = JSON.stringify(data);
+             logToUI('INFO', `Sending data to bot: ${dataString}`);
+             WebApp.sendData(dataString);
+             logToUI('DEBUG', 'WebApp.sendData called.');
+             return true; // Indicate sending was attempted
+         } catch (e) {
+             logToUI('ERROR', `Failed to send data via WebApp.sendData: ${e.message}`);
+             updateStatus('Communication Error.', true);
+             return false; // Indicate sending failed
+         }
+     }
+
 
     function setupEventListeners() {
-        const startButton = document.getElementById('start-climbing');
-        if (!startButton) {
-            logToUI('ERROR', 'Start Climbing button not found in DOM');
-            return;
+        if (!startButton || !cashoutButton || !stakeInput || !tokenSelect) {
+             logToUI('ERROR', 'One or more control elements are missing from the DOM.');
+             return;
         }
+
         startButton.addEventListener('click', () => {
+            logToUI('DEBUG', 'Start Climbing button clicked.');
             if (isGameActive) {
-                logToUI('DEBUG', 'Game already active, ignoring click');
+                logToUI('WARN', 'Game is already active, ignoring start click.');
                 return;
             }
-            const stake = parseFloat(document.getElementById('stake-input').value);
-            const token = document.getElementById('token-select').value;
-            logToUI('DEBUG', `Start clicked: token=${token}, stake=${stake}`);
 
-            if (!token || !['BNB', 'NIMS'].includes(token)) {
-                logToUI('WARN', 'Invalid token selected');
-                document.getElementById('status').textContent = 'Please select BNB or NIMS';
-                document.getElementById('status').classList.add('error');
+            const stake = parseFloat(stakeInput.value);
+            const token = tokenSelect.value;
+
+            // --- Input Validation ---
+            if (!token || (token !== 'BNB' && token !== 'NIMS')) {
+                logToUI('WARN', 'Invalid token selected.');
+                updateStatus('Please select BNB or NIMS.', true);
                 return;
             }
-            if (isNaN(stake) || stake < 0.1 || stake > 10) {
-                logToUI('WARN', `Invalid stake: ${stake}`);
-                document.getElementById('status').textContent = 'Stake must be between 0.1 and 10';
-                document.getElementById('status').classList.add('error');
+            const minStake = 0.1, maxStake = 10.0;
+            if (isNaN(stake) || stake < minStake || stake > maxStake) {
+                logToUI('WARN', `Invalid stake amount: ${stake}. Must be between ${minStake} and ${maxStake}.`);
+                updateStatus(`Stake must be ${minStake} - ${maxStake} ${token}.`, true);
+                stakeInput.focus(); // Highlight the input field
                 return;
             }
-            const balance = token === 'BNB' ? 
-                parseFloat(document.getElementById('bnb-balance').textContent) :
-                parseFloat(document.getElementById('nims-balance').textContent);
+
+            // --- Balance Check ---
+            const currentBnb = parseFloat(bnbBalanceEl.textContent);
+            const currentNims = parseFloat(nimsBalanceEl.textContent);
+            const balance = token === 'BNB' ? currentBnb : currentNims;
+
             if (stake > balance) {
-                logToUI('WARN', `Insufficient ${token} balance: ${balance}`);
-                document.getElementById('status').textContent = `Insufficient ${token} balance: ${balance.toFixed(4)}`;
-                document.getElementById('status').classList.add('error');
+                logToUI('WARN', `Insufficient balance. Needed: ${stake} ${token}, Have: ${balance}`);
+                updateStatus(`Insufficient ${token}: ${balance.toFixed(4)} available.`, true);
                 return;
             }
 
-            const data = { action: 'start_game', token, stake: stake.toString() };
-            logToUI('INFO', `Preparing to send: ${JSON.stringify(data)}`);
-            if (!WebApp || !WebApp.isVersionAtLeast('6.0')) {
-                logToUI('ERROR', 'WebApp not available or version too old');
-                document.getElementById('status').textContent = 'WebApp unavailable or outdated';
-                document.getElementById('status').classList.add('error');
-                return;
-            }
-            try {
-                WebApp.ready();
-                logToUI('DEBUG', 'Calling WebApp.sendData');
-                WebApp.sendData(JSON.stringify(data));
-                logToUI('INFO', 'sendData executed successfully');
-                document.getElementById('start-climbing').disabled = true;
-                document.getElementById('status').textContent = 'Starting game...';
-                WebApp.close();
-            } catch (e) {
-                logToUI('ERROR', `sendData failed: ${e.message}`);
-                document.getElementById('status').textContent = 'Failed to start game';
-                document.getElementById('status').classList.add('error');
-                document.getElementById('start-climbing').disabled = false;
-            }
-        });
-
-        document.getElementById('cashout-button').addEventListener('click', () => {
-            if (!isGameActive) return;
-            const data = { 
-                action: 'cashout', 
-                stake: currentStake, 
-                multiplier: multiplier, 
-                token: currentToken 
+            // --- Prepare and Send Data ---
+            const dataToSend = {
+                action: 'start_game',
+                token: token,
+                stake: stake.toString() // Send stake as string for backend consistency
             };
-            logToUI('INFO', `Sending cashout: ${JSON.stringify(data)}`);
-            WebApp.sendData(JSON.stringify(data));
-            stopGame();
-        });
-    }
 
-    function startClimbing(gameStartedData) {
-        if (isGameActive) return;
-        isGameActive = true;
-        currentStake = parseFloat(gameStartedData.stake);
-        currentToken = gameStartedData.token;
-        multiplier = 1.0;
-        document.getElementById('start-controls').style.display = 'none';
-        document.getElementById('game-interface').style.display = 'block';
-        document.getElementById('multiplier').textContent = `${multiplier.toFixed(2)}x`;
-        document.getElementById('status').textContent = `Climbing with ${currentStake} ${currentToken}!`;
-        document.getElementById('status').classList.remove('error');
-        logToUI('INFO', `Game started: stake=${currentStake}, token=${currentToken}`);
-
-        gameInterval = setInterval(() => {
-            multiplier += 0.05;
-            document.getElementById('multiplier').textContent = `${multiplier.toFixed(2)}x`;
-            if (Math.random() < 0.05) {
-                logToUI('WARN', 'Game crashed!');
-                WebApp.sendData(JSON.stringify({ 
-                    action: 'lost', 
-                    stake: currentStake, 
-                    token: currentToken 
-                }));
-                stopGame();
-                document.getElementById('status').textContent = 'Crashed! Game over.';
-                document.getElementById('status').classList.add('error');
+            if (sendBotData(dataToSend)) {
+                startButton.disabled = true; // Disable button immediately
+                updateStatus('Starting game...');
+                logToUI('INFO', 'Start game request sent to bot.');
+            } else {
+                 // sendBotData already logged the error and updated status
+                 startButton.disabled = false; // Re-enable if sending failed
             }
-        }, 500);
+        });
 
-        document.getElementById('status').textContent = 'Processing...';
-setTimeout(() => {
-    if (WebApp.isClosingRequested) return;
-    WebApp.close();
-}, 2000);
+        cashoutButton.addEventListener('click', () => {
+            logToUI('DEBUG', 'Cash Out button clicked.');
+            if (!isGameActive || !currentSessionId) { // Also check session ID
+                logToUI('WARN', 'Cashout clicked but game not active or no session ID.');
+                return;
+            }
+
+            // Stop the game locally immediately to capture current multiplier
+            const finalMultiplier = multiplier;
+            stopGame(); // Stops interval, resets UI visually
+
+            const dataToSend = {
+                action: 'cashout',
+                session_id: currentSessionId, // ** Send session ID
+                stake: currentStake,
+                multiplier: finalMultiplier, // Send the multiplier at time of click
+                token: currentToken
+            };
+
+            if (sendBotData(dataToSend)) {
+                 updateStatus('Cashing out...');
+                 logToUI('INFO', `Cashout request sent for session ${currentSessionId} at ${finalMultiplier.toFixed(2)}x.`);
+            } else {
+                 // Error already handled by sendBotData
+                 // Consider how to handle UI state if cashout sending fails - maybe try again?
+                 updateStatus('Cashout failed to send. Please try again or refresh.', true);
+                 // Re-enable the game? Or force refresh? For now, leave UI reset.
+            }
+        });
+
+         // Optional: Listen for visibility changes to pause/resume game?
+         // document.addEventListener("visibilitychange", () => {
+         //    if (document.hidden && isGameActive) {
+         //       logToUI('INFO', 'Page hidden, pausing game visually (backend continues)');
+         //       // You might clear the interval visually but let backend decide game state
+         //    } else if(!document.hidden && wasPaused) {
+         //       logToUI('INFO', 'Page visible again, requesting refresh');
+         //       // Request full refresh from bot
+         //       sendBotData({ action: 'refresh_balance' });
+         //    }
+         // });
     }
 
-      Telegram.WebApp.ready();
-        Telegram.WebApp.expand();
-        console.log("WebApp initialized:", Telegram.WebApp.initData);
-   
+    function startClimbing(gameData) {
+        if (!gameData || !gameData.session_id) {
+             logToUI('ERROR', 'Cannot start climbing, invalid game data received.');
+             resetToStartScreen();
+             updateStatus('Error starting game.', true);
+             return;
+        }
+
+        if (isGameActive) {
+            logToUI('WARN', `startClimbing called but game already active (Session: ${currentSessionId}).`);
+            return; // Prevent multiple intervals
+        }
+
+        isGameActive = true;
+        currentStake = parseFloat(gameData.stake);
+        currentToken = gameData.token;
+        currentSessionId = gameData.session_id; // ** Store session ID
+        multiplier = 1.0; // Start multiplier fresh
+
+        logToUI('INFO', `Starting climb animation for session ${currentSessionId}, Stake: ${currentStake} ${currentToken}`);
+
+        startControls.style.display = 'none';
+        gameInterface.style.display = 'flex'; // Use flex for alignment
+        multiplierEl.textContent = `${multiplier.toFixed(2)}x`;
+        updateStatus(`Climbing! Current stake: ${currentStake} ${currentToken}`);
+        cashoutButton.disabled = false; // Ensure cashout is enabled
+
+        // Request animation frame for smoother updates if possible, fallback to interval
+        let lastFrameTime = performance.now();
+        let timeAccumulator = 0;
+
+        function gameLoop(currentTime) {
+            if (!isGameActive) return; // Stop loop if game ended
+
+            const deltaTime = currentTime - lastFrameTime;
+            lastFrameTime = currentTime;
+            timeAccumulator += deltaTime;
+
+            // Update multiplier based on interval time, not frame rate
+            while (timeAccumulator >= intervalTime) {
+                multiplier += multiplierIncrement;
+                multiplierEl.textContent = `${multiplier.toFixed(2)}x`;
+                timeAccumulator -= intervalTime;
+
+                 // Crash check (on interval, not per frame)
+                 if (Math.random() < crashProbability) {
+                     logToUI('WARN', `Crash detected visually at ${multiplier.toFixed(2)}x! Informing bot.`);
+                     handleCrash(); // Handle the crash: stop loop, send data
+                     return; // Stop the loop
+                 }
+            }
+
+            requestAnimationFrame(gameLoop); // Continue the loop
+        }
+
+        // Clear any existing interval just in case
+        if (gameInterval) clearInterval(gameInterval);
+        // Start the game loop
+        requestAnimationFrame(gameLoop);
+
+        // Fallback using setInterval if requestAnimationFrame is too complex
+        // gameInterval = setInterval(() => {
+        //     if (!isGameActive) {
+        //         clearInterval(gameInterval);
+        //         return;
+        //     }
+        //     multiplier += multiplierIncrement;
+        //     multiplierEl.textContent = `${multiplier.toFixed(2)}x`;
+        //
+        //     if (Math.random() < crashProbability) {
+        //         logToUI('WARN', `Crash detected visually at ${multiplier.toFixed(2)}x! Informing bot.`);
+        //         handleCrash();
+        //     }
+        // }, intervalTime);
+
+         // Enable closing confirmation when game starts
+         WebApp.enableClosingConfirmation();
+    }
+
+    function handleCrash() {
+         // Stop the game locally FIRST
+         const crashedMultiplier = multiplier; // Capture multiplier at crash
+         stopGame(); // Stops interval/animation, resets UI variables
+
+         // Send 'lost' action to the bot
+         const dataToSend = {
+             action: 'lost',
+             session_id: currentSessionId, // ** Send session ID
+             stake: currentStake,
+             token: currentToken,
+             multiplier_at_crash: crashedMultiplier // Optional: for logging on backend
+         };
+
+         if(sendBotData(dataToSend)) {
+             logToUI('INFO', `Sent 'lost' signal to bot for session ${currentSessionId}.`);
+             updateStatus(`💥 Crashed at ${crashedMultiplier.toFixed(2)}x! Game Over.`, true);
+         } else {
+              updateStatus('💥 Crashed! Failed to notify server.', true);
+         }
+         // UI is already reset by stopGame()
+    }
+
 
     function stopGame() {
-        if (!isGameActive) return;
+        logToUI('INFO', 'Stopping game animation/interval.');
         isGameActive = false;
-        clearInterval(gameInterval);
-        document.getElementById('start-controls').style.display = 'block';
-        document.getElementById('game-interface').style.display = 'none';
-        document.getElementById('start-climbing').disabled = false;
+        if (gameInterval) { // Clear interval if used
+            clearInterval(gameInterval);
+            gameInterval = null;
+        }
+        // Reset variables (keep last stake/token for display if needed?)
+        // currentStake = 0;
+        // currentToken = '';
+        currentSessionId = null; // Clear session ID
+        multiplier = 1.0;
+
+        resetToStartScreen();
+
+         // Disable closing confirmation when game ends
+         WebApp.disableClosingConfirmation();
     }
 
+     function resetToStartScreen() {
+         logToUI('DEBUG', 'Resetting UI to start screen.');
+         startControls.style.display = 'flex'; // Use flex
+         gameInterface.style.display = 'none';
+         if(startButton) startButton.disabled = false; // Re-enable start button
+         if(cashoutButton) cashoutButton.disabled = true; // Disable cashout button
+         // Don't reset status message here, let caller set it
+     }
 
-    if (!window.Telegram?.WebApp) {
-        logToUI('WARN', 'Telegram WebApp not immediately available, waiting for SDK');
-        setTimeout(initializeWebApp, 500);
-    } else {
-        initializeWebApp();
+
+    // --- Initialization Trigger ---
+    // Use DOMContentLoaded as a primary trigger, fallback to script load event
+    document.addEventListener('DOMContentLoaded', () => {
+         logToUI('INFO', 'DOM fully loaded.');
+         if (window.Telegram && window.Telegram.WebApp) {
+             if (!isInitialized) initializeWebApp();
+         } else {
+             logToUI('WARN', 'Telegram WebApp SDK not immediately available on DOMContentLoaded, relying on script load.');
+             // The script's async onload will call onWebAppScriptLoaded -> initializeWebApp
+         }
+    });
+
+    // If the script loads *after* DOMContentLoaded (e.g., slow network), this ensures init still happens
+    // Check if the script is already loaded (might happen with caching)
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+        if (window.Telegram && window.Telegram.WebApp && !isInitialized) {
+            logToUI('INFO', 'DOM interactive/complete and SDK found, initializing early.');
+            initializeWebApp();
+        }
     }
-</script>
+
+    // **REMOVED Redundant Calls:**
+    // Telegram.WebApp.ready();
+    // Telegram.WebApp.expand();
+    // console.log("WebApp initialized:", Telegram.WebApp.initData);
+
+  </script>
 </body>
 </html>
