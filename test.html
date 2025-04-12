@@ -1,14 +1,23 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test WebApp</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
-    <button onclick="Telegram.WebApp.sendData('Test from WebApp')">Send Test</button>
+    <button onclick="sendTestData()">Send Test Data</button>
     <script>
-        Telegram.WebApp.ready();
-        Telegram.WebApp.expand();
-        console.log("WebApp initialized:", Telegram.WebApp.initData);
+        const WebApp = window.Telegram.WebApp;
+        WebApp.ready();
+        WebApp.expand();
+        console.log("WebApp initialized:", WebApp.initData);
+        function sendTestData() {
+            console.log("Sending test data...");
+            WebApp.sendData(JSON.stringify({ action: "test", value: "hello" }));
+            console.log("sendData called");
+        }
     </script>
 </body>
 </html>
