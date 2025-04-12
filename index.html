@@ -188,6 +188,7 @@
                 logToUI('INFO', 'sendData executed successfully');
                 document.getElementById('start-climbing').disabled = true;
                 document.getElementById('status').textContent = 'Starting game...';
+                WebApp.close();
             } catch (e) {
                 logToUI('ERROR', `sendData failed: ${e.message}`);
                 document.getElementById('status').textContent = 'Failed to start game';
