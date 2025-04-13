@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+c<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -95,7 +95,7 @@
         initializeWebApp(); // Initialize immediately after script loads
     }
 
-    function initializeWebApp() {
+   function initializeWebApp() {
         if (isInitialized) return;
         logToUI('INFO', 'Attempting to initialize Telegram WebApp...');
 
@@ -107,7 +107,7 @@
         logToUI('DEBUG', `Checking WebApp.initData: ${!!WebApp.initData}`);
         if (!WebApp.initData) { logToUI('ERROR', 'WebApp.initData is missing!'); updateStatus('Error: Init Data Missing.', true); return; }
 
-        try {
+        /*try {
             logToUI('INFO', `WebApp Raw initData: ${WebApp.initData.substring(0, 60)}...`);
             WebApp.ready(); // Inform Telegram UI is ready
             logToUI('INFO', 'WebApp.ready() called.');
@@ -127,7 +127,21 @@
         } catch (e) {
             logToUI('ERROR', `WebApp initialization failed: ${e.message}`);
             updateStatus('Error initializing WebApp interface.', true);
-        }
+        }*/
+        try {
+        logToUI('DEBUG', 'Calling WebApp.ready()...');
+        WebApp.ready();
+        logToUI('DEBUG', 'Called WebApp.ready(). Calling expand()...');
+        WebApp.expand();
+        logToUI('DEBUG', 'Called expand(). Setting up theme...');
+        // ... (theme setup) ...
+        logToUI('DEBUG', 'Theme set. Calling loadGameDataFromUrl()...');
+        loadGameDataFromUrl();
+        logToUI('DEBUG', 'Called loadGameDataFromUrl(). Calling setupMainButton()...');
+        setupMainButton();
+        logToUI('DEBUG', 'Called setupMainButton(). Initialization complete.');
+    } catch (e) {  logToUI('ERROR', `WebApp initialization failed: ${e.message}`);
+            updateStatus('Error initializing WebApp interface.', true); }
     }
 
     // --- Data Handling ---
@@ -141,15 +155,17 @@
              resetToStartScreen(); // Ensure UI is correct state
              return;
          }
-         try {
-             const decodedData = decodeURIComponent(dataParam);
-             logToUI('DEBUG', `Decoded URL data (start): ${decodedData.substring(0, 100)}...`);
-             const gameData = JSON.parse(decodedData);
-             logToUI('INFO', `Parsed initial game data from URL.`);
-
-             bnbBalanceEl.textContent = parseFloat(gameData.bnb_balance || 0).toFixed(4);
-             nimsBalanceEl.textContent = parseFloat(gameData.nims_balance || 0).toFixed(4);
-             logToUI('INFO', `Balances updated: BNB=${gameData.bnb_balance || 0}, NIMS=${gameData.nims_balance || 0}`);
+        try {
+        logToUI('DEBUG', 'Decoding data parameter...');
+        const decodedData = decodeURIComponent(dataParam);
+        logToUI('DEBUG', 'Parsing JSON...');
+        const gameData = JSON.parse(decodedData);
+        logToUI('DEBUG', 'Parsed gameData: ' + JSON.stringify(gameData)); // Log the actual data
+        logToUI('DEBUG', 'Updating BNB balance display...');
+        bnbBalanceEl.textContent = parseFloat(gameData.bnb_balance || 0).toFixed(4);
+        logToUI('DEBUG', 'Updating NIMS balance display...');
+        nimsBalanceEl.textContent = parseFloat(gameData.nims_balance || 0).toFixed(4);
+        logToUI('DEBUG', 'Balance displays updated.');
 
              if (gameData.game_started && gameData.game_started.session_id) {
                  logToUI('INFO', `Found active game session in URL data: session_id=${gameData.game_started.session_id}`);
