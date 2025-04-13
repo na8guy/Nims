@@ -2,525 +2,239 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nims Climb</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        :root {
-            --tg-bg: var(--tg-theme-bg-color, #f0f0f0);
-            --tg-text: var(--tg-theme-text-color, #333);
-            --tg-hint: var(--tg-theme-hint-color, #6c757d);
-            --tg-link: var(--tg-theme-link-color, #007bff);
-            --tg-button: var(--tg-theme-button-color, #007bff);
-            --tg-button-text: var(--tg-theme-button-text-color, #ffffff);
-            --tg-secondary-bg: var(--tg-theme-secondary-bg-color, #ffffff);
-            --tg-destructive: var(--tg-theme-destructive-text-color, #ff3b30);
-            --tg-green-button: #28a745;
-        }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            font-family: Arial, sans-serif;
             margin: 0;
-            padding: 15px;
-            background-color: var(--tg-bg);
-            color: var(--tg-text);
+            padding: 20px;
+            background-color: #f0f2f5;
+            color: #333;
             display: flex;
             flex-direction: column;
+            align-items: center;
             min-height: 100vh;
-            box-sizing: border-box;
         }
         .container {
-            width: 100%;
             max-width: 600px;
-            margin: 10px auto;
-            background: var(--tg-secondary-bg);
+            width: 100%;
+            background: white;
             padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            box-sizing: border-box;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
         h1 {
             text-align: center;
-            color: var(--tg-link);
-            margin: 0 0 15px;
-            font-weight: 600;
+            color: #1a73e8;
         }
         .balance {
-            margin-bottom: 20px;
-            background-color: rgba(0, 123, 255, 0.05);
-            padding: 10px 15px;
-            border-radius: 8px;
-            border: 1px solid rgba(0, 123, 255, 0.1);
+            margin: 20px 0;
+            font-size: 1.2em;
         }
-        .balance p {
-            margin: 5px 0;
-            font-size: 16px;
-            display: flex;
-            justify-content: space-between;
+        button {
+            padding: 10px 20px;
+            margin: 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: #1a73e8;
+            color: white;
+            font-size: 1em;
+            cursor: pointer;
         }
-        .balance span {
-            font-weight: 600;
-            color: var(--tg-link);
+        button:hover {
+            background-color: #1557b0;
         }
-        label {
-            font-size: 14px;
-            color: var(--tg-hint);
-            margin-bottom: 5px;
-        }
-        select, input[type="number"] {
-            padding: 12px;
-            font-size: 16px;
-            border: 1px solid var(--tg-hint);
-            border-radius: 8px;
-            background-color: var(--tg-bg);
-            color: var(--tg-text);
-            width: 100%;
-            box-sizing: border-box;
-            margin-bottom: 10px;
-        }
-        #game-interface {
-            display: none;
-            margin-top: 20px;
-            flex-direction: column;
-            align-items: center;
-        }
-        #multiplier-display {
-            font-size: 28px;
-            font-weight: bold;
-            color: var(--tg-link);
-            text-align: center;
-            margin-bottom: 15px;
-            background: rgba(0, 123, 255, 0.08);
-            padding: 10px;
-            border-radius: 8px;
-        }
-        #status {
-            margin-top: 15px;
-            font-weight: 500;
-            text-align: center;
-            font-size: 15px;
-            min-height: 1.2em;
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
         }
         .error {
-            color: var(--tg-destructive);
-            font-weight: bold;
+            color: red;
+            margin: 10px 0;
         }
-        #log-panel {
-            margin-top: auto;
-            padding: 10px;
-            background-color: rgba(0,0,0,0.03);
-            border: 1px solid var(--tg-hint);
-            border-radius: 8px;
-            max-height: 100px;
-            overflow-y: auto;
-            font-size: 11px;
-            line-height: 1.4;
-            font-family: monospace;
-            color: var(--tg-hint);
-        }
-        .log-entry {
-            margin: 2px 0;
+        .debug {
+            font-size: 0.8em;
+            color: #666;
+            margin-top: 20px;
             word-break: break-all;
-        }
-        .log-info {
-            color: var(--tg-text);
-        }
-        .log-warn {
-            color: #ff8c00;
-        }
-        .log-error {
-            color: var(--tg-destructive);
-            font-weight: bold;
-        }
-        #stake-controls {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin-bottom: 15px;
-        }
-        .refresh-btn {
-            padding: 10px;
-            background-color: var(--tg-button);
-            color: var(--tg-button-text);
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            text-align: center;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🧗 Nims Climb</h1>
-        <div class="balance">
-            <p>BNB Balance: <span id="bnb-balance">Loading...</span></p>
-            <p>NIMS Balance: <span id="nims-balance">Loading...</span></p>
-            <p>Wallet: <span id="wallet-address">Loading...</span></p>
-        </div>
-        <div id="stake-controls">
-            <label for="token-select">Currency:</label>
+        <h1>Nims Climb</h1>
+        <div id="error" class="error"></div>
+        <div id="balance" class="balance"></div>
+        <div id="game-status"></div>
+        <div>
+            <input id="stake-input" type="number" placeholder="Stake (0.1-10.0)" step="0.1" min="0.1" max="10.0" style="padding: 10px; margin: 10px;">
             <select id="token-select">
                 <option value="BNB">BNB</option>
                 <option value="NIMS">NIMS</option>
             </select>
-            <label for="stake-input">Stake Amount:</label>
-            <input type="number" id="stake-input" placeholder="0.1 - 10" step="0.1" min="0.1" max="10" value="0.1">
-            <button class="refresh-btn" onclick="refreshData()">🔄 Refresh</button>
+            <button id="start-game">Start Game</button>
+            <button id="cashout" disabled>Cash Out</button>
+            <button id="buy-ticket">Buy Raffle Ticket</button>
+            <button id="refresh-balance">Refresh Balance</button>
         </div>
-        <div id="game-interface">
-            <p id="multiplier-display">Multiplier: <span id="multiplier">1.00x</span></p>
-        </div>
-        <p id="status">Initializing...</p>
-        <div id="log-panel"></div>
+        <div id="debug" class="debug"></div>
     </div>
 
     <script>
-        // --- Global Variables ---
-        let WebApp = null;
-        let isInitialized = false;
-        let isGameActive = false;
-        let currentStake = 0;
-        let currentToken = '';
-        let currentSessionId = null;
-        let multiplier = 1.0;
-        let animationFrameId = null;
-
-        const crashProbability = 0.03;
-        const intervalTime = 400;
-        const multiplierIncrement = 0.05;
-
-        // --- DOM Elements ---
-        let statusEl, logPanel, stakeControls, gameInterface, multiplierEl, bnbBalanceEl, nimsBalanceEl, walletAddressEl, stakeInput, tokenSelect;
-        document.addEventListener('DOMContentLoaded', () => {
-            statusEl = document.getElementById('status');
-            logPanel = document.getElementById('log-panel');
-            stakeControls = document.getElementById('stake-controls');
-            gameInterface = document.getElementById('game-interface');
-            multiplierEl = document.getElementById('multiplier');
-            bnbBalanceEl = document.getElementById('bnb-balance');
-            nimsBalanceEl = document.getElementById('nims-balance');
-            walletAddressEl = document.getElementById('wallet-address');
-            stakeInput = document.getElementById('stake-input');
-            tokenSelect = document.getElementById('token-select');
-            initializeWebApp();
-        });
-
-        // --- Logging and Status ---
-        function logToUI(level, message) {
-            if (!logPanel) {
-                console.log(`[${level}] ${message}`);
-                return;
-            }
-            const entry = document.createElement('div');
-            entry.className = `log-entry log-${level.toLowerCase()}`;
-            entry.textContent = `[${new Date().toISOString().slice(11, 19)}] ${level}: ${message}`;
-            logPanel.appendChild(entry);
-            logPanel.scrollTop = logPanel.scrollHeight;
-            console.log(`[${level}] ${message}`);
+        // Debug logging function
+        function logDebug(message) {
+            console.log(message);
+            const debugDiv = document.getElementById('debug');
+            debugDiv.innerHTML += `<p>${new Date().toISOString()} - ${message}</p>`;
         }
 
-        function updateStatus(message, isError = false) {
-            if (statusEl) {
-                statusEl.textContent = message;
-                statusEl.classList.toggle('error', isError);
-            }
+        // Error display function
+        function showError(message) {
+            console.error(message);
+            document.getElementById('error').textContent = message;
         }
 
-        // --- WebApp Initialization ---
+        // Initialize WebApp
         function initializeWebApp() {
-            if (isInitialized) {
-                logToUI('WARN', 'Already initialized.');
-                return;
+            logDebug('Checking Telegram WebApp SDK...');
+            if (!window.Telegram || !window.Telegram.WebApp) {
+                showError('Telegram WebApp SDK not loaded. Please open in Telegram.');
+                return false;
             }
 
-            function tryInit() {
-                WebApp = window.Telegram?.WebApp;
-                if (!WebApp) {
-                    logToUI('WARN', 'WebApp not ready, retrying...');
-                    return false;
-                }
-                if (!WebApp.initData) {
-                    logToUI('ERROR', 'No initData.');
-                    updateStatus('Error: No init data.', true);
-                    return false;
-                }
+            const webApp = window.Telegram.WebApp;
+            webApp.ready();
 
-                try {
-                    WebApp.ready();
-                    WebApp.expand();
-                    if (WebApp.themeParams) {
-                        document.body.style.backgroundColor = WebApp.themeParams.bg_color || '#f0f0f0';
-                        document.body.style.color = WebApp.themeParams.text_color || '#333';
-                    }
-                    isInitialized = true;
-                    logToUI('INFO', 'WebApp initialized.');
-                    updateStatus('Loading data...');
-                    loadGameDataFromUrl();
-                    setupMainButton();
-                    return true;
-                } catch (e) {
-                    logToUI('ERROR', `Init error: ${e.message}`);
-                    updateStatus('Error initializing.', true);
-                    return false;
-                }
-            }
+            // Log initialization details
+            logDebug(`WebApp SDK available: ${!!window.Telegram.WebApp}`);
+            logDebug(`initData: ${webApp.initData || 'none'}`);
+            logDebug(`URL params: ${window.location.search}`);
 
-            if (!tryInit()) {
-                const retryInterval = setInterval(() => {
-                    if (tryInit()) {
-                        clearInterval(retryInterval);
-                    }
-                }, 500);
-                setTimeout(() => {
-                    if (!isInitialized) {
-                        clearInterval(retryInterval);
-                        updateStatus('Failed to initialize. Please reload.', true);
-                    }
-                }, 5000);
-            }
-        }
-
-        // --- Data Handling ---
-        function loadGameDataFromUrl() {
-            logToUI('INFO', 'Loading game data...');
+            // Parse query parameter 'data'
             const urlParams = new URLSearchParams(window.location.search);
-            const dataParam = urlParams.get('data');
-            if (!dataParam) {
-                logToUI('WARN', 'No data in URL.');
-                updateStatus('No data. Tap refresh.', true);
-                resetToStartScreen();
-                return;
-            }
-
-            try {
-                const decodedData = decodeURIComponent(dataParam);
-                const gameData = JSON.parse(decodedData);
-                logToUI('INFO', 'Parsed game data.');
-
-                const requiredFields = ['user_id', 'bnb_balance', 'nims_balance', 'bnb_address', 'nims_address'];
-                if (!requiredFields.every(field => field in gameData)) {
-                    throw new Error('Missing required fields.');
-                }
-
-                if (bnbBalanceEl) {
-                    const bnb = parseFloat(gameData.bnb_balance);
-                    bnbBalanceEl.textContent = isNaN(bnb) ? '0.0000' : bnb.toFixed(4);
-                }
-                if (nimsBalanceEl) {
-                    const nims = parseFloat(gameData.nims_balance);
-                    nimsBalanceEl.textContent = isNaN(nims) ? '0.0000' : nims.toFixed(4);
-                }
-                if (walletAddressEl) {
-                    walletAddressEl.textContent = gameData.bnb_address || 'Not set';
-                }
-
-                if (gameData.game_started && !isGameActive) {
-                    startClimbing(gameData.game_started);
-                } else {
-                    resetToStartScreen();
-                }
-
-                updateStatus('Ready to play!');
-            } catch (e) {
-                logToUI('ERROR', `Data parse error: ${e.message}`);
-                updateStatus('Error loading data. Tap refresh.', true);
-                resetToStartScreen();
-            }
-        }
-
-        function sendBotData(data) {
-            if (!WebApp || !isInitialized) {
-                logToUI('ERROR', 'WebApp not ready.');
-                updateStatus('Cannot communicate.', true);
+            const data = urlParams.get('data');
+            if (!data) {
+                showError('No initialization data provided. Please reload.');
                 return false;
             }
+
             try {
-                const dataString = JSON.stringify(data);
-                logToUI('INFO', `Sending: ${dataString}`);
-                WebApp.sendData(dataString);
-                return true;
+                const gameData = JSON.parse(decodeURIComponent(data));
+                logDebug(`Parsed game data: ${JSON.stringify(gameData)}`);
+                return gameData;
             } catch (e) {
-                logToUI('ERROR', `Send error: ${e.message}`);
-                updateStatus('Comm error.', true);
+                showError('Invalid initialization data. Please reload.');
+                logDebug(`Parse error: ${e.message}`);
                 return false;
             }
         }
 
-        function refreshData() {
-            if (!isInitialized) {
-                updateStatus('Not initialized.', true);
-                return;
-            }
-            sendBotData({ action: 'refresh_balance' });
-            updateStatus('Refreshing...');
-        }
-
-        // --- Main Button Logic ---
-        function setupMainButton() {
-            if (!WebApp || !WebApp.MainButton) {
-                logToUI('ERROR', 'MainButton not ready.');
-                return;
-            }
-            WebApp.MainButton.offClick(mainButtonClickHandler);
-            const buttonText = isGameActive ? 'Cash Out' : 'Start Climbing';
-            const buttonColor = isGameActive ? '#007bff' : '#28a745';
-            WebApp.MainButton.setText(buttonText).setParams({ color: buttonColor }).enable().show();
-            WebApp.MainButton.onClick(mainButtonClickHandler);
-            WebApp.MainButton.hideProgress();
-        }
-
-        function mainButtonClickHandler() {
-            if (!isInitialized) {
-                updateStatus('Not initialized.', true);
-                return;
-            }
-            if (isGameActive) {
-                handleCashoutViaMainButton();
+        // Update UI with game data
+        function updateUI(gameData) {
+            if (!gameData) return;
+            const balanceDiv = document.getElementById('balance');
+            balanceDiv.innerHTML = `
+                BNB: ${parseFloat(gameData.bnb_balance).toFixed(8)}<br>
+                NIMS: ${parseFloat(gameData.nims_balance).toFixed(4)}
+            `;
+            if (gameData.game_started) {
+                const statusDiv = document.getElementById('game-status');
+                statusDiv.innerHTML = `
+                    Game Started!<br>
+                    Stake: ${parseFloat(gameData.game_started.stake).toFixed(8)} ${gameData.game_started.token}<br>
+                    Session ID: ${gameData.game_started.session_id}
+                `;
+                document.getElementById('start-game').disabled = true;
+                document.getElementById('cashout').disabled = false;
             } else {
-                handleStartGameViaMainButton();
+                document.getElementById('game-status').innerHTML = '';
+                document.getElementById('start-game').disabled = false;
+                document.getElementById('cashout').disabled = true;
             }
         }
 
-        function handleStartGameViaMainButton() {
-            logToUI('INFO', 'Starting game...');
-            if (!stakeInput || !tokenSelect || !bnbBalanceEl || !nimsBalanceEl) {
-                updateStatus('UI not ready.', true);
+        // Send data to bot
+        function sendToBot(data) {
+            if (!window.Telegram.WebApp) {
+                showError('Cannot send data. Telegram WebApp not initialized.');
                 return;
             }
-            const stake = parseFloat(stakeInput.value);
-            const token = tokenSelect.value;
-
-            if (!token || !['BNB', 'NIMS'].includes(token)) {
-                updateStatus('Select currency.', true);
-                return;
-            }
-            if (isNaN(stake) || stake < 0.1 || stake > 10) {
-                updateStatus('Stake 0.1–10.', true);
-                return;
-            }
-            const balance = token === 'BNB' ? parseFloat(bnbBalanceEl.textContent) : parseFloat(nimsBalanceEl.textContent);
-            if (isNaN(balance) || stake > balance) {
-                updateStatus(`Low ${token} balance.`, true);
-                return;
-            }
-
-            const data = { action: 'start_game', token, stake: stake.toString() };
-            WebApp.MainButton.showProgress();
-            if (sendBotData(data)) {
-                updateStatus('Starting...');
-            } else {
-                WebApp.MainButton.hideProgress();
-                updateStatus('Failed to start.', true);
-            }
+            window.Telegram.WebApp.sendData(JSON.stringify(data));
+            logDebug(`Sent to bot: ${JSON.stringify(data)}`);
         }
 
-        function handleCashoutViaMainButton() {
-            if (!isGameActive || !currentSessionId) {
-                return;
-            }
-            const finalMultiplier = multiplier;
-            stopGame();
-            const data = {
-                action: 'cashout',
-                session_id: currentSessionId,
-                stake: currentStake.toString(),
-                multiplier: finalMultiplier.toString(),
-                token: currentToken
-            };
-            WebApp.MainButton.showProgress();
-            if (sendBotData(data)) {
-                updateStatus('Cashing out...');
-            } else {
-                updateStatus('Cashout failed.', true);
-                WebApp.MainButton.hideProgress();
-            }
-        }
+        // Main initialization
+        let gameData = null;
+        let multiplier = 1.0; // Simulated multiplier for demo
 
-        // --- Game Logic ---
-        function startClimbing(gameData) {
-            if (isGameActive) {
-                logToUI('WARN', 'Game already active.');
-                return;
-            }
-            if (!gameData || !gameData.session_id || !gameData.stake || !gameData.token) {
-                logToUI('ERROR', 'Invalid game data.');
-                resetToStartScreen();
-                return;
+        document.addEventListener('DOMContentLoaded', () => {
+            gameData = initializeWebApp();
+            if (gameData) {
+                updateUI(gameData);
             }
 
-            isGameActive = true;
-            currentStake = parseFloat(gameData.stake);
-            currentToken = gameData.token;
-            currentSessionId = gameData.session_id;
-            multiplier = 1.0;
-
-            stakeControls.style.display = 'none';
-            gameInterface.style.display = 'flex';
-            multiplierEl.textContent = `${multiplier.toFixed(2)}x`;
-            updateStatus(`Climbing: ${currentStake} ${currentToken}`);
-            setupMainButton();
-            WebApp.enableClosingConfirmation();
-
-            let lastFrameTime = performance.now();
-            let timeAccumulator = 0;
-            if (animationFrameId) {
-                cancelAnimationFrame(animationFrameId);
-            }
-
-            function gameLoop(currentTime) {
-                if (!isGameActive) {
+            // Start game button
+            document.getElementById('start-game').addEventListener('click', () => {
+                const stake = document.getElementById('stake-input').value;
+                const token = document.getElementById('token-select').value;
+                if (!stake || isNaN(stake) || stake < 0.1 || stake > 10.0) {
+                    showError('Stake must be between 0.1 and 10.0');
                     return;
                 }
-                const deltaTime = currentTime - lastFrameTime;
-                lastFrameTime = currentTime;
-                timeAccumulator += deltaTime;
-                while (timeAccumulator >= intervalTime) {
-                    multiplier += multiplierIncrement;
-                    multiplierEl.textContent = `${multiplier.toFixed(2)}x`;
-                    timeAccumulator -= intervalTime;
-                    if (Math.random() < crashProbability) {
-                        handleCrash();
-                        return;
-                    }
+                const data = {
+                    action: 'start_game',
+                    token: token,
+                    stake: stake
+                };
+                sendToBot(data);
+            });
+
+            // Cash out button
+            document.getElementById('cashout').addEventListener('click', () => {
+                if (!gameData?.game_started) {
+                    showError('No active game to cash out.');
+                    return;
                 }
-                animationFrameId = requestAnimationFrame(gameLoop);
-            }
-            animationFrameId = requestAnimationFrame(gameLoop);
-        }
+                const data = {
+                    action: 'cashout',
+                    session_id: gameData.game_started.session_id,
+                    stake: gameData.game_started.stake,
+                    multiplier: multiplier.toFixed(4),
+                    token: gameData.game_started.token
+                };
+                sendToBot(data);
+            });
 
-        function handleCrash() {
-            const crashedMultiplier = multiplier;
-            stopGame();
-            const data = {
-                action: 'lost',
-                session_id: currentSessionId,
-                stake: currentStake.toString(),
-                token: currentToken
-            };
-            updateStatus(`💥 Crashed at ${crashedMultiplier.toFixed(2)}x!`, true);
-            sendBotData(data);
-        }
+            // Buy raffle ticket button
+            document.getElementById('buy-ticket').addEventListener('click', () => {
+                sendToBot({ action: 'buy_raffle_ticket' });
+            });
 
-        function stopGame() {
-            isGameActive = false;
-            if (animationFrameId) {
-                cancelAnimationFrame(animationFrameId);
-                animationFrameId = null;
-            }
-            multiplier = 1.0;
-            currentSessionId = null;
-            resetToStartScreen();
-            WebApp.disableClosingConfirmation();
-        }
+            // Refresh balance button
+            document.getElementById('refresh-balance').addEventListener('click', () => {
+                sendToBot({ action: 'refresh_balance' });
+            });
 
-        function resetToStartScreen() {
-            stakeControls.style.display = 'flex';
-            gameInterface.style.display = 'none';
-            multiplierEl.textContent = '1.00x';
-            setupMainButton();
-        }
+            // Simulate game multiplier (replace with actual game logic)
+            setInterval(() => {
+                if (gameData?.game_started) {
+                    multiplier += 0.1;
+                    document.getElementById('game-status').innerHTML = `
+                        Game Started!<br>
+                        Stake: ${parseFloat(gameData.game_started.stake).toFixed(8)} ${gameData.game_started.token}<br>
+                        Session ID: ${gameData.game_started.session_id}<br>
+                        Multiplier: ${multiplier.toFixed(2)}x
+                    `;
+                }
+            }, 1000);
+        });
+
+        // Handle WebApp close or crash
+        window.Telegram.WebApp.onEvent('viewportChanged', () => {
+            logDebug('Viewport changed');
+        });
     </script>
 </body>
 </html>
