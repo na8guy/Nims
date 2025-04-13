@@ -17,7 +17,7 @@
         </div>
 
         <!-- Game Canvas -->
-        <canvas id="gameCanvas"></canvas>
+        <canvas id="gameCanvas" class="hidden"></canvas>
 
         <!-- Altitude Graph -->
         <div class="altitude-graph">
@@ -46,11 +46,14 @@
         </div>
 
         <!-- Nims Character -->
-        <div id="nimsCharacter" class="nims"></div>
+        <div id="nimsCharacter" class="nims hidden"></div>
 
         <!-- UI Overlay -->
         <div class="ui-overlay">
             <div class="status">
+                <div class="balance-display">
+                    BNB: <span id="bnbBalance">0.0</span> | NIMS: <span id="nimsBalance">0.0</span>
+                </div>
                 <div class="altitude-display">Altitude: <span id="altitude">1000</span>m</div>
                 <div class="multiplier-display">Multiplier: <span id="multiplier">1.0</span>x</div>
             </div>
@@ -61,6 +64,8 @@
                     <option value="NIMS">NIMS</option>
                 </select>
                 <button id="stakeButton">Stake</button>
+            </div>
+            <div class="game-controls hidden">
                 <button id="restButton" disabled>Rest</button>
                 <button id="cashoutButton" disabled>Cashout</button>
             </div>
