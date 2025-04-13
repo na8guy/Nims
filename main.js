@@ -1,11 +1,10 @@
-// Game state
 let gameData = null;
 let multiplier = 1.0;
 let altitude = 1000;
 let isClimbing = false;
 let sessionId = null;
 let crashPoint = null;
-let graphPoints = [[0, 600]];
+let graphPoints = [[0, '100%']];
 let lastUpdate = Date.now();
 let lastMilestone = 1000;
 const canvas = document.getElementById('gameCanvas');
@@ -24,15 +23,25 @@ const cashoutButton = document.getElementById('cashoutButton');
 const graphSvg = document.getElementById('graphSvg');
 const altitudeLine = document.getElementById('altitudeLine');
 const avalancheOverlay = document.getElementById('avalancheOverlay');
-const climbSound = document.getElementById('climbSound');
-const avalancheSound = document.getElementById('avalancheSound');
-const milestoneSound = document.getElementById('milestoneSound');
-
-// Particle system for avalanche and wind
+const errorPopup = document.getElementById('errorPopup');
 let particles = [];
 
-// Initialize game
+function resizeCanvas() {
+    canvas.width = Math.min(window.innerWidth * 0.9, 500);
+    canvas.height = Math.min(window.innerHeight * 0.7, 700);
+    graphSvg.setAttribute('width', Math.min(window.innerWidth * 0.15, 100));
+    graphSvg.setAttribute('height', canvas.height);
+}
+
+function showError(message) {
+    errorPopup.textContent = message;
+    errorPopup.classList.add('active');
+    setTimeout(() => errorPopup.classList.remove('active'), 3000);
+}
+
 function initGame() {
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
     const urlParams = new URLSearchParams(window.location.search);
     const data = urlParams.get('data');
     if (data) {
@@ -42,11 +51,11 @@ function initGame() {
             updateUI();
         } catch (e) {
             console.error('Error parsing gameData:', e);
+            showError('Failed to load game data.');
         }
     }
 }
 
-// Update UI
 function updateUI() {
     if (!gameData) return;
     earnedTickets.textContent = gameData.raffle_tickets || 0;
@@ -64,24 +73,20 @@ function updateUI() {
         stakeButton.disabled = true;
         restButton.disabled = false;
         cashoutButton.disabled = false;
-        graphPoints = [[0, 600]];
+        graphPoints = [[0, '100%']];
         lastMilestone = 1000;
         nims.classList.add('climbing');
-        climbSound.play();
         startClimbing();
     } else {
-        nims.classList.remove('climbing');
-        climbSound.pause();
+        nims.classList.remove('climbing', 'waving');
     }
 }
 
-// Start climbing
 function startClimbing() {
     lastUpdate = Date.now();
     requestAnimationFrame(updateGame);
 }
 
-// Update game
 function updateGame() {
     if (!isClimbing) return;
 
@@ -89,48 +94,41 @@ function updateGame() {
     const delta = (now - lastUpdate) / 1000;
     lastUpdate = now;
 
-    // Update multiplier
-    multiplier += delta * (0.6 + multiplier * 0.15); // Slightly faster
+    multiplier += delta * (0.7 + multiplier * 0.2);
     if (crashPoint && multiplier >= crashPoint) {
         triggerAvalanche();
         return;
     }
 
-    // Update altitude
     altitude = Math.round(1000 * multiplier);
     altitudeDisplay.textContent = altitude;
     multiplierDisplay.textContent = multiplier.toFixed(2);
 
-    // Milestone reactions
     if (altitude >= lastMilestone + 1000) {
         lastMilestone += 1000;
         nims.classList.remove('climbing');
         nims.classList.add('waving');
-        milestoneSound.play();
         setTimeout(() => {
             if (isClimbing) {
                 nims.classList.remove('waving');
                 nims.classList.add('climbing');
             }
-        }, 1000);
+        }, 800);
     }
 
-    // Move Nims
     const canvasHeight = canvas.height;
-    const nimsY = canvasHeight - (multiplier - 1) * 100;
-    nims.style.bottom = `${Math.max(50, Math.min(canvasHeight - 70, nimsY))}px`;
+    const nimsY = canvasHeight - (multiplier - 1) * 80;
+    nims.style.bottom = `${Math.max(50, Math.min(canvasHeight - 85, nimsY))}px`;
 
-    // Update graph
-    const graphX = graphPoints[graphPoints.length - 1][0] + delta * 60;
-    const graphY = 600 - (multiplier - 1) * 100;
+    const graphX = graphPoints[graphPoints.length - 1][0] + delta * 70;
+    const graphY = `${100 - (multiplier - 1) * 20}%`;
     graphPoints.push([graphX, graphY]);
-    if (graphX > 100) {
+    if (graphX > graphSvg.getAttribute('width')) {
         graphPoints.shift();
-        graphPoints = graphPoints.map(([x, y]) => [x - delta * 60, y]);
+        graphPoints = graphPoints.map(([x, y]) => [x - delta * 70, y]);
     }
-    altitudeLine.setAttribute('points', graphPoints.map(p => p.join(',')).join(' '));
+    altitudeLine.setAttribute('points', graphPoints.map(([x, y]) => `${x},${(parseFloat(y) / 100) * canvasHeight}`).join(' '));
 
-    // Draw particles
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     drawWind();
     drawParticles();
@@ -138,19 +136,18 @@ function updateGame() {
     requestAnimationFrame(updateGame);
 }
 
-// Draw wind particles
 function drawWind() {
-    if (Math.random() < 0.15) {
+    if (Math.random() < 0.2) {
         particles.push({
             x: canvas.width,
             y: Math.random() * canvas.height,
-            size: 3 + Math.random() * 4,
-            speed: 60 + Math.random() * 60,
+            size: 3 + Math.random() * 5,
+            speed: 80 + Math.random() * 80,
             type: 'wind'
         });
     }
     particles = particles.filter(p => p.x > -p.size || p.type !== 'wind');
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
     particles.forEach(p => {
         if (p.type === 'wind') {
             p.x -= p.speed * (1 / 60);
@@ -161,38 +158,33 @@ function drawWind() {
     });
 }
 
-// Draw avalanche particles
 function drawParticles() {
     particles.forEach(p => {
         if (p.type === 'snow') {
             p.x += p.vx * (1 / 60);
             p.y += p.vy * (1 / 60);
-            p.vy += 0.5; // Gravity
+            p.vy += 0.6;
             ctx.drawImage(p.image, p.x, p.y, p.size, p.size);
         }
     });
     particles = particles.filter(p => p.y < canvas.height + p.size);
 }
 
-// Trigger avalanche
 function triggerAvalanche() {
     isClimbing = false;
     nims.classList.remove('climbing', 'waving');
-    climbSound.pause();
-    avalancheSound.play();
     avalancheOverlay.classList.add('active');
-    document.body.style.animation = 'shake 0.8s';
+    document.body.style.animation = 'shake 1s';
 
-    // Add snow particles
     const snowImage = new Image();
     snowImage.src = '/assets/snow.png';
     for (let i = 0; i < 100; i++) {
         particles.push({
             x: Math.random() * canvas.width,
-            y: -10,
-            size: 5 + Math.random() * 10,
-            vx: (Math.random() - 0.5) * 50,
-            vy: 50 + Math.random() * 100,
+            y: -20,
+            size: 6 + Math.random() * 12,
+            vx: (Math.random() - 0.5) * 60,
+            vy: 60 + Math.random() * 120,
             type: 'snow',
             image: snowImage
         });
@@ -208,16 +200,15 @@ function triggerAvalanche() {
             token: gameData.game_started.token
         }));
         resetGame();
-    }, 2500);
+    }, 3000);
 }
 
-// Reset game
 function resetGame() {
     multiplier = 1.0;
     altitude = 1000;
     sessionId = null;
     crashPoint = null;
-    graphPoints = [[0, 600]];
+    graphPoints = [[0, '100%']];
     lastMilestone = 1000;
     stakeButton.disabled = false;
     restButton.disabled = true;
@@ -228,15 +219,13 @@ function resetGame() {
     multiplierDisplay.textContent = '1.0';
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     particles = particles.filter(p => p.type !== 'snow');
-    climbSound.pause();
 }
 
-// Event listeners
 stakeButton.addEventListener('click', () => {
     const stake = parseFloat(stakeInput.value);
     const token = tokenSelect.value;
-    if (isNaN(stake) || stake <= 0) {
-        alert('Please enter a valid stake.');
+    if (isNaN(stake) || stake < 0.01) {
+        showError('Stake must be at least 0.01.');
         return;
     }
     Telegram.WebApp.sendData(JSON.stringify({
@@ -248,7 +237,6 @@ stakeButton.addEventListener('click', () => {
 
 restButton.addEventListener('click', () => {
     isClimbing = false;
-    climbSound.pause();
     Telegram.WebApp.sendData(JSON.stringify({
         action: 'rest',
         session_id: sessionId,
@@ -260,7 +248,6 @@ restButton.addEventListener('click', () => {
 
 cashoutButton.addEventListener('click', () => {
     isClimbing = false;
-    climbSound.pause();
     Telegram.WebApp.sendData(JSON.stringify({
         action: 'cashout',
         session_id: sessionId,
@@ -270,5 +257,4 @@ cashoutButton.addEventListener('click', () => {
     resetGame();
 });
 
-// Initialize
 initGame();
