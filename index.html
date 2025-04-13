@@ -124,6 +124,7 @@
         let speed_phase = 'normal';
         let climber_pos = 20;
         let gameActive = false;
+        let gameStartTime = null;
 
         function logDebug(message) {
             console.log(message);
@@ -218,14 +219,16 @@
         }
 
         function updateMultiplier() {
-            if (!gameActive) return;
+            if (!gameActive || !gameStartTime) return;
             const timeElapsed = (Date.now() - gameStartTime) / 1000;
-            multiplier = Math.min(10, 1 + timeElapsed * 0.1);
+            multiplier = Math.min(10, 1 + timeElapsed * 0.05); // Slower increment
             speed_phase = multiplier < 2 ? 'normal' : multiplier < 5 ? 'fast' : 'extreme';
-            climber_pos = Math.min(90, 20 + (multiplier - 1) * 10);
+            climber_pos = Math.min(90, 20 + (multiplier - 1) * 15);
             updateUI();
-            if (multiplier >= parseFloat(gameData.game_started.crash_point)) {
+            // Delay loss check by 500ms to ensure UI renders
+            if (timeElapsed > 0.5 && multiplier >= parseFloat(gameData.game_started.crash_point)) {
                 gameActive = false;
+                gameStartTime = null;
                 Telegram.WebApp.sendData(JSON.stringify({
                     action: 'lost',
                     session_id: gameData.game_started.session_id,
@@ -234,8 +237,6 @@
                 }));
             }
         }
-
-        let gameStartTime = null;
 
         document.getElementById('start-game').addEventListener('click', () => {
             const stake = document.getElementById('stake-input').value;
@@ -255,6 +256,7 @@
         document.getElementById('cashout').addEventListener('click', () => {
             if (!gameData.game_started) return;
             gameActive = false;
+            gameStartTime = null;
             Telegram.WebApp.sendData(JSON.stringify({
                 action: 'cashout',
                 session_id: gameData.game_started.session_id,
