@@ -3,576 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <title>Nims Climb</title>
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
-        }
-        body {
-            background: #1a1a2e;
-            color: #fff;
-            min-height: 100vh;
-            overflow-x: hidden;
-            display: grid;
-            grid-template-areas: 
-                "header header"
-                "sidebar main"
-                "controls controls";
-            grid-template-columns: minmax(200px, 250px) 1fr;
-            grid-template-rows: auto 1fr auto;
-            gap: 10px;
-        }
-        #header {
-            grid-area: header;
-            background: #16213e;
-            padding: 1rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-        }
-        #balance {
-            font-size: clamp(1rem, 4vw, 1.2rem);
-        }
-        #multiplier {
-            font-size: clamp(1.5rem, 5vw, 2rem);
-            font-weight: bold;
-            color: #e94560;
-        }
-        #sidebar {
-            grid-area: sidebar;
-            background: #0f3460;
-            padding: 1rem;
-            overflow-y: auto;
-            max-height: calc(100vh - 60px);
-        }
-        #sidebar button {
-            width: 100%;
-            padding: 0.75rem;
-            margin: 0.5rem 0;
-            background: #e94560;
-            border: none;
-            border-radius: 5px;
-            color: #fff;
-            font-size: clamp(0.9rem, 3vw, 1rem);
-            cursor: pointer;
-            transition: background 0.3s;
-            touch-action: manipulation;
-        }
-        #sidebar button:hover {
-            background: #ff6b6b;
-        }
-        #jackpot, #raffle, #leaderboard {
-            margin: 1rem 0;
-            font-size: clamp(0.9rem, 3vw, 1rem);
-        }
-        #leaderboard ul {
-            list-style: none;
-            padding: 0;
-        }
-        #leaderboard li {
-            padding: 0.5rem 0;
-            border-bottom: 1px solid #ffffff20;
-        }
-        #gameCanvas {
-            grid-area: main;
-            width: 100%;
-            height: 100%;
-            max-height: calc(100vh - 140px);
-            background: #1a1a2e;
-            touch-action: none;
-        }
-        #controls {
-            grid-area: controls;
-            padding: 0.5rem;
-            background: #16213e;
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 0.5rem;
-        }
-        #stakeInput, #tokenSelect {
-            padding: 0.75rem;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-            background: #fff;
-            color: #000;
-            font-size: clamp(0.9rem, 3vw, 1rem);
-            max-width: 150px;
-        }
-        button {
-            padding: 0.75rem 1.5rem;
-            border: none;
-            border-radius: 5px;
-            background: #e94560;
-            color: #fff;
-            font-size: clamp(0.9rem, 3vw, 1rem);
-            cursor: pointer;
-            transition: background 0.3s;
-            touch-action: manipulation;
-        }
-        button:disabled {
-            background: #6c757d;
-            cursor: not-allowed;
-        }
-        button:hover:not(:disabled) {
-            background: #ff6b6b;
-        }
-        #modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        }
-        .modal-content {
-            background: #16213e;
-            padding: 1.5rem;
-            border-radius: 10px;
-            width: min(90%, 400px);
-            text-align: center;
-        }
-        .modal-content input {
-            width: 100%;
-            padding: 0.75rem;
-            margin: 0.5rem 0;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-            font-size: clamp(0.9rem, 3vw, 1rem);
-        }
-        #error, #cashout-message {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: #e94560;
-            padding: 0.75rem 1.5rem;
-            border-radius: 5px;
-            display: none;
-            z-index: 999;
-            font-size: clamp(0.9rem, 3vw, 1rem);
-        }
-        @keyframes scale {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.2); }
-            100% { transform: scale(1); }
-        }
-        .animate-multiplier {
-            animation: scale 0.5s ease-in-out;
-        }
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            body {
-                grid-template-areas: 
-                    "header"
-                    "main"
-                    "controls"
-                    "sidebar";
-                grid-template-columns: 1fr;
-                grid-template-rows: auto 1fr auto auto;
-            }
-            #sidebar {
-                max-height: none;
-                padding-bottom: 1rem;
-            }
-            #gameCanvas {
-                max-height: calc(100vh - 200px);
-            }
-            #controls {
-                flex-direction: column;
-                align-items: center;
-            }
-            #stakeInput, #tokenSelect, button {
-                width: 100%;
-                max-width: 100%;
-            }
-        }
-        @media (max-width: 480px) {
-            #header {
-                flex-direction: column;
-                gap: 0.5rem;
-            }
-            #gameCanvas {
-                max-height: calc(100vh - 250px);
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
-    <div id="header">
-        <div id="multiplier">1.00x</div>
-        <div id="balance">BNB: 0 | NIMS: 0</div>
-    </div>
-    <div id="sidebar">
-        <button onclick="showModal('deposit')">Deposit Address</button>
-        <button onclick="showModal('withdraw')">Withdraw Funds</button>
-        <button onclick="showModal('buy_raffle')">Buy Raffle Tickets</button>
-        <div id="jackpot">Community Jackpot: 0 NIMS</div>
-       <div id="raffle">Earned Tickets: 0 | Purchased: 0 <button onclick="refreshTickets()">Refresh</button></div>
-        <div id="leaderboard">
-            <h3>Leaderboard</h3>
-            <ul id="leaderboard-list"></ul>
+    <div class="game-container">
+        <!-- Background Layers -->
+        <div class="background">
+            <div class="mountain-layer layer-1"></div>
+            <div class="mountain-layer layer-2"></div>
+            <div class="mountain-layer layer-3"></div>
+            <div class="cloud-layer"></div>
         </div>
-    </div>
-    <canvas id="gameCanvas"></canvas>
-    <div id="controls">
-        <input type="number" id="stakeInput" placeholder="Stake (0.1-10)" step="0.1" min="0.1" max="10">
-        <select id="tokenSelect">
-            <option value="BNB">BNB</option>
-            <option value="NIMS">NIMS</option>
-        </select>
-        <button id="startButton">Start Game</button>
-        <button id="cashoutButton" disabled>Cash Out</button>
-        <button id="restButton" disabled>Rest</button>
-    </div>
-    <div id="modal">
-        <div class="modal-content">
-            <h2 id="modal-title"></h2>
-            <p id="modal-body"></p>
-            <input id="withdraw-amount" type="number" placeholder="Amount" style="display: none;">
-            <input id="withdraw-address" type="text" placeholder="Address" style="display: none;">
-            <input id="ticket-amount" type="number" placeholder="Tickets (1 NIMS each)" min="1" style="display: none;">
-            <button onclick="closeModal()">Close</button>
-            <button id="withdraw-submit" onclick="submitWithdrawal()" style="display: none;">Submit</button>
-            <button id="ticket-submit" onclick="buyRaffleTickets()" style="display: none;">Buy</button>
+
+        <!-- Game Canvas for Particles -->
+        <canvas id="gameCanvas" width="400" height="600"></canvas>
+
+        <!-- Altitude Graph (Right Edge) -->
+        <div class="altitude-graph">
+            <svg id="graphSvg" width="100" height="600">
+                <polyline id="altitudeLine" points="0,600" fill="none" stroke="#00ff88" stroke-width="3" filter="url(#glow)"/>
+                <defs>
+                    <filter id="glow">
+                        <feGaussianBlur stdDeviation="2" result="blur"/>
+                        <feMerge>
+                            <feMergeNode in="blur"/>
+                            <feMergeNode in="SourceGraphic"/>
+                        </feMerge>
+                    </filter>
+                </defs>
+            </svg>
+            <div class="altitude-markers"></div>
         </div>
+
+        <!-- Altitude Scale (Left Edge) -->
+        <div class="altitude-scale">
+            <div class="marker" style="bottom: 0;">1000m</div>
+            <div class="marker" style="bottom: 120px;">2000m</div>
+            <div class="marker" style="bottom: 240px;">3000m</div>
+            <div class="marker" style="bottom: 360px;">4000m</div>
+            <div class="marker" style="bottom: 480px;">5000m</div>
+        </div>
+
+        <!-- Nims Character -->
+        <div id="nimsCharacter" class="nims"></div>
+
+        <!-- UI Elements -->
+        <div class="ui-overlay">
+            <div class="altitude-display">Altitude: <span id="altitude">1000</span>m</div>
+            <div class="multiplier-display">Multiplier: <span id="multiplier">1.0</span>x</div>
+            <div class="controls">
+                <input type="number" id="stakeInput" placeholder="Stake (BNB)" step="0.01" min="0.01">
+                <select id="tokenSelect">
+                    <option value="BNB">BNB</option>
+                    <option value="NIMS">NIMS</option>
+                </select>
+                <button id="stakeButton">Stake</button>
+                <button id="restButton" disabled>Rest</button>
+                <button id="cashoutButton" disabled>Cashout</button>
+            </div>
+            <div class="raffle-display">
+                Earned: <span id="earnedTickets">0</span> | Purchased: <span id="purchasedTickets">0</span>
+            </div>
+            <div class="leaderboard">
+                <h3>Leaderboard</h3>
+                <ul id="leaderboardList"></ul>
+            </div>
+        </div>
+
+        <!-- Avalanche Overlay -->
+        <div id="avalancheOverlay" class="avalanche"></div>
     </div>
-    <div id="error"></div>
-    <div id="cashout-message"></div>
-
-    <script>
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        const multiplierDisplay = document.getElementById('multiplier');
-        const balanceDisplay = document.getElementById('balance');
-        const stakeInput = document.getElementById('stakeInput');
-        const tokenSelect = document.getElementById('tokenSelect');
-        const startButton = document.getElementById('startButton');
-        const cashoutButton = document.getElementById('cashoutButton');
-        const restButton = document.getElementById('restButton');
-        const errorDisplay = document.getElementById('error');
-        const cashoutMessage = document.getElementById('cashout-message');
-        const jackpotDisplay = document.getElementById('jackpot');
-        const raffleDisplay = document.getElementById('raffle');
-        const leaderboardList = document.getElementById('leaderboard-list');
-        const modal = document.getElementById('modal');
-        const modalTitle = document.getElementById('modal-title');
-        const modalBody = document.getElementById('modal-body');
-        const withdrawAmount = document.getElementById('withdraw-amount');
-        const withdrawAddress = document.getElementById('withdraw-address');
-        const withdrawSubmit = document.getElementById('withdraw-submit');
-        const ticketAmount = document.getElementById('ticket-amount');
-        const ticketSubmit = document.getElementById('ticket-submit');
-
-        let gameData = null;
-        let sessionId = null;
-        let stake = 0;
-        let token = 'BNB';
-        let crashPoint = 0;
-        let multiplier = 1;
-        let timeElapsed = 0;
-        let isGameRunning = false;
-        let climber = { x: 100, y: 0, angle: 0 };
-        const climbSpeed = 2;
-        let pathProgress = 0;
-
-        function getQueryParam(param) {
-            const urlParams = new URLSearchParams(window.location.search);
-            return urlParams.get(param);
-        }
-
-        function showError(message) {
-            errorDisplay.textContent = message;
-            errorDisplay.style.display = 'block';
-            setTimeout(() => errorDisplay.style.display = 'none', 3000);
-            console.error('Error:', message);
-        }
-
-        function showCashout(message) {
-            cashoutMessage.textContent = message;
-            cashoutMessage.style.display = 'block';
-            setTimeout(() => cashoutMessage.style.display = 'none', 3000);
-        }
-
-        function refreshTickets() {
-    Telegram.WebApp.sendData(JSON.stringify({ action: 'get_tickets' }));
-}
-
-        function showModal(type) {
-            modal.style.display = 'flex';
-            withdrawAmount.style.display = 'none';
-            withdrawAddress.style.display = 'none';
-            withdrawSubmit.style.display = 'none';
-            ticketAmount.style.display = 'none';
-            ticketSubmit.style.display = 'none';
-            modalBody.style.whiteSpace = 'pre-wrap';
-            if (type === 'deposit') {
-                modalTitle.textContent = 'Deposit Address';
-                modalBody.textContent = `BNB: ${gameData.bnb_address || 'N/A'}\nNIMS: ${gameData.nims_address || 'N/A'}`;
-            } else if (type === 'withdraw') {
-                modalTitle.textContent = 'Withdraw Funds';
-                modalBody.textContent = 'Enter amount and address:';
-                withdrawAmount.style.display = 'block';
-                withdrawAddress.style.display = 'block';
-                withdrawSubmit.style.display = 'block';
-            } else if (type === 'buy_raffle') {
-                modalTitle.textContent = 'Buy Raffle Tickets';
-                modalBody.textContent = 'Enter number of tickets (1 NIMS each):';
-                ticketAmount.style.display = 'block';
-                ticketSubmit.style.display = 'block';
-            }
-        }
-
-        function closeModal() {
-            modal.style.display = 'none';
-        }
-
-        function submitWithdrawal() {
-            const amount = parseFloat(withdrawAmount.value);
-            const address = withdrawAddress.value;
-            if (!amount || amount <= 0 || !address) {
-                showError('Invalid amount or address');
-                return;
-            }
-            Telegram.WebApp.sendData(JSON.stringify({
-                action: 'withdraw',
-                amount: amount.toFixed(8),
-                address,
-                token: tokenSelect.value
-            }));
-            showError('Withdrawal request sent');
-            closeModal();
-        }
-
-        // Assuming raffleDisplay and leaderboardDisplay are HTML elements
-if (gameData) {
-    console.log("Received gameData:", gameData); // Debug log
-    raffleDisplay.textContent = `Earned Tickets: ${gameData.raffle_tickets || 0} | Purchased: ${gameData.purchased_tickets || 0}`;
-    if (gameData.leaderboard && gameData.leaderboard.length > 0) {
-        leaderboardDisplay.innerHTML = gameData.leaderboard.map(entry => 
-            `<li>User ${entry.user_id}: ${entry.highest_cashout.toFixed(4)} NIMS</li>`
-        ).join('');
-    } else {
-        leaderboardDisplay.textContent = "No leaderboard data yet.";
-    }
-}
-
-        function buyRaffleTickets() {
-            const tickets = parseInt(ticketAmount.value);
-            if (!tickets || tickets < 1) {
-                showError('Enter at least 1 ticket');
-                return;
-            }
-            Telegram.WebApp.sendData(JSON.stringify({
-                action: 'buy_raffle',
-                tickets,
-                token: 'NIMS'
-            }));
-            showError('Ticket purchase requested');
-            closeModal();
-        }
-
-        function resizeCanvas() {
-            canvas.width = canvas.offsetWidth;
-            canvas.height = canvas.offsetHeight;
-            climber.y = canvas.height - 50;
-        }
-
-        function drawPath() {
-            ctx.beginPath();
-            ctx.strokeStyle = '#e94560';
-            ctx.lineWidth = 5;
-            ctx.moveTo(100, canvas.height);
-            for (let t = 0; t <= pathProgress; t += 0.01) {
-                const x = 100 + t * (canvas.width - 200);
-                const y = canvas.height - (t * canvas.height * 0.8);
-                ctx.lineTo(x, y);
-            }
-            ctx.stroke();
-        }
-
-        function drawClimber() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            drawPath();
-            ctx.save();
-            ctx.translate(climber.x, climber.y);
-            ctx.rotate(climber.angle);
-            ctx.fillStyle = '#ff6b6b';
-            ctx.beginPath();
-            ctx.moveTo(20, 0);
-            ctx.lineTo(-10, -10);
-            ctx.lineTo(-10, 10);
-            ctx.closePath();
-            ctx.fill();
-            ctx.restore();
-        }
-
-        function updateLeaderboard() {
-            leaderboardList.innerHTML = '';
-            if (gameData.leaderboard && Array.isArray(gameData.leaderboard)) {
-                gameData.leaderboard.slice(0, 5).forEach((entry, index) => {
-                    const li = document.createElement('li');
-                    li.textContent = `#${index + 1} User ${entry.user_id}: ${entry.highest_cashout.toFixed(2)}x`;
-                    leaderboardList.appendChild(li);
-                });
-            } else {
-                leaderboardList.textContent = 'No leaderboard data';
-            }
-        }
-
-        function updateGame() {
-            if (!isGameRunning) return;
-            timeElapsed += 0.016;
-            multiplier = 1 + timeElapsed * 0.03;
-            pathProgress = Math.min(timeElapsed / 10, 1);
-            climber.x = 100 + pathProgress * (canvas.width - 200);
-            climber.y = canvas.height - (pathProgress * canvas.height * 0.8);
-            climber.angle = Math.atan2(-0.8 * canvas.height, canvas.width - 200) * pathProgress;
-            multiplierDisplay.textContent = multiplier.toFixed(2) + 'x';
-            multiplierDisplay.classList.add('animate-multiplier');
-            setTimeout(() => multiplierDisplay.classList.remove('animate-multiplier'), 500);
-            drawClimber();
-            console.log(`Game tick: multiplier=${multiplier.toFixed(2)}, crashPoint=${crashPoint}`);
-            if (crashPoint && multiplier >= crashPoint) {
-                isGameRunning = false;
-                multiplierDisplay.textContent = 'Avalanche!';
-                cashoutButton.disabled = true;
-                restButton.disabled = true;
-                startButton.disabled = false;
-                Telegram.WebApp.sendData(JSON.stringify({
-                    action: 'lost',
-                    session_id: sessionId,
-                    stake: stake.toString(),
-                    token
-                }));
-                resetGame();
-            } else {
-                const safetyZones = [1.5, 3.0, 5.0];
-                restButton.disabled = !safetyZones.some(zone => Math.abs(multiplier - zone) < 0.1);
-            }
-            requestAnimationFrame(updateGame);
-        }
-
-        function resetGame() {
-            isGameRunning = false;
-            multiplier = 1;
-            timeElapsed = 0;
-            pathProgress = 0;
-            climber = { x: 100, y: canvas.height - 50, angle: 0 };
-            multiplierDisplay.textContent = '1.00x';
-            cashoutButton.disabled = true;
-            restButton.disabled = true;
-            startButton.disabled = false;
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            console.log('Game reset');
-        }
-
-        function validateStake() {
-            const value = parseFloat(stakeInput.value);
-            return value >= 0.1 && value <= 10 && !isNaN(value);
-        }
-
-        try {
-            const rawData = getQueryParam('data');
-            if (!rawData) throw new Error('No game data provided');
-            gameData = JSON.parse(decodeURIComponent(rawData));
-            console.log('Game data:', gameData);
-            balanceDisplay.textContent = `BNB: ${parseFloat(gameData.bnb_balance).toFixed(8)} | NIMS: ${parseFloat(gameData.nims_balance).toFixed(4)}`;
-            jackpotDisplay.textContent = `Community Jackpot: ${parseFloat(gameData.jackpot || 0).toFixed(4)} NIMS`;
-            raffleDisplay.textContent = `Earned Tickets: ${gameData.raffle_tickets || 0} | Purchased: ${gameData.purchased_tickets || 0}`;
-            updateLeaderboard();
-            if (gameData.game_started) {
-                sessionId = gameData.game_started.session_id;
-                stake = parseFloat(gameData.game_started.stake);
-                token = gameData.game_started.token;
-                crashPoint = parseFloat(gameData.game_started.crash_point);
-                console.log('Game started:', { sessionId, stake, token, crashPoint });
-                if (!sessionId || !stake || !token || !crashPoint) {
-                    throw new Error('Incomplete game_started data');
-                }
-                isGameRunning = true;
-                startButton.disabled = true;
-                cashoutButton.disabled = false;
-                restButton.disabled = false;
-                stakeInput.value = stake;
-                tokenSelect.value = token;
-                stakeInput.disabled = true;
-                tokenSelect.disabled = true;
-                requestAnimationFrame(updateGame);
-            }
-        } catch (e) {
-            showError(`Failed to load game: ${e.message}`);
-            resetGame();
-        }
-
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
-
-        startButton.addEventListener('click', () => {
-            if (!validateStake()) {
-                showError('Stake must be between 0.1 and 10');
-                return;
-            }
-            const stakeValue = parseFloat(stakeInput.value).toFixed(8);
-            token = tokenSelect.value;
-            console.log('Starting game:', { stake: stakeValue, token });
-            startButton.disabled = true;
-            stakeInput.disabled = true;
-            tokenSelect.disabled = true;
-            Telegram.WebApp.sendData(JSON.stringify({
-                action: 'start_game',
-                token,
-                stake: stakeValue
-            }));
-        });
-
-        cashoutButton.addEventListener('click', () => {
-            if (!isGameRunning) return;
-            isGameRunning = false;
-            cashoutButton.disabled = true;
-            showCashout('Cashing out...');
-            console.log('Cashout:', { sessionId, stake, token, multiplier });
-            Telegram.WebApp.sendData(JSON.stringify({
-                action: 'cashout',
-                session_id: sessionId,
-                stake: stake.toString(),
-                token,
-                multiplier: multiplier.toFixed(4)
-            }));
-            Telegram.WebApp.onEvent('message', (data) => {
-                showCashout(`Cashed out ${multiplier.toFixed(2)}x!`);
-                resetGame();
-            });
-        });
-
-        restButton.addEventListener('click', () => {
-            if (!isGameRunning) return;
-            const safetyZones = [1.5, 3.0, 5.0];
-            if (!safetyZones.some(zone => Math.abs(multiplier - zone) < 0.1)) {
-                showError('Can only rest at 1.5x, 3x, or 5x');
-                return;
-            }
-            isGameRunning = false;
-            Telegram.WebApp.sendData(JSON.stringify({
-                action: 'rest',
-                session_id: sessionId,
-                token,
-                multiplier: multiplier.toFixed(4)
-            }));
-            resetGame();
-        });
-
-        Telegram.WebApp.ready();
-        console.log('WebApp initialized');
-    </script>
+    <audio id="climbSound" src="/assets/climb.mp3" loop></audio>
+    <audio id="avalancheSound" src="/assets/avalanche.mp3"></audio>
+    <audio id="milestoneSound" src="/assets/milestone.mp3"></audio>
+    <script src="main.js"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </body>
 </html>
