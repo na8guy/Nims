@@ -4,310 +4,292 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nims Climb</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body {
-            font-family: Arial, sans-serif;
             margin: 0;
-            padding: 20px;
-            background: url('https://via.placeholder.com/800x1200/ffffff/cccccc?text=Mountain+Background') no-repeat center/cover;
-            color: #333;
-            min-height: 100vh;
+            font-family: Arial, sans-serif;
+            background: #f0f0f0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+        #gameCanvas {
+            flex: 1;
+            width: 100%;
+            background: url('mountain.jpg') no-repeat center center;
+            background-size: cover;
+        }
+        #interface {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            display: flex;
+            justify-content: space-between;
+            color: white;
+            text-shadow: 1px 1px 2px black;
+        }
+        #controls {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            right: 10px;
             display: flex;
             justify-content: center;
-        }
-        .container {
-            max-width: 600px;
-            width: 100%;
-            background: rgba(255, 255, 255, 0.9);
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-        }
-        h1 {
-            text-align: center;
-            color: #1a73e8;
-        }
-        .multiplier {
-            font-size: 2em;
-            text-align: center;
-            color: green;
-            transition: color 0.5s;
-        }
-        .multiplier.high-risk {
-            color: red;
-        }
-        .climber {
-            width: 50px;
-            height: 50px;
-            background: url('https://via.placeholder.com/50/0000ff/ffffff?text=Climber') no-repeat center/contain;
-            position: absolute;
-            bottom: 20%;
-            left: 50%;
-            transform: translateX(-50%);
-            transition: bottom 1s;
-        }
-        .balance, .raffle-info, .leaderboard {
-            margin: 20px 0;
-            font-size: 1.1em;
-        }
-        .balance .address {
-            cursor: pointer;
-            color: #1a73e8;
-            font-family: monospace;
-            word-break: break-all;
+            gap: 10px;
         }
         button {
             padding: 10px 20px;
-            margin: 10px;
+            font-size: 16px;
+            cursor: pointer;
             border: none;
             border-radius: 5px;
-            background-color: #1a73e8;
+            background: #007bff;
             color: white;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #1557b0;
         }
         button:disabled {
-            background-color: #ccc;
+            background: #6c757d;
             cursor: not-allowed;
         }
-        .error {
-            color: red;
-            margin: 10px 0;
+        #multiplier {
+            font-size: 24px;
+            font-weight: bold;
         }
-        .debug {
-            font-size: 0.8em;
-            color: #666;
-            margin-top: 20px;
+        #balance {
+            font-size: 18px;
         }
-        input, select {
+        #error {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 0, 0, 0.8);
+            color: white;
             padding: 10px;
-            margin: 10px;
+            border-radius: 5px;
+            display: none;
+        }
+        #stakeInput {
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 5px;
             border: 1px solid #ccc;
+        }
+        #tokenSelect {
+            padding: 10px;
+            font-size: 16px;
             border-radius: 5px;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Nims Climb</h1>
-        <div id="error" class="error"></div>
-        <div id="multiplier" class="multiplier">1.00x</div>
-        <div id="balance" class="balance"></div>
-        <div id="game-status"></div>
-        <div id="raffle-info" class="raffle-info"></div>
-        <div id="leaderboard" class="leaderboard"></div>
-        <div>
-            <input id="stake-input" type="number" placeholder="Stake (0.1-10.0)" step="0.1" min="0.1" max="10.0">
-            <select id="token-select">
-                <option value="BNB">BNB</option>
-                <option value="NIMS">NIMS</option>
-            </select>
-            <button id="start-game">Start Game</button>
-            <button id="cashout" disabled>Cash Out</button>
-            <button id="rest" disabled>Rest</button>
-            <button id="buy-ticket">Buy Raffle Ticket</button>
-            <button id="refresh-balance">Refresh Balance</button>
-            <button id="withdraw">Withdraw</button>
-            <button id="set-limit">Set Limit</button>
-            <button id="take-break">Take Break</button>
-        </div>
-        <div id="debug" class="debug"></div>
+    <div id="interface">
+        <div id="multiplier">1.00x</div>
+        <div id="balance">BNB: 0 | NIMS: 0</div>
     </div>
-    <div id="climber" class="climber"></div>
+    <canvas id="gameCanvas"></canvas>
+    <div id="controls">
+        <input type="number" id="stakeInput" placeholder="Stake (0.1-10)" step="0.1" min="0.1" max="10">
+        <select id="tokenSelect">
+            <option value="BNB">BNB</option>
+            <option value="NIMS">NIMS</option>
+        </select>
+        <button id="startButton">Start Game</button>
+        <button id="cashoutButton" disabled>Cash Out</button>
+        <button id="restButton" disabled>Rest</button>
+    </div>
+    <div id="error"></div>
 
     <script>
-        let gameData = null;
-        let multiplier = 1.0;
-        let speed_phase = 'normal';
-        let climber_pos = 20;
-        let gameActive = false;
-        let gameStartTime = null;
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const multiplierDisplay = document.getElementById('multiplier');
+        const balanceDisplay = document.getElementById('balance');
+        const stakeInput = document.getElementById('stakeInput');
+        const tokenSelect = document.getElementById('tokenSelect');
+        const startButton = document.getElementById('startButton');
+        const cashoutButton = document.getElementById('cashoutButton');
+        const restButton = document.getElementById('restButton');
+        const errorDisplay = document.getElementById('error');
 
-        function logDebug(message) {
-            console.log(message);
-            document.getElementById('debug').innerHTML += `<p>${new Date().toISOString()} - ${message}</p>`;
+        let gameData = null;
+        let sessionId = null;
+        let stake = 0;
+        let token = 'BNB';
+        let crashPoint = 0;
+        let multiplier = 1;
+        let timeElapsed = 0;
+        let isGameRunning = false;
+        let climberY = 0;
+        const climberSpeed = 0.5;
+
+        function getQueryParam(param) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(param);
         }
 
         function showError(message) {
-            console.error(message);
-            document.getElementById('error').textContent = message;
+            errorDisplay.textContent = message;
+            errorDisplay.style.display = 'block';
+            setTimeout(() => errorDisplay.style.display = 'none', 5000);
+            console.error('Error:', message);
         }
 
-        function initializeWebApp() {
-            logDebug('Checking Telegram WebApp SDK...');
-            if (!window.Telegram || !window.Telegram.WebApp) {
-                showError('Telegram WebApp SDK not loaded. Please open in Telegram.');
-                return false;
-            }
-            const webApp = window.Telegram.WebApp;
-            webApp.ready();
-            logDebug(`WebApp SDK available: ${!!window.Telegram.WebApp}`);
-            logDebug(`initData: ${webApp.initData || 'none'}`);
-            logDebug(`URL params: ${window.location.search}`);
-            const urlParams = new URLSearchParams(window.location.search);
-            const data = urlParams.get('data');
-            if (!data) {
-                showError('No initialization data provided. Please reload.');
-                return false;
-            }
-            try {
-                const parsed = JSON.parse(decodeURIComponent(data));
-                logDebug(`Parsed game data: ${JSON.stringify(parsed)}`);
-                return parsed;
-            } catch (e) {
-                showError('Invalid initialization data. Please reload.');
-                logDebug(`Parse error: ${e.message}`);
-                return false;
-            }
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight - 100;
+            climberY = canvas.height - 50;
         }
 
-        function copyAddress() {
-            if (gameData && gameData.bnb_address) {
-                navigator.clipboard.writeText(gameData.bnb_address).then(() => {
-                    alert('Address copied to clipboard!');
-                }).catch(err => {
-                    showError('Failed to copy address.');
-                    logDebug(`Copy error: ${err}`);
-                });
-            }
+        function drawClimber() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#ff0000';
+            ctx.fillRect(canvas.width / 2 - 10, climberY, 20, 20);
+            climberY -= climberSpeed * (multiplier / 1.5);
+            if (climberY < 0) climberY = 0;
         }
 
-        function updateUI() {
-            if (!gameData) return;
-            document.getElementById('balance').innerHTML = `
-                BNB: ${parseFloat(gameData.bnb_balance).toFixed(8)}<br>
-                NIMS: ${parseFloat(gameData.nims_balance).toFixed(4)}<br>
-                Address: <span class="address" onclick="copyAddress()">${gameData.bnb_address}</span> (Click to copy)
-            `;
-            document.getElementById('raffle-info').innerHTML = `
-                Raffle Jackpot: Calculating...<br>
-                Your Tickets: Calculating...<br>
-                Draw: Monday
-            `;
-            document.getElementById('leaderboard').innerHTML = `
-                <h3>Leaderboard</h3>
-                Calculating...
-            `;
-            if (gameData.game_started) {
-                gameActive = true;
-                document.getElementById('game-status').innerHTML = `
-                    Game Started!<br>
-                    Stake: ${parseFloat(gameData.game_started.stake).toFixed(8)} ${gameData.game_started.token}<br>
-                    Session ID: ${gameData.game_started.session_id}<br>
-                    Multiplier: ${multiplier.toFixed(2)}x<br>
-                    Speed: ${speed_phase}
-                `;
-                document.getElementById('start-game').disabled = true;
-                document.getElementById('cashout').disabled = false;
-                document.getElementById('rest').disabled = false;
-                document.getElementById('multiplier').textContent = `${multiplier.toFixed(2)}x`;
-                document.getElementById('multiplier').className = `multiplier ${multiplier >= 3 ? 'high-risk' : ''}`;
-                document.getElementById('climber').style.bottom = `${climber_pos}%`;
-            } else {
-                gameActive = false;
-                document.getElementById('game-status').textContent = 'No active game.';
-                document.getElementById('start-game').disabled = false;
-                document.getElementById('cashout').disabled = true;
-                document.getElementById('rest').disabled = true;
-                document.getElementById('multiplier').textContent = '1.00x';
-                document.getElementById('multiplier').className = 'multiplier';
-                document.getElementById('climber').style.bottom = '20%';
-            }
-        }
-
-        function updateMultiplier() {
-            if (!gameActive || !gameStartTime) return;
-            const timeElapsed = (Date.now() - gameStartTime) / 1000;
-            multiplier = Math.min(10, 1 + timeElapsed * 0.05); // Slower increment
-            speed_phase = multiplier < 2 ? 'normal' : multiplier < 5 ? 'fast' : 'extreme';
-            climber_pos = Math.min(90, 20 + (multiplier - 1) * 15);
-            updateUI();
-            // Delay loss check by 500ms to ensure UI renders
-            if (timeElapsed > 0.5 && multiplier >= parseFloat(gameData.game_started.crash_point)) {
-                gameActive = false;
-                gameStartTime = null;
+        function updateGame() {
+            if (!isGameRunning) return;
+            timeElapsed += 0.016; // ~60 FPS
+            multiplier = 1 + timeElapsed * 0.05;
+            multiplierDisplay.textContent = multiplier.toFixed(2) + 'x';
+            drawClimber();
+            console.log(`Game tick: multiplier=${multiplier.toFixed(2)}, crashPoint=${crashPoint}, timeElapsed=${timeElapsed.toFixed(3)}`);
+            if (crashPoint && multiplier >= crashPoint) {
+                isGameRunning = false;
+                multiplierDisplay.textContent = 'Avalanche!';
+                cashoutButton.disabled = true;
+                restButton.disabled = true;
+                startButton.disabled = false;
+                console.log('Game ended: Avalanche hit');
                 Telegram.WebApp.sendData(JSON.stringify({
                     action: 'lost',
-                    session_id: gameData.game_started.session_id,
-                    stake: gameData.game_started.stake,
-                    token: gameData.game_started.token
+                    session_id: sessionId,
+                    stake: stake.toString(),
+                    token: token
                 }));
+                resetGame();
+            } else {
+                // Check if rest is possible
+                const safetyZones = [1.5, 3.0, 5.0];
+                restButton.disabled = !safetyZones.some(zone => Math.abs(multiplier - zone) < 0.1);
             }
+            requestAnimationFrame(updateGame);
         }
 
-        document.getElementById('start-game').addEventListener('click', () => {
-            const stake = document.getElementById('stake-input').value;
-            const token = document.getElementById('token-select').value;
-            if (!stake || parseFloat(stake) < 0.1) {
-                showError('Stake must be at least 0.1.');
+        function resetGame() {
+            isGameRunning = false;
+            multiplier = 1;
+            timeElapsed = 0;
+            climberY = canvas.height - 50;
+            multiplierDisplay.textContent = '1.00x';
+            cashoutButton.disabled = true;
+            restButton.disabled = true;
+            startButton.disabled = false;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            console.log('Game reset');
+        }
+
+        function validateStake() {
+            const value = parseFloat(stakeInput.value);
+            return value >= 0.1 && value <= 10 && !isNaN(value);
+        }
+
+        try {
+            const rawData = getQueryParam('data');
+            if (!rawData) {
+                throw new Error('No game data provided in URL');
+            }
+            gameData = JSON.parse(decodeURIComponent(rawData));
+            console.log('Game data received:', gameData);
+            balanceDisplay.textContent = `BNB: ${parseFloat(gameData.bnb_balance).toFixed(8)} | NIMS: ${parseFloat(gameData.nims_balance).toFixed(4)}`;
+            if (gameData.game_started) {
+                sessionId = gameData.game_started.session_id;
+                stake = parseFloat(gameData.game_started.stake);
+                token = gameData.game_started.token;
+                crashPoint = parseFloat(gameData.game_started.crash_point);
+                console.log('Game started:', { sessionId, stake, token, crashPoint });
+                if (!sessionId || !stake || !token || !crashPoint) {
+                    throw new Error('Incomplete game_started data');
+                }
+                isGameRunning = true;
+                startButton.disabled = true;
+                cashoutButton.disabled = false;
+                restButton.disabled = false;
+                stakeInput.value = stake;
+                tokenSelect.value = token;
+                stakeInput.disabled = true;
+                tokenSelect.disabled = true;
+                requestAnimationFrame(updateGame);
+            } else {
+                console.log('No active game, waiting for start');
+                stakeInput.disabled = false;
+                tokenSelect.disabled = false;
+                startButton.disabled = false;
+            }
+        } catch (e) {
+            showError(`Failed to load game: ${e.message}`);
+            resetGame();
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        startButton.addEventListener('click', () => {
+            if (!validateStake()) {
+                showError('Stake must be between 0.1 and 10');
                 return;
             }
-            gameStartTime = Date.now();
+            const stakeValue = parseFloat(stakeInput.value).toFixed(8);
+            token = tokenSelect.value;
+            console.log('Starting game:', { stake: stakeValue, token });
             Telegram.WebApp.sendData(JSON.stringify({
                 action: 'start_game',
                 token: token,
-                stake: stake
+                stake: stakeValue
             }));
+            startButton.disabled = true;
+            stakeInput.disabled = true;
+            tokenSelect.disabled = true;
         });
 
-        document.getElementById('cashout').addEventListener('click', () => {
-            if (!gameData.game_started) return;
-            gameActive = false;
-            gameStartTime = null;
+        cashoutButton.addEventListener('click', () => {
+            if (!isGameRunning) return;
+            isGameRunning = false;
+            console.log('Cashout requested:', { sessionId, stake, token, multiplier });
             Telegram.WebApp.sendData(JSON.stringify({
                 action: 'cashout',
-                session_id: gameData.game_started.session_id,
-                stake: gameData.game_started.stake,
-                multiplier: multiplier.toFixed(4),
-                token: gameData.game_started.token
+                session_id: sessionId,
+                stake: stake.toString(),
+                token: token,
+                multiplier: multiplier.toFixed(4)
             }));
+            resetGame();
         });
 
-        document.getElementById('rest').addEventListener('click', () => {
-            if (!gameData.game_started) return;
+        restButton.addEventListener('click', () => {
+            if (!isGameRunning) return;
             const safetyZones = [1.5, 3.0, 5.0];
             if (!safetyZones.some(zone => Math.abs(multiplier - zone) < 0.1)) {
-                showError('Can only rest at 1.5x, 3x, or 5x.');
+                showError('Can only rest at 1.5x, 3x, or 5x');
                 return;
             }
+            isGameRunning = false;
+            console.log('Rest requested:', { sessionId, token, multiplier });
             Telegram.WebApp.sendData(JSON.stringify({
                 action: 'rest',
-                session_id: gameData.game_started.session_id,
-                multiplier: multiplier.toFixed(4),
-                token: gameData.game_started.token
+                session_id: sessionId,
+                token: token,
+                multiplier: multiplier.toFixed(4)
             }));
+            resetGame();
         });
 
-        document.getElementById('buy-ticket').addEventListener('click', () => {
-            Telegram.WebApp.sendData(JSON.stringify({ action: 'buy_raffle_ticket' }));
-        });
-
-        document.getElementById('refresh-balance').addEventListener('click', () => {
-            Telegram.WebApp.sendData(JSON.stringify({ action: 'refresh_balance' }));
-        });
-
-        document.getElementById('withdraw').addEventListener('click', () => {
-            alert('To withdraw, use /withdraw <amount> <BNB|NIMS> in Telegram (e.g., /withdraw 0.5 BNB).');
-        });
-
-        document.getElementById('set-limit').addEventListener('click', () => {
-            alert('To set a daily limit, use /set_limit <amount> in Telegram (e.g., /set_limit 10.0).');
-        });
-
-        document.getElementById('take-break').addEventListener('click', () => {
-            alert('To take a break, use /take_break <hours> in Telegram (e.g., /take_break 24).');
-        });
-
-        window.onload = () => {
-            gameData = initializeWebApp();
-            if (gameData) {
-                updateUI();
-                setInterval(updateMultiplier, 100);
-            }
-        };
+        // Initialize Telegram WebApp
+        Telegram.WebApp.ready();
+        console.log('WebApp initialized');
     </script>
 </body>
 </html>
