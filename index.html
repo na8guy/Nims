@@ -4,35 +4,52 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nims Climb</title>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@jaames/iro@5"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 20px;
-            background-color: #f0f2f5;
+            background: url('https://via.placeholder.com/800x1200/ffffff/cccccc?text=Mountain+Background') no-repeat center/cover;
             color: #333;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
             min-height: 100vh;
+            display: flex;
+            justify-content: center;
         }
         .container {
             max-width: 600px;
             width: 100%;
-            background: white;
+            background: rgba(255, 255, 255, 0.9);
             padding: 20px;
             border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
         }
         h1 {
             text-align: center;
             color: #1a73e8;
         }
-        .balance {
+        .multiplier {
+            font-size: 2em;
+            text-align: center;
+            color: green;
+            transition: color 0.5s;
+        }
+        .multiplier.high-risk {
+            color: red;
+        }
+        .climber {
+            width: 50px;
+            height: 50px;
+            background: url('https://via.placeholder.com/50/0000ff/ffffff?text=Climber') no-repeat center/contain;
+            position: absolute;
+            bottom: 20%;
+            left: 50%;
+            transform: translateX(-50%);
+            transition: bottom 1s;
+        }
+        .balance, .raffle-info, .leaderboard {
             margin: 20px 0;
-            font-size: 1.2em;
+            font-size: 1.1em;
         }
         button {
             padding: 10px 20px;
@@ -41,7 +58,6 @@
             border-radius: 5px;
             background-color: #1a73e8;
             color: white;
-            font-size: 1em;
             cursor: pointer;
         }
         button:hover {
@@ -59,7 +75,12 @@
             font-size: 0.8em;
             color: #666;
             margin-top: 20px;
-            word-break: break-all;
+        }
+        input, select {
+            padding: 10px;
+            margin: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
         }
     </style>
 </head>
@@ -67,64 +88,66 @@
     <div class="container">
         <h1>Nims Climb</h1>
         <div id="error" class="error"></div>
+        <div id="multiplier" class="multiplier">1.00x</div>
         <div id="balance" class="balance"></div>
         <div id="game-status"></div>
+        <div id="raffle-info" class="raffle-info"></div>
+        <div id="leaderboard" class="leaderboard"></div>
         <div>
-            <input id="stake-input" type="number" placeholder="Stake (0.1-10.0)" step="0.1" min="0.1" max="10.0" style="padding: 10px; margin: 10px;">
+            <input id="stake-input" type="number" placeholder="Stake (0.1-10.0)" step="0.1" min="0.1" max="10.0">
             <select id="token-select">
                 <option value="BNB">BNB</option>
                 <option value="NIMS">NIMS</option>
             </select>
             <button id="start-game">Start Game</button>
             <button id="cashout" disabled>Cash Out</button>
+            <button id="rest" disabled>Rest</button>
             <button id="buy-ticket">Buy Raffle Ticket</button>
             <button id="refresh-balance">Refresh Balance</button>
+            <button id="set-limit">Set Limit</button>
+            <button id="take-break">Take Break</button>
         </div>
         <div id="debug" class="debug"></div>
     </div>
+    <div id="climber" class="climber"></div>
 
     <script>
-        // Debug logging function
+        let gameData = null;
+        let multiplier = 1.0;
+        let speed_phase = 'normal';
+        let climber_pos = 20;
+
         function logDebug(message) {
             console.log(message);
-            const debugDiv = document.getElementById('debug');
-            debugDiv.innerHTML += `<p>${new Date().toISOString()} - ${message}</p>`;
+            document.getElementById('debug').innerHTML += `<p>${new Date().toISOString()} - ${message}</p>`;
         }
 
-        // Error display function
         function showError(message) {
             console.error(message);
             document.getElementById('error').textContent = message;
         }
 
-        // Initialize WebApp
         function initializeWebApp() {
             logDebug('Checking Telegram WebApp SDK...');
             if (!window.Telegram || !window.Telegram.WebApp) {
                 showError('Telegram WebApp SDK not loaded. Please open in Telegram.');
                 return false;
             }
-
             const webApp = window.Telegram.WebApp;
             webApp.ready();
-
-            // Log initialization details
             logDebug(`WebApp SDK available: ${!!window.Telegram.WebApp}`);
             logDebug(`initData: ${webApp.initData || 'none'}`);
             logDebug(`URL params: ${window.location.search}`);
-
-            // Parse query parameter 'data'
             const urlParams = new URLSearchParams(window.location.search);
             const data = urlParams.get('data');
             if (!data) {
                 showError('No initialization data provided. Please reload.');
                 return false;
             }
-
             try {
-                const gameData = JSON.parse(decodeURIComponent(data));
-                logDebug(`Parsed game data: ${JSON.stringify(gameData)}`);
-                return gameData;
+                const parsed = JSON.parse(decodeURIComponent(data));
+                logDebug(`Parsed game data: ${JSON.stringify(parsed)}`);
+                return parsed;
             } catch (e) {
                 showError('Invalid initialization data. Please reload.');
                 logDebug(`Parse error: ${e.message}`);
@@ -132,56 +155,97 @@
             }
         }
 
-        // Update UI with game data
-        function updateUI(gameData) {
+        function updateUI() {
             if (!gameData) return;
-            const balanceDiv = document.getElementById('balance');
-            balanceDiv.innerHTML = `
+            document.getElementById('balance').innerHTML = `
                 BNB: ${parseFloat(gameData.bnb_balance).toFixed(8)}<br>
                 NIMS: ${parseFloat(gameData.nims_balance).toFixed(4)}
             `;
+            document.getElementById('raffle-info').innerHTML = `
+                Raffle Jackpot: Calculating...<br>
+                Your Tickets: Calculating...<br>
+                Draw: Monday
+            `;
+            document.getElementById('leaderboard').innerHTML = `
+                <h3>Leaderboard</h3>
+                Calculating...
+            `;
             if (gameData.game_started) {
-                const statusDiv = document.getElementById('game-status');
-                statusDiv.innerHTML = `
+                document.getElementById('game-status').innerHTML = `
                     Game Started!<br>
                     Stake: ${parseFloat(gameData.game_started.stake).toFixed(8)} ${gameData.game_started.token}<br>
-                    Session ID: ${gameData.game_started.session_id}
+                    Session ID: ${gameData.game_started.session_id}<br>
+                    Multiplier: ${multiplier.toFixed(2)}x<br>
+                    Speed: ${speed_phase}
                 `;
                 document.getElementById('start-game').disabled = true;
                 document.getElementById('cashout').disabled = false;
+                document.getElementById('multiplier').textContent = `${multiplier.toFixed(2)}x`;
+                document.getElementById('multiplier').className = `multiplier ${multiplier > 5 ? 'high-risk' : ''}`;
+                climber_pos = Math.min(80, 20 + (multiplier - 1) * 10);
+                document.getElementById('climber').style.bottom = `${climber_pos}%`;
             } else {
                 document.getElementById('game-status').innerHTML = '';
                 document.getElementById('start-game').disabled = false;
                 document.getElementById('cashout').disabled = true;
+                document.getElementById('rest').disabled = true;
+                document.getElementById('multiplier').textContent = '1.00x';
+                climber_pos = 20;
+                document.getElementById('climber').style.bottom = '20%';
             }
         }
 
-        // Send data to bot
         function sendToBot(data) {
-    if (!window.Telegram.WebApp) {
-        showError('Cannot send data. Telegram WebApp not initialized.');
-        return;
-    }
-    try {
-        window.Telegram.WebApp.sendData(JSON.stringify(data));
-        logDebug(`Sent to bot: ${JSON.stringify(data)}`);
-    } catch (e) {
-        showError('Failed to send data to bot. Please try again.');
-        logDebug(`Send error: ${e.message}`);
-    }
-}
+            if (!window.Telegram.WebApp) {
+                showError('Cannot send data. Telegram WebApp not initialized.');
+                return;
+            }
+            try {
+                window.Telegram.WebApp.sendData(JSON.stringify(data));
+                logDebug(`Sent to bot: ${JSON.stringify(data)}`);
+            } catch (e) {
+                showError('Failed to send data to bot. Please try again.');
+                logDebug(`Send error: ${e.message}`);
+            }
+        }
 
-        // Main initialization
-        let gameData = null;
-        let multiplier = 1.0; // Simulated multiplier for demo
+        function updateMultiplier() {
+            if (gameData?.game_started) {
+                let increment = speed_phase === 'fast' ? 0.3 : speed_phase === 'slow' ? 0.05 : 0.1;
+                let boost = gameData.game_started.multiplier_boost || 1.0;
+                multiplier += increment * boost;
+                updateUI();
+                if (Math.random() < 0.2) {
+                    speed_phase = ['normal', 'fast', 'slow'][Math.floor(Math.random() * 3)];
+                    logDebug(`Speed changed to: ${speed_phase}`);
+                }
+                if (gameData.game_started.crash_point && multiplier >= parseFloat(gameData.game_started.crash_point)) {
+                    document.getElementById('game-status').innerHTML = '💥 Crashed!';
+                    sendToBot({
+                        action: 'lost',
+                        session_id: gameData.game_started.session_id,
+                        stake: gameData.game_started.stake,
+                        token: gameData.game_started.token
+                    });
+                    gameData.game_started = null;
+                }
+            }
+        }
+
+        function checkSafetyZones() {
+            if (gameData?.game_started) {
+                const safety_zones = [1.5, 3, 5];
+                const restButton = document.getElementById('rest');
+                restButton.disabled = !safety_zones.some(zone => Math.abs(multiplier - zone) < 0.1);
+            }
+        }
 
         document.addEventListener('DOMContentLoaded', () => {
             gameData = initializeWebApp();
-            if (gameData) {
-                updateUI(gameData);
-            }
+            if (gameData) updateUI();
+            setInterval(updateMultiplier, 1000);
+            setInterval(checkSafetyZones, 100);
 
-            // Start game button
             document.getElementById('start-game').addEventListener('click', () => {
                 const stake = document.getElementById('stake-input').value;
                 const token = document.getElementById('token-select').value;
@@ -189,57 +253,46 @@
                     showError('Stake must be between 0.1 and 10.0');
                     return;
                 }
-                const data = {
-                    action: 'start_game',
-                    token: token,
-                    stake: stake
-                };
-                sendToBot(data);
+                multiplier = 1.0;
+                sendToBot({ action: 'start_game', token, stake });
             });
 
-            // Cash out button
             document.getElementById('cashout').addEventListener('click', () => {
-                if (!gameData?.game_started) {
-                    showError('No active game to cash out.');
-                    return;
-                }
-                const data = {
+                if (!gameData?.game_started) return;
+                sendToBot({
                     action: 'cashout',
                     session_id: gameData.game_started.session_id,
                     stake: gameData.game_started.stake,
                     multiplier: multiplier.toFixed(4),
                     token: gameData.game_started.token
-                };
-                sendToBot(data);
+                });
             });
 
-            // Buy raffle ticket button
+            document.getElementById('rest').addEventListener('click', () => {
+                if (!gameData?.game_started) return;
+                sendToBot({
+                    action: 'rest',
+                    session_id: gameData.game_started.session_id,
+                    multiplier: multiplier.toFixed(4),
+                    token: gameData.game_started.token
+                });
+            });
+
             document.getElementById('buy-ticket').addEventListener('click', () => {
                 sendToBot({ action: 'buy_raffle_ticket' });
             });
 
-            // Refresh balance button
             document.getElementById('refresh-balance').addEventListener('click', () => {
                 sendToBot({ action: 'refresh_balance' });
             });
 
-            // Simulate game multiplier (replace with actual game logic)
-            setInterval(() => {
-                if (gameData?.game_started) {
-                    multiplier += 0.1;
-                    document.getElementById('game-status').innerHTML = `
-                        Game Started!<br>
-                        Stake: ${parseFloat(gameData.game_started.stake).toFixed(8)} ${gameData.game_started.token}<br>
-                        Session ID: ${gameData.game_started.session_id}<br>
-                        Multiplier: ${multiplier.toFixed(2)}x
-                    `;
-                }
-            }, 1000);
-        });
+            document.getElementById('set-limit').addEventListener('click', () => {
+                showError('Use /set_limit <amount> in Telegram chat (e.g., /set_limit 10.0)');
+            });
 
-        // Handle WebApp close or crash
-        window.Telegram.WebApp.onEvent('viewportChanged', () => {
-            logDebug('Viewport changed');
+            document.getElementById('take-break').addEventListener('click', () => {
+                showError('Use /take_break <hours> in Telegram chat (e.g., /take_break 24)');
+            });
         });
     </script>
 </body>
