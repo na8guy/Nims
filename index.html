@@ -134,7 +134,9 @@ c<!DOCTYPE html>
         logToUI('DEBUG', 'Called WebApp.ready(). Calling expand()...');
         WebApp.expand();
         logToUI('DEBUG', 'Called expand(). Setting up theme...');
-        // ... (theme setup) ...
+        // Apply theme
+            document.body.style.backgroundColor = WebApp.themeParams.bg_color || '#f0f0f0';
+            document.body.style.color = WebApp.themeParams.text_color || '#333';
         logToUI('DEBUG', 'Theme set. Calling loadGameDataFromUrl()...');
         loadGameDataFromUrl();
         logToUI('DEBUG', 'Called loadGameDataFromUrl(). Calling setupMainButton()...');
