@@ -115,7 +115,7 @@
             grid-area: controls;
             padding: 0.5rem;
             /*background: #1e293b;*/
-            background:rgba( 0,0,0,0.5);
+            background:rgba(0,0,0,0.5);
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
@@ -182,6 +182,28 @@
             color: #fff;
             font-size: clamp(0.9rem, 3vw, 1rem);
         }
+        .address-container {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 0.5rem 0;
+        }
+        .address {
+            flex: 1;
+            font-size: clamp(0.8rem, 2.5vw, 0.9rem);
+            word-break: break-all;
+            background: #334155;
+            padding: 0.5rem;
+            border-radius: 8px;
+        }
+        .copy-button {
+            padding: 0.5rem;
+            font-size: 0.8rem;
+            background: #10b981;
+        }
+        .copy-button.copied {
+            background: #059669;
+        }
         #error, #cashout-message {
             position: fixed;
             top: 50%;
@@ -202,16 +224,6 @@
         }
         .animate-multiplier {
             animation: pulse 0.5s ease-in-out;
-        }
-        .graph-line {
-            stroke: #facc15;
-            stroke-width: 2;
-            fill: none;
-        }
-        .graph-marker {
-            fill: #a5f3fc;
-            stroke: #3b82f6;
-            stroke-width: 1;
         }
         @media (max-width: 768px) {
             body {
@@ -283,7 +295,7 @@
     <div id="modal">
         <div class="modal-content">
             <h2 id="modal-title"></h2>
-            <p id="modal-body"></p>
+            <div id="modal-body"></div>
             <input id="withdraw-amount" type="number" placeholder="Amount" style="display: none;">
             <input id="withdraw-address" type="text" placeholder="Address" style="display: none;">
             <input id="ticket-amount" type="number" placeholder="Tickets (1 NIMS each)" min="1" style="display: none;">
@@ -316,11 +328,6 @@
         const modal = document.getElementById('modal');
         const modalTitle = document.getElementById('modal-title');
         const modalBody = document.getElementById('modal-body');
-        const withdrawAmount = document.getElementById('withdraw-amount');
-        const withdrawAddress = document.getElementById('withdraw-address');
-        const withdrawSubmit = document.getElementById('withdraw-submit');
-        const ticketAmount = document.getElementById('ticket-amount');
-        const ticketSubmit = document.getElementById('ticket-submit');
 
         let gameData = null;
         let sessionId = null;
@@ -332,10 +339,11 @@
         let isGameRunning = false;
         let nims = { x: 100, y: 0, frame: 0, state: 'climbing' };
         let pathProgress = 0;
+        let cameraOffset = { x: 0, y: 0 };
         let clouds = [];
         let particles = [];
         let shakeOffset = { x: 0, y: 0 };
-        const maxAltitude = 8848; // Everest height in meters
+        const baseAltitude = 8848; // Base for scaling altitude
 
         function getQueryParam(param) {
             const urlParams = new URLSearchParams(window.location.search);
@@ -357,6 +365,20 @@
             setTimeout(() => cashoutMessage.style.display = 'none', 3000);
         }
 
+        function copyAddress(address, button) {
+            navigator.clipboard.writeText(address).then(() => {
+                button.textContent = 'Copied!';
+                button.classList.add('copied');
+                if (Telegram.WebApp) Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+                setTimeout(() => {
+                    button.textContent = 'Copy';
+                    button.classList.remove('copied');
+                }, 2000);
+            }).catch(() => {
+                showError('Failed to copy address');
+            });
+        }
+
         function refreshTickets() {
             if (Telegram.WebApp) {
                 Telegram.WebApp.sendData(JSON.stringify({ action: 'get_tickets' }));
@@ -367,28 +389,57 @@
 
         function showModal(type) {
             modal.style.display = 'flex';
-            withdrawAmount.style.display = 'none';
-            withdrawAddress.style.display = 'none';
-            withdrawSubmit.style.display = 'none';
-            ticketAmount.style.display = 'none';
-            ticketSubmit.style.display = 'none';
-            modalBody.style.whiteSpace = 'pre-wrap';
+            document.getElementById('withdraw-amount').style.display = 'none';
+            document.getElementById('withdraw-address').style.display = 'none';
+            document.getElementById('withdraw-submit').style.display = 'none';
+            document.getElementById('ticket-amount').style.display = 'none';
+            document.getElementById('ticket-submit').style.display = 'none';
+            modalBody.innerHTML = '';
             if (type === 'deposit') {
                 modalTitle.textContent = 'Deposit Address';
-                modalBody.textContent = gameData
-                    ? `BNB: ${gameData.bnb_address || 'N/A'}\nNIMS: ${gameData.nims_address || 'N/A'}`
-                    : 'No address data available';
+                if (gameData) {
+                    const bnbDiv = document.createElement('div');
+                    bnbDiv.className = 'address-container';
+                    bnbDiv.innerHTML = `<span class="address">BNB: ${gameData.bnb_address || 'N/A'}</span>`;
+                    const bnbCopy = document.createElement('button');
+                    bnbCopy.className = 'copy-button';
+                    bnbCopy.textContent = 'Copy';
+                    if (gameData.bnb_address) {
+                        bnbCopy.onclick = () => copyAddress(gameData.bnb_address, bnbCopy);
+                    } else {
+                        bnbCopy.disabled = true;
+                    }
+                    bnbDiv.appendChild(bnbCopy);
+
+                    const nimsDiv = document.createElement('div');
+                    nimsDiv.className = 'address-container';
+                    nimsDiv.innerHTML = `<span class="address">NIMS: ${gameData.nims_address || 'N/A'}</span>`;
+                    const nimsCopy = document.createElement('button');
+                    nimsCopy.className = 'copy-button';
+                    nimsCopy.textContent = 'Copy';
+                    if (gameData.nims_address) {
+                        nimsCopy.onclick = () => copyAddress(gameData.nims_address, nimsCopy);
+                    } else {
+                        nimsCopy.disabled = true;
+                    }
+                    nimsDiv.appendChild(nimsCopy);
+
+                    modalBody.appendChild(bnbDiv);
+                    modalBody.appendChild(nimsDiv);
+                } else {
+                    modalBody.textContent = 'No address data available';
+                }
             } else if (type === 'withdraw') {
                 modalTitle.textContent = 'Withdraw Funds';
                 modalBody.textContent = 'Enter amount and address:';
-                withdrawAmount.style.display = 'block';
-                withdrawAddress.style.display = 'block';
-                withdrawSubmit.style.display = 'block';
+                document.getElementById('withdraw-amount').style.display = 'block';
+                document.getElementById('withdraw-address').style.display = 'block';
+                document.getElementById('withdraw-submit').style.display = 'block';
             } else if (type === 'buy_raffle') {
                 modalTitle.textContent = 'Buy Raffle Tickets';
                 modalBody.textContent = 'Enter number of tickets (1 NIMS each):';
-                ticketAmount.style.display = 'block';
-                ticketSubmit.style.display = 'block';
+                document.getElementById('ticket-amount').style.display = 'block';
+                document.getElementById('ticket-submit').style.display = 'block';
             }
         }
 
@@ -397,8 +448,8 @@
         }
 
         function submitWithdrawal() {
-            const amount = parseFloat(withdrawAmount.value);
-            const address = withdrawAddress.value;
+            const amount = parseFloat(document.getElementById('withdraw-amount').value);
+            const address = document.getElementById('withdraw-address').value;
             if (!amount || amount <= 0 || !address) {
                 showError('Invalid amount or address');
                 return;
@@ -418,7 +469,7 @@
         }
 
         function buyRaffleTickets() {
-            const tickets = parseInt(ticketAmount.value);
+            const tickets = parseInt(document.getElementById('ticket-amount').value);
             if (!tickets || tickets < 1) {
                 showError('Enter at least 1 ticket');
                 return;
@@ -453,39 +504,39 @@
 
             bgCtx.fillStyle = '#334155';
             bgCtx.beginPath();
-            bgCtx.moveTo(0, bgCanvas.height);
-            for (let x = 0; x <= bgCanvas.width; x += 20) {
-                const y = bgCanvas.height - 100 - Math.sin(x * 0.01 + timeElapsed * 0.1) * 50;
+            bgCtx.moveTo(-cameraOffset.x, bgCanvas.height);
+            for (let x = -cameraOffset.x; x <= bgCanvas.width - cameraOffset.x; x += 20) {
+                const y = bgCanvas.height - 100 - Math.sin((x + cameraOffset.x) * 0.01 + timeElapsed * 0.1) * 50;
                 bgCtx.lineTo(x, y);
             }
-            bgCtx.lineTo(bgCanvas.width, bgCanvas.height);
+            bgCtx.lineTo(bgCanvas.width - cameraOffset.x, bgCanvas.height);
             bgCtx.closePath();
             bgCtx.fill();
 
             bgCtx.fillStyle = '#475569';
             bgCtx.beginPath();
-            bgCtx.moveTo(0, bgCanvas.height);
-            for (let x = 0; x <= bgCanvas.width; x += 20) {
-                const y = bgCanvas.height - 150 - Math.sin(x * 0.005 + timeElapsed * 0.05) * 30;
+            bgCtx.moveTo(-cameraOffset.x * 0.5, bgCanvas.height);
+            for (let x = -cameraOffset.x * 0.5; x <= bgCanvas.width - cameraOffset.x * 0.5; x += 20) {
+                const y = bgCanvas.height - 150 - Math.sin((x + cameraOffset.x * 0.5) * 0.005 + timeElapsed * 0.05) * 30;
                 bgCtx.lineTo(x, y);
             }
-            bgCtx.lineTo(bgCanvas.width, bgCanvas.height);
+            bgCtx.lineTo(bgCanvas.width - cameraOffset.x * 0.5, bgCanvas.height);
             bgCtx.closePath();
             bgCtx.fill();
 
             clouds.forEach(cloud => {
                 bgCtx.fillStyle = `rgba(255, 255, 255, ${cloud.opacity})`;
                 bgCtx.beginPath();
-                bgCtx.arc(cloud.x, cloud.y, cloud.size, 0, Math.PI * 2);
+                bgCtx.arc(cloud.x - cameraOffset.x, cloud.y, cloud.size, 0, Math.PI * 2);
                 bgCtx.fill();
             });
         }
 
         function updateClouds() {
-            clouds = clouds.filter(cloud => cloud.x < bgCanvas.width + cloud.size);
+            clouds = clouds.filter(cloud => cloud.x - cameraOffset.x < bgCanvas.width + cloud.size);
             if (Math.random() < 0.05) {
                 clouds.push({
-                    x: -50,
+                    x: cameraOffset.x + bgCanvas.width,
                     y: Math.random() * bgCanvas.height * 0.3,
                     size: 20 + Math.random() * 30,
                     speed: 0.5 + Math.random(),
@@ -493,13 +544,13 @@
                 });
             }
             clouds.forEach(cloud => {
-                cloud.x += cloud.speed;
+                cloud.x -= cloud.speed;
             });
         }
 
         function drawNims() {
             gameCtx.save();
-            gameCtx.translate(nims.x + shakeOffset.x, nims.y + shakeOffset.y);
+            gameCtx.translate(nims.x + shakeOffset.x - cameraOffset.x, nims.y + shakeOffset.y - cameraOffset.y);
             gameCtx.rotate(nims.angle || 0);
             gameCtx.fillStyle = '#facc15';
             gameCtx.beginPath();
@@ -524,12 +575,14 @@
             gameCtx.beginPath();
             gameCtx.strokeStyle = '#facc15';
             gameCtx.lineWidth = 5;
-            gameCtx.moveTo(100, gameCanvas.height);
             const points = [];
+            const startX = 100;
+            const startY = gameCanvas.height;
+            gameCtx.moveTo(startX - cameraOffset.x, startY - cameraOffset.y);
             for (let t = 0; t <= pathProgress; t += 0.01) {
-                const x = 100 + t * (gameCanvas.width - 200);
-                const y = gameCanvas.height - (t * gameCanvas.height * 0.8);
-                gameCtx.lineTo(x, y);
+                const x = startX + t * 500; // Extended path
+                const y = startY - t * 800 * multiplier; // Scale with multiplier
+                gameCtx.lineTo(x - cameraOffset.x, y - cameraOffset.y);
                 points.push({ x, y });
             }
             gameCtx.stroke();
@@ -542,19 +595,19 @@
             gameCtx.lineWidth = 2;
             gameCtx.moveTo(20, gameCanvas.height - 20);
             points.forEach(p => {
-                const graphX = 20 + (p.x - 100) * 0.2;
-                const graphY = gameCanvas.height - 20 - (gameCanvas.height - p.y) * 0.2;
+                const graphX = 20 + (p.x - 100) * 0.1;
+                const graphY = gameCanvas.height - 20 - (gameCanvas.height - p.y) * 0.05;
                 gameCtx.lineTo(graphX, graphY);
             });
             gameCtx.stroke();
 
             [1.5, 3.0, 5.0].forEach(zone => {
-                const t = (zone - 1) / 4;
+                const t = (zone - 1) / (multiplier - 1);
                 if (t <= pathProgress) {
                     const idx = Math.floor(t / 0.01);
                     if (points[idx]) {
                         gameCtx.beginPath();
-                        gameCtx.arc(20 + (points[idx].x - 100) * 0.2, gameCanvas.height - 20 - (gameCanvas.height - points[idx].y) * 0.2, 5, 0, Math.PI * 2);
+                        gameCtx.arc(20 + (points[idx].x - 100) * 0.1, gameCanvas.height - 20 - (gameCanvas.height - points[idx].y) * 0.05, 5, 0, Math.PI * 2);
                         gameCtx.fillStyle = '#a5f3fc';
                         gameCtx.fill();
                     }
@@ -566,13 +619,13 @@
             particles.forEach(p => {
                 gameCtx.fillStyle = `rgba(255, 255, 255, ${p.opacity})`;
                 gameCtx.beginPath();
-                gameCtx.arc(p.x + shakeOffset.x, p.y + shakeOffset.y, p.size, 0, Math.PI * 2);
+                gameCtx.arc(p.x + shakeOffset.x - cameraOffset.x, p.y + shakeOffset.y - cameraOffset.y, p.size, 0, Math.PI * 2);
                 gameCtx.fill();
             });
         }
 
         function updateAvalanche() {
-            particles = particles.filter(p => p.y < gameCanvas.height && p.opacity > 0);
+            particles = particles.filter(p => p.y < gameCanvas.height + cameraOffset.y && p.opacity > 0);
             if (particles.length > 0) {
                 particles.forEach(p => {
                     p.y += p.vy;
@@ -589,8 +642,8 @@
         function triggerAvalanche() {
             for (let i = 0; i < 100; i++) {
                 particles.push({
-                    x: Math.random() * gameCanvas.width,
-                    y: -10,
+                    x: cameraOffset.x + Math.random() * gameCanvas.width,
+                    y: cameraOffset.y - 10,
                     size: 2 + Math.random() * 5,
                     vx: (Math.random() - 0.5) * 2,
                     vy: 5 + Math.random() * 5,
@@ -629,12 +682,15 @@
             if (!isGameRunning) return;
             timeElapsed += 0.016;
             multiplier = 1 + timeElapsed * 0.03;
-            pathProgress = Math.min(timeElapsed / 10, 1);
-            nims.x = 100 + pathProgress * (gameCanvas.width - 200);
-            nims.y = gameCanvas.height - (pathProgress * gameCanvas.height * 0.8);
-            nims.angle = Math.atan2(-0.8 * gameCanvas.height, gameCanvas.width - 200) * pathProgress;
+            pathProgress = timeElapsed / 10; // No cap
 
-            const altitude = Math.floor(pathProgress * maxAltitude);
+            nims.x = 100 + pathProgress * 500;
+            nims.y = gameCanvas.height - pathProgress * 800 * multiplier;
+            cameraOffset.x = Math.max(0, nims.x - gameCanvas.width / 2);
+            cameraOffset.y = Math.max(0, nims.y - gameCanvas.height / 2);
+            nims.angle = Math.atan2(-800 * multiplier, 500) * Math.min(pathProgress, 1);
+
+            const altitude = Math.floor(multiplier * baseAltitude);
             altitudeDisplay.textContent = `Altitude: ${altitude}m`;
             multiplierDisplay.textContent = multiplier.toFixed(2) + 'x';
             multiplierDisplay.classList.add('animate-multiplier');
@@ -680,6 +736,7 @@
             multiplier = 1;
             timeElapsed = 0;
             pathProgress = 0;
+            cameraOffset = { x: 0, y: 0 };
             nims = { x: 100, y: gameCanvas.height - 50, frame: 0, state: 'climbing' };
             multiplierDisplay.textContent = '1.00x';
             altitudeDisplay.textContent = 'Altitude: 0m';
@@ -690,6 +747,7 @@
             tokenSelect.disabled = false;
             particles = [];
             shakeOffset = { x: 0, y: 0 };
+            clouds = [];
             gameCtx.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
             drawBackground();
             updateUI();
