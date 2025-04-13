@@ -97,12 +97,19 @@ body {
 #gameCanvas {
     position: absolute;
     left: 50%;
-    transform: translateX(-50%);
+    top: 50%;
+    transform: translate(-50%, -50%);
     z-index: 10;
-    width: 90vw;
-    max-width: 500px;
-    height: 70vh;
-    max-height: 700px;
+    width: 100vw;
+    height: 60vh;
+    max-width: 600px;
+    max-height: 800px;
+    transition: opacity 0.3s ease;
+}
+
+#gameCanvas.hidden {
+    opacity: 0;
+    pointer-events: none;
 }
 
 /* Nims */
@@ -117,7 +124,11 @@ body {
     z-index: 15;
     left: 50%;
     transform: translateX(-50%);
-    transition: bottom 0.15s ease-out;
+    transition: bottom 0.15s ease-out, opacity 0.3s ease;
+}
+
+.nims.hidden {
+    opacity: 0;
 }
 
 .nims.climbing {
@@ -215,7 +226,7 @@ body {
     flex-wrap: wrap;
 }
 
-.altitude-display, .multiplier-display {
+.balance-display, .altitude-display, .multiplier-display {
     font-size: clamp(16px, 4vw, 20px);
     background: rgba(0, 0, 0, 0.6);
     padding: 0.5em 1em;
@@ -223,7 +234,7 @@ body {
     white-space: nowrap;
 }
 
-.controls {
+.controls, .game-controls {
     display: flex;
     gap: 1vw;
     flex-wrap: wrap;
@@ -268,6 +279,36 @@ button:disabled {
 
 button:active:not(:disabled) {
     transform: scale(0.95);
+}
+
+.game-controls {
+    position: absolute;
+    bottom: 2vh;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 12;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.game-controls.active {
+    opacity: 1;
+}
+
+#restButton, #cashoutButton {
+    min-width: 100px;
+}
+
+#restButton {
+    background: linear-gradient(to bottom, #ffaa00, #cc8800);
+}
+
+#cashoutButton {
+    background: linear-gradient(to bottom, #00ff88, #00cc66);
+}
+
+.hidden {
+    display: none !important;
 }
 
 .raffle-display {
@@ -394,16 +435,18 @@ button:active:not(:disabled) {
         flex-direction: column;
         gap: 1vh;
     }
+
+    #gameCanvas {
+        height: 50vh;
+    }
+
+    .game-controls {
+        flex-direction: column;
+        gap: 2vw;
+    }
 }
 
 @media (min-width: 1200px) {
-    #gameCanvas {
-        width: 80vw;
-        max-width: 600px;
-        height: 75vh;
-        max-height: 800px;
-    }
-
     .ui-overlay {
         max-width: 800px;
         left: 50%;
