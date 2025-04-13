@@ -2,10 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Nims Climb</title>
     <link rel="stylesheet" href="styles.css">
-  
 </head>
 <body>
     <div class="game-container">
@@ -17,16 +16,16 @@
             <div class="cloud-layer"></div>
         </div>
 
-        <!-- Game Canvas for Particles -->
-        <canvas id="gameCanvas" width="400" height="600"></canvas>
+        <!-- Game Canvas -->
+        <canvas id="gameCanvas"></canvas>
 
-        <!-- Altitude Graph (Right Edge) -->
+        <!-- Altitude Graph -->
         <div class="altitude-graph">
-            <svg id="graphSvg" width="100" height="600">
-                <polyline id="altitudeLine" points="0,600" fill="none" stroke="#00ff88" stroke-width="3" filter="url(#glow)"/>
+            <svg id="graphSvg">
+                <polyline id="altitudeLine" points="0,100%" fill="none" stroke="#00ff88" stroke-width="3" filter="url(#glow)"/>
                 <defs>
                     <filter id="glow">
-                        <feGaussianBlur stdDeviation="2" result="blur"/>
+                        <feGaussianBlur stdDeviation="2.5" result="blur"/>
                         <feMerge>
                             <feMergeNode in="blur"/>
                             <feMergeNode in="SourceGraphic"/>
@@ -37,25 +36,27 @@
             <div class="altitude-markers"></div>
         </div>
 
-        <!-- Altitude Scale (Left Edge) -->
+        <!-- Altitude Scale -->
         <div class="altitude-scale">
-            <div class="marker" style="bottom: 0;">1000m</div>
-            <div class="marker" style="bottom: 120px;">2000m</div>
-            <div class="marker" style="bottom: 240px;">3000m</div>
-            <div class="marker" style="bottom: 360px;">4000m</div>
-            <div class="marker" style="bottom: 480px;">5000m</div>
+            <div class="marker" data-altitude="1000">1000m</div>
+            <div class="marker" data-altitude="2000">2000m</div>
+            <div class="marker" data-altitude="3000">3000m</div>
+            <div class="marker" data-altitude="4000">4000m</div>
+            <div class="marker" data-altitude="5000">5000m</div>
         </div>
 
         <!-- Nims Character -->
         <div id="nimsCharacter" class="nims"></div>
 
-        <!-- UI Elements -->
+        <!-- UI Overlay -->
         <div class="ui-overlay">
-            <div class="altitude-display">Altitude: <span id="altitude">1000</span>m</div>
-            <div class="multiplier-display">Multiplier: <span id="multiplier">1.0</span>x</div>
+            <div class="status">
+                <div class="altitude-display">Altitude: <span id="altitude">1000</span>m</div>
+                <div class="multiplier-display">Multiplier: <span id="multiplier">1.0</span>x</div>
+            </div>
             <div class="controls">
-                <input type="number" id="stakeInput" placeholder="Stake (BNB)" step="0.01" min="0.01">
-                <select id="tokenSelect">
+                <input type="number" id="stakeInput" placeholder="Stake (BNB)" step="0.01" min="0.01" aria-label="Stake amount">
+                <select id="tokenSelect" aria-label="Select currency">
                     <option value="BNB">BNB</option>
                     <option value="NIMS">NIMS</option>
                 </select>
@@ -68,16 +69,14 @@
             </div>
             <div class="leaderboard">
                 <h3>Leaderboard</h3>
-                <ul id="leaderboardList"></ul>
+                <ul id="leaderboardList" aria-label="Leaderboard"></ul>
             </div>
+            <div id="errorPopup" class="error-popup" role="alert"></div>
         </div>
 
         <!-- Avalanche Overlay -->
         <div id="avalancheOverlay" class="avalanche"></div>
     </div>
-    <audio id="climbSound" src="/assets/climb.mp3" loop></audio>
-    <audio id="avalancheSound" src="/assets/avalanche.mp3"></audio>
-    <audio id="milestoneSound" src="/assets/milestone.mp3"></audio>
     <script src="main.js"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </body>
