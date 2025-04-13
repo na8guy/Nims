@@ -193,12 +193,23 @@ function triggerAvalanche() {
     setTimeout(() => {
         document.body.style.animation = '';
         avalancheOverlay.classList.remove('active');
-        Telegram.WebApp.sendData(JSON.stringify({
+        if (!gameData || !gameData.game_started || !sessionId) {
+            console.error('Cannot send lost action: Missing game data', {
+                gameData: gameData,
+                sessionId: sessionId
+            });
+            showError('Game error: Please restart.');
+            resetGame();
+            return;
+        }
+        const lostData = {
             action: 'lost',
             session_id: sessionId,
-            multiplier: multiplier.toFixed(2),
-            token: gameData.game_started.token
-        }));
+            multiplier: parseFloat(multiplier.toFixed(2)),
+            token: gameData.game_started.token || 'BNB'
+        };
+        console.log('Sending lost data:', lostData);
+        Telegram.WebApp.sendData(JSON.stringify(lostData));
         resetGame();
     }, 3000);
 }
@@ -241,7 +252,7 @@ restButton.addEventListener('click', () => {
         action: 'rest',
         session_id: sessionId,
         multiplier: multiplier.toFixed(2),
-        token: gameData.game_started.token
+        token: gameData.game_started.token || 'BNB'
     }));
     resetGame();
 });
@@ -252,7 +263,7 @@ cashoutButton.addEventListener('click', () => {
         action: 'cashout',
         session_id: sessionId,
         multiplier: multiplier.toFixed(2),
-        token: gameData.game_started.token
+        token: gameData.game_started.token || 'BNB'
     }));
     resetGame();
 });
