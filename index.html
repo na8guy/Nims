@@ -2,9 +2,13 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"> <title>Nims Climb</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Nims Climb</title>
+    <script src="https://telegram.org/js/telegram-web-app.js" onload="onWebAppScriptLoaded()"></script> <style>
+        /* ... (Keep the CSS from the previous full index.html example) ... */
+        /* Ensure old HTML button area is hidden if elements still exist */
+        #start-controls { display: none !important; } /* Hide old controls */
+        /* Adjust styles as needed for the new layout */
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; margin: 0; padding: 15px; background-color: var(--tg-theme-bg-color, #f0f0f0); color: var(--tg-theme-text-color, #333); display: flex; flex-direction: column; min-height: 100vh; box-sizing: border-box;}
         .container { width: 100%; max-width: 600px; margin: 0 auto; background: var(--tg-theme-secondary-bg-color, white); padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); flex-grow: 1; display: flex; flex-direction: column; box-sizing: border-box;}
         h1 { text-align: center; color: var(--tg-theme-link-color, #007bff); margin-top: 0; margin-bottom: 15px; font-weight: 600; }
@@ -14,14 +18,6 @@
         .controls, #game-interface { display: flex; flex-direction: column; gap: 12px; }
         label { font-size: 14px; color: var(--tg-theme-hint-color, #6c757d); margin-bottom: -5px;}
         select, input[type="number"] { padding: 12px; font-size: 16px; border: 1px solid var(--tg-theme-hint-color, #ccc); border-radius: 8px; background-color: var(--tg-theme-bg-color, #fff); color: var(--tg-theme-text-color, #333); width: 100%; box-sizing: border-box;}
-        input[type="number"] { -moz-appearance: textfield; appearance: textfield; } /* Better number input styling */
-        button { padding: 14px; font-size: 17px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: background-color 0.2s ease, transform 0.1s ease; }
-        button#start-climbing { background-color: var(--tg-theme-button-color, #28a745); color: var(--tg-theme-button-text-color, white); }
-        button#start-climbing:hover { background-color: #218838; } /* Adjust hover color if needed */
-        button#cashout-button { background-color: var(--tg-theme-button-color, #007bff); color: var(--tg-theme-button-text-color, white); }
-        button#cashout-button:hover { background-color: #0056b3; } /* Adjust hover color if needed */
-        button:active { transform: scale(0.98); }
-        button:disabled { background-color: var(--tg-theme-hint-color, #cccccc); cursor: not-allowed; color: rgba(255, 255, 255, 0.7); }
         #game-interface { display: none; margin-top: 20px; align-items: center; }
         #multiplier-display { font-size: 28px; font-weight: bold; color: var(--tg-theme-link-color, #007bff); text-align: center; margin-bottom: 15px; background: #eef; padding: 10px; border-radius: 8px;}
         #status { margin-top: 15px; font-weight: 500; text-align: center; font-size: 15px; }
@@ -31,18 +27,19 @@
         .log-info { color: var(--tg-theme-text-color); }
         .log-warn { color: #ff8c00; }
         .log-error { color: var(--tg-theme-destructive-text-color, #ff0000); font-weight: bold;}
+        /* Controls needed for stake input */
+        #stake-controls { display: flex; flex-direction: column; gap: 12px; margin-bottom: 15px; }
     </style>
 </head>
-
 <body>
     <div class="container">
         <h1>🧗 Nims Climb</h1>
         <div class="balance">
             <p>BNB Balance: <span id="bnb-balance">0.0000</span></p>
             <p>NIMS Balance: <span id="nims-balance">0.0000</span></p>
-            </div>
+        </div>
 
-        <div class="controls" id="start-controls">
+        <div id="stake-controls">
              <label for="token-select">Currency:</label>
              <select id="token-select">
                  <option value="BNB">BNB</option>
@@ -50,428 +47,331 @@
              </select>
              <label for="stake-input">Stake Amount:</label>
              <input type="number" id="stake-input" placeholder="Enter stake (0.1 - 10)" step="0.1" min="0.1" max="10" value="0.1">
-             <button id="start-climbing">Start Climbing</button>
-        </div>
+             </div>
 
         <div id="game-interface">
             <p id="multiplier-display">Multiplier: <span id="multiplier">1.00x</span></p>
-            <button id="cashout-button">Cash Out</button>
-        </div>
+            </div>
 
         <p id="status">Initializing...</p>
         <div id="log-panel"></div>
     </div>
 
   <script>
+    // --- Global Variables ---
     let WebApp;
     let isInitialized = false;
     let isGameActive = false;
     let currentStake = 0;
     let currentToken = '';
-    let currentSessionId = null; // ** Added to store session ID
+    let currentSessionId = null;
     let multiplier = 1.0;
-    let gameInterval;
-    const crashProbability = 0.03; // Chance to crash each interval (3%)
-    const intervalTime = 400; // ms between multiplier increases
-    const multiplierIncrement = 0.05; // How much multiplier increases each interval
+    let gameInterval; // Can be interval ID or animation frame ID
+    let animationFrameId = null; // Specifically for requestAnimationFrame
 
+    const crashProbability = 0.03;
+    const intervalTime = 400; // Target interval for multiplier increase (ms)
+    const multiplierIncrement = 0.05;
+
+    // --- DOM Element References ---
     const statusEl = document.getElementById('status');
     const logPanel = document.getElementById('log-panel');
-    const startControls = document.getElementById('start-controls');
+    const stakeControls = document.getElementById('stake-controls'); // New ID for stake inputs area
     const gameInterface = document.getElementById('game-interface');
-    const startButton = document.getElementById('start-climbing');
-    const cashoutButton = document.getElementById('cashout-button');
     const multiplierEl = document.getElementById('multiplier');
     const bnbBalanceEl = document.getElementById('bnb-balance');
     const nimsBalanceEl = document.getElementById('nims-balance');
     const stakeInput = document.getElementById('stake-input');
     const tokenSelect = document.getElementById('token-select');
 
-    function logToUI(level, message) {
-        if (!logPanel) return;
-        const entry = document.createElement('div');
-        entry.className = `log-entry log-${level.toLowerCase()}`;
-        entry.textContent = `[${new Date().toISOString().slice(11, 19)}] ${level}: ${message}`;
-        logPanel.appendChild(entry);
-        logPanel.scrollTop = logPanel.scrollHeight; // Auto-scroll
-        console.log(`[${level}] ${message}`);
-    }
+    // --- Logging and Status ---
+    function logToUI(level, message) { /* ... keep existing logToUI ... */ }
+    function updateStatus(message, isError = false) { /* ... keep existing updateStatus ... */ }
 
-    function updateStatus(message, isError = false) {
-        if (!statusEl) return;
-        statusEl.textContent = message;
-        statusEl.classList.toggle('error', isError);
-    }
-
+    // --- WebApp Initialization ---
     function onWebAppScriptLoaded() {
-        logToUI('INFO', 'Telegram WebApp SDK script loaded');
-        if (!isInitialized) {
-             initializeWebApp();
-        }
+        // This is called by the script tag's onload attribute
+        logToUI('INFO', 'Telegram WebApp SDK script loaded via onload');
+        initializeWebApp(); // Initialize immediately after script loads
     }
 
     function initializeWebApp() {
         if (isInitialized) return;
         logToUI('INFO', 'Attempting to initialize Telegram WebApp...');
+
+        logToUI('DEBUG', `Checking window.Telegram: ${typeof window.Telegram}`);
+        logToUI('DEBUG', `Checking window.Telegram.WebApp: ${typeof window.Telegram?.WebApp}`);
         WebApp = window.Telegram?.WebApp;
 
-        if (!WebApp || !WebApp.initData) {
-            logToUI('ERROR', 'Telegram WebApp SDK not available or not in TG context.');
-            updateStatus('Error: Must be opened within Telegram.', true);
-            // Disable controls if SDK fails
-            if(startButton) startButton.disabled = true;
-            if(stakeInput) stakeInput.disabled = true;
-            if(tokenSelect) tokenSelect.disabled = true;
-            // Optionally show a more prominent error message or hide the container
-            return;
-        }
+        if (!WebApp) { logToUI('ERROR', 'window.Telegram.WebApp object is missing!'); updateStatus('Error: SDK Missing.', true); return; }
+        logToUI('DEBUG', `Checking WebApp.initData: ${!!WebApp.initData}`);
+        if (!WebApp.initData) { logToUI('ERROR', 'WebApp.initData is missing!'); updateStatus('Error: Init Data Missing.', true); return; }
 
         try {
             logToUI('INFO', `WebApp Raw initData: ${WebApp.initData.substring(0, 60)}...`);
-            WebApp.ready(); // Inform Telegram app UI is ready
-            WebApp.expand(); // Expand the Web App to full height
-            WebApp.enableClosingConfirmation(); // Ask user before closing if game running?
+            WebApp.ready(); // Inform Telegram UI is ready
+            logToUI('INFO', 'WebApp.ready() called.');
+            WebApp.expand(); // Expand the view
 
-            // Set background based on theme
+            // Apply theme
             document.body.style.backgroundColor = WebApp.themeParams.bg_color || '#f0f0f0';
             document.body.style.color = WebApp.themeParams.text_color || '#333';
 
             isInitialized = true;
             logToUI('INFO', 'WebApp initialized successfully.');
-            logToUI('DEBUG', `Version: ${WebApp.version}, Platform: ${WebApp.platform}, Color Scheme: ${WebApp.colorScheme}`);
             updateStatus('Loading your data...');
-            loadGameDataFromUrl(); // Parse URL data first
-            setupEventListeners(); // Setup buttons etc.
+
+            loadGameDataFromUrl(); // Load initial balance/state AFTER init
+            setupMainButton(); // Setup the Main Button logic
 
         } catch (e) {
             logToUI('ERROR', `WebApp initialization failed: ${e.message}`);
             updateStatus('Error initializing WebApp interface.', true);
-            if(startButton) startButton.disabled = true;
         }
     }
 
+    // --- Data Handling ---
     function loadGameDataFromUrl() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const dataParam = urlParams.get('data');
-        if (!dataParam) {
-            logToUI('WARN', 'No initial data parameter found in URL.');
-            updateStatus('Ready to climb!'); // Default status if no data
-            // Maybe request data from bot explicitly?
-            // sendBotData({ action: 'request_initial_data' });
-            return;
-        }
-        try {
-            const decodedData = decodeURIComponent(dataParam);
-            // Log first part of decoded data for security/privacy if needed
-            logToUI('DEBUG', `Decoded URL data (start): ${decodedData.substring(0, 100)}...`);
-            const gameData = JSON.parse(decodedData);
-            logToUI('INFO', `Parsed initial game data from URL.`); // Avoid logging full data directly
-
-            // Update balances display
-            bnbBalanceEl.textContent = parseFloat(gameData.bnb_balance || 0).toFixed(4);
-            nimsBalanceEl.textContent = parseFloat(gameData.nims_balance || 0).toFixed(4);
-            logToUI('INFO', `Balances updated: BNB=${gameData.bnb_balance || 0}, NIMS=${gameData.nims_balance || 0}`);
-
-
-            if (gameData.game_started && gameData.game_started.session_id) {
-                logToUI('INFO', `Found active game session in URL data: session_id=${gameData.game_started.session_id}`);
-                // Start or resume the climbing animation based on received data
-                startClimbing(gameData.game_started);
-            } else {
-                 logToUI('INFO', 'No active game session found in URL data.');
-                 resetToStartScreen(); // Ensure UI is in the 'start' state
-                 updateStatus('Ready to climb!');
-            }
-        } catch (e) {
-            logToUI('ERROR', `Failed to parse game data from URL: ${e.message}`);
-            updateStatus('Error loading data from Telegram.', true);
-        }
-    }
-
-     function sendBotData(data) {
-         if (!WebApp || !isInitialized) {
-             logToUI('ERROR', 'WebApp not initialized, cannot send data.');
-             updateStatus('Error: Cannot communicate with Telegram.', true);
+        // ... (Keep existing loadGameDataFromUrl - it should be fine) ...
+         const urlParams = new URLSearchParams(window.location.search);
+         const dataParam = urlParams.get('data');
+         if (!dataParam) {
+             logToUI('WARN', 'No initial data parameter found in URL.');
+             updateStatus('Ready to climb!');
+             resetToStartScreen(); // Ensure UI is correct state
              return;
          }
-         if (!WebApp.isVersionAtLeast('6.1')) {
-              logToUI('WARN', 'WebApp version might be too old for reliable sendData.');
-              // alert('Your Telegram app might be outdated. Please update for the best experience.');
-              // We can still try to send, but it might fail silently on very old clients
-         }
+         try {
+             const decodedData = decodeURIComponent(dataParam);
+             logToUI('DEBUG', `Decoded URL data (start): ${decodedData.substring(0, 100)}...`);
+             const gameData = JSON.parse(decodedData);
+             logToUI('INFO', `Parsed initial game data from URL.`);
 
+             bnbBalanceEl.textContent = parseFloat(gameData.bnb_balance || 0).toFixed(4);
+             nimsBalanceEl.textContent = parseFloat(gameData.nims_balance || 0).toFixed(4);
+             logToUI('INFO', `Balances updated: BNB=${gameData.bnb_balance || 0}, NIMS=${gameData.nims_balance || 0}`);
+
+             if (gameData.game_started && gameData.game_started.session_id) {
+                 logToUI('INFO', `Found active game session in URL data: session_id=${gameData.game_started.session_id}`);
+                 startClimbing(gameData.game_started); // Start/resume game state
+             } else {
+                  logToUI('INFO', 'No active game session found in URL data.');
+                  resetToStartScreen();
+                  updateStatus('Ready to climb!');
+             }
+         } catch (e) {
+             logToUI('ERROR', `Failed to parse game data from URL: ${e.message}`);
+             updateStatus('Error loading data from Telegram.', true);
+             resetToStartScreen();
+         }
+    }
+
+    function sendBotData(data) {
+        // ... (Keep existing sendBotData - it should be fine) ...
+         if (!WebApp || !isInitialized) { logToUI('ERROR', 'WebApp not initialized, cannot send data.'); updateStatus('Error: Cannot communicate.', true); return false; }
          try {
              const dataString = JSON.stringify(data);
              logToUI('INFO', `Sending data to bot: ${dataString}`);
              WebApp.sendData(dataString);
              logToUI('DEBUG', 'WebApp.sendData called.');
-             return true; // Indicate sending was attempted
+             return true;
          } catch (e) {
              logToUI('ERROR', `Failed to send data via WebApp.sendData: ${e.message}`);
              updateStatus('Communication Error.', true);
-             return false; // Indicate sending failed
+             return false;
          }
-     }
-
-
-    function setupEventListeners() {
-        if (!startButton || !cashoutButton || !stakeInput || !tokenSelect) {
-             logToUI('ERROR', 'One or more control elements are missing from the DOM.');
-             return;
-        }
-
-        startButton.addEventListener('click', () => {
-            logToUI('DEBUG', 'Start Climbing button clicked.');
-            if (isGameActive) {
-                logToUI('WARN', 'Game is already active, ignoring start click.');
-                return;
-            }
-
-            const stake = parseFloat(stakeInput.value);
-            const token = tokenSelect.value;
-
-            // --- Input Validation ---
-            if (!token || (token !== 'BNB' && token !== 'NIMS')) {
-                logToUI('WARN', 'Invalid token selected.');
-                updateStatus('Please select BNB or NIMS.', true);
-                return;
-            }
-            const minStake = 0.1, maxStake = 10.0;
-            if (isNaN(stake) || stake < minStake || stake > maxStake) {
-                logToUI('WARN', `Invalid stake amount: ${stake}. Must be between ${minStake} and ${maxStake}.`);
-                updateStatus(`Stake must be ${minStake} - ${maxStake} ${token}.`, true);
-                stakeInput.focus(); // Highlight the input field
-                return;
-            }
-
-            // --- Balance Check ---
-            const currentBnb = parseFloat(bnbBalanceEl.textContent);
-            const currentNims = parseFloat(nimsBalanceEl.textContent);
-            const balance = token === 'BNB' ? currentBnb : currentNims;
-
-            if (stake > balance) {
-                logToUI('WARN', `Insufficient balance. Needed: ${stake} ${token}, Have: ${balance}`);
-                updateStatus(`Insufficient ${token}: ${balance.toFixed(4)} available.`, true);
-                return;
-            }
-
-            // --- Prepare and Send Data ---
-            const dataToSend = {
-                action: 'start_game',
-                token: token,
-                stake: stake.toString() // Send stake as string for backend consistency
-            };
-
-            if (sendBotData(dataToSend)) {
-                startButton.disabled = true; // Disable button immediately
-                updateStatus('Starting game...');
-                logToUI('INFO', 'Start game request sent to bot.');
-            } else {
-                 // sendBotData already logged the error and updated status
-                 startButton.disabled = false; // Re-enable if sending failed
-            }
-        });
-
-        cashoutButton.addEventListener('click', () => {
-            logToUI('DEBUG', 'Cash Out button clicked.');
-            if (!isGameActive || !currentSessionId) { // Also check session ID
-                logToUI('WARN', 'Cashout clicked but game not active or no session ID.');
-                return;
-            }
-
-            // Stop the game locally immediately to capture current multiplier
-            const finalMultiplier = multiplier;
-            stopGame(); // Stops interval, resets UI visually
-
-            const dataToSend = {
-                action: 'cashout',
-                session_id: currentSessionId, // ** Send session ID
-                stake: currentStake,
-                multiplier: finalMultiplier, // Send the multiplier at time of click
-                token: currentToken
-            };
-
-            if (sendBotData(dataToSend)) {
-                 updateStatus('Cashing out...');
-                 logToUI('INFO', `Cashout request sent for session ${currentSessionId} at ${finalMultiplier.toFixed(2)}x.`);
-            } else {
-                 // Error already handled by sendBotData
-                 // Consider how to handle UI state if cashout sending fails - maybe try again?
-                 updateStatus('Cashout failed to send. Please try again or refresh.', true);
-                 // Re-enable the game? Or force refresh? For now, leave UI reset.
-            }
-        });
-
-         // Optional: Listen for visibility changes to pause/resume game?
-         // document.addEventListener("visibilitychange", () => {
-         //    if (document.hidden && isGameActive) {
-         //       logToUI('INFO', 'Page hidden, pausing game visually (backend continues)');
-         //       // You might clear the interval visually but let backend decide game state
-         //    } else if(!document.hidden && wasPaused) {
-         //       logToUI('INFO', 'Page visible again, requesting refresh');
-         //       // Request full refresh from bot
-         //       sendBotData({ action: 'refresh_balance' });
-         //    }
-         // });
     }
 
-    function startClimbing(gameData) {
-        if (!gameData || !gameData.session_id) {
-             logToUI('ERROR', 'Cannot start climbing, invalid game data received.');
-             resetToStartScreen();
-             updateStatus('Error starting game.', true);
-             return;
-        }
+    // --- Main Button Logic ---
+    function setupMainButton() {
+        // Configures the Main Button text and action based on game state
+        logToUI('DEBUG', `Setting up Main Button. Game active: ${isGameActive}`);
+        if (!WebApp || !WebApp.MainButton) { logToUI('ERROR', 'WebApp or MainButton not ready for setup.'); return; }
+
+        WebApp.MainButton.offClick(mainButtonClickHandler); // Remove previous listener
 
         if (isGameActive) {
-            logToUI('WARN', `startClimbing called but game already active (Session: ${currentSessionId}).`);
-            return; // Prevent multiple intervals
+            // Game is running - button should be "Cash Out"
+            WebApp.MainButton
+                .setText('Cash Out') // Keep text simple or add multiplier dynamically if needed
+                .setColor(WebApp.themeParams.button_color || '#007bff') // Standard button color
+                .enable()
+                .show();
+        } else {
+            // Game not running - button should be "Start Climbing"
+            WebApp.MainButton
+                .setText('Start Climbing')
+                .setColor('#28a745') // Use a distinct "start" color (e.g., green)
+                .enable()
+                .show();
         }
+        WebApp.MainButton.onClick(mainButtonClickHandler); // Add the listener
+        WebApp.MainButton.hideProgress(); // Ensure progress indicator is hidden initially
+    }
+
+    function mainButtonClickHandler() {
+        // Single handler decides action based on game state
+        logToUI('DEBUG', 'Main Button was clicked.');
+        if (isGameActive) {
+            handleCashoutViaMainButton();
+        } else {
+            handleStartGameViaMainButton();
+        }
+    }
+
+    function handleStartGameViaMainButton() {
+        logToUI('INFO', 'Attempting to start game via Main Button...');
+        const stake = parseFloat(stakeInput.value);
+        const token = tokenSelect.value;
+
+        // --- Validation ---
+        if (!token || (token !== 'BNB' && token !== 'NIMS')) { updateStatus('Select BNB or NIMS.', true); return; }
+        const minStake = 0.1, maxStake = 10.0;
+        if (isNaN(stake) || stake < minStake || stake > maxStake) { updateStatus(`Stake must be ${minStake} - ${maxStake} ${token}.`, true); stakeInput.focus(); return; }
+        const balance = token === 'BNB' ? parseFloat(bnbBalanceEl.textContent) : parseFloat(nimsBalanceEl.textContent);
+        if (stake > balance) { updateStatus(`Insufficient ${token}: ${balance.toFixed(4)} avail.`, true); return; }
+
+        const dataToSend = { action: 'start_game', token: token, stake: stake.toString() };
+
+        WebApp.MainButton.showProgress(false); // Show indeterminate loading
+        WebApp.MainButton.disable();
+        updateStatus('Starting game...');
+
+        if (!sendBotData(dataToSend)) {
+            // If sending failed immediately
+            WebApp.MainButton.hideProgress();
+            WebApp.MainButton.enable();
+            updateStatus('Failed to send start request.', true);
+        }
+        // If send succeeded, we wait for backend to potentially trigger startClimbing via URL reload
+        // OR we could optimistically start the animation - requires careful state management
+    }
+
+    function handleCashoutViaMainButton() {
+        logToUI('INFO', 'Attempting to cash out via Main Button...');
+        if (!isGameActive || !currentSessionId) { logToUI('WARN', 'Cashout clicked but game/session not active.'); return; }
+
+        const finalMultiplier = multiplier;
+        stopGame(); // Stop animation, reset variables locally first
+
+        const dataToSend = {
+            action: 'cashout', session_id: currentSessionId,
+            stake: currentStake, multiplier: finalMultiplier, token: currentToken
+        };
+
+        WebApp.MainButton.showProgress(false);
+        WebApp.MainButton.disable();
+        updateStatus('Cashing out...');
+
+        if (!sendBotData(dataToSend)) {
+             WebApp.MainButton.hideProgress();
+             // Button state should be reset via stopGame -> resetToStartScreen -> setupMainButton
+             updateStatus('Cashout failed to send.', true);
+        }
+        // Backend will confirm cashout via message. UI is already reset by stopGame.
+    }
+
+    // --- Game Logic ---
+    function startClimbing(gameData) {
+        if (isGameActive) { logToUI('WARN', `startClimbing called but game already active.`); return; }
+        if (!gameData || !gameData.session_id) { logToUI('ERROR', 'Invalid game data for startClimbing.'); resetToStartScreen(); return; }
 
         isGameActive = true;
         currentStake = parseFloat(gameData.stake);
         currentToken = gameData.token;
-        currentSessionId = gameData.session_id; // ** Store session ID
-        multiplier = 1.0; // Start multiplier fresh
+        currentSessionId = gameData.session_id;
+        multiplier = 1.0; // Reset multiplier for new game
 
-        logToUI('INFO', `Starting climb animation for session ${currentSessionId}, Stake: ${currentStake} ${currentToken}`);
+        logToUI('INFO', `Starting climb animation: session ${currentSessionId}, Stake: ${currentStake} ${currentToken}`);
 
-        startControls.style.display = 'none';
-        gameInterface.style.display = 'flex'; // Use flex for alignment
+        stakeControls.style.display = 'none'; // Hide stake controls
+        gameInterface.style.display = 'flex';
         multiplierEl.textContent = `${multiplier.toFixed(2)}x`;
         updateStatus(`Climbing! Current stake: ${currentStake} ${currentToken}`);
-        cashoutButton.disabled = false; // Ensure cashout is enabled
 
-        // Request animation frame for smoother updates if possible, fallback to interval
+        setupMainButton(); // Update Main Button to "Cash Out" mode
+        WebApp.enableClosingConfirmation(); // Prevent accidental close during game
+
+        // --- Animation Loop ---
         let lastFrameTime = performance.now();
         let timeAccumulator = 0;
+        if (animationFrameId) cancelAnimationFrame(animationFrameId); // Clear previous frame
 
         function gameLoop(currentTime) {
-            if (!isGameActive) return; // Stop loop if game ended
+            if (!isGameActive) return; // Stop if game ended elsewhere
 
             const deltaTime = currentTime - lastFrameTime;
             lastFrameTime = currentTime;
             timeAccumulator += deltaTime;
 
-            // Update multiplier based on interval time, not frame rate
             while (timeAccumulator >= intervalTime) {
                 multiplier += multiplierIncrement;
-                multiplierEl.textContent = `${multiplier.toFixed(2)}x`;
+                multiplierEl.textContent = `${multiplier.toFixed(2)}x`; // Update display
                 timeAccumulator -= intervalTime;
 
-                 // Crash check (on interval, not per frame)
-                 if (Math.random() < crashProbability) {
-                     logToUI('WARN', `Crash detected visually at ${multiplier.toFixed(2)}x! Informing bot.`);
-                     handleCrash(); // Handle the crash: stop loop, send data
-                     return; // Stop the loop
-                 }
+                // Crash check
+                if (Math.random() < crashProbability) {
+                    logToUI('WARN', `Crash detected visually at ${multiplier.toFixed(2)}x!`);
+                    handleCrash(); // Handle crash: send data, stop loop
+                    return; // Exit loop
+                }
             }
-
-            requestAnimationFrame(gameLoop); // Continue the loop
+            animationFrameId = requestAnimationFrame(gameLoop); // Continue loop
         }
-
-        // Clear any existing interval just in case
-        if (gameInterval) clearInterval(gameInterval);
-        // Start the game loop
-        requestAnimationFrame(gameLoop);
-
-        // Fallback using setInterval if requestAnimationFrame is too complex
-        // gameInterval = setInterval(() => {
-        //     if (!isGameActive) {
-        //         clearInterval(gameInterval);
-        //         return;
-        //     }
-        //     multiplier += multiplierIncrement;
-        //     multiplierEl.textContent = `${multiplier.toFixed(2)}x`;
-        //
-        //     if (Math.random() < crashProbability) {
-        //         logToUI('WARN', `Crash detected visually at ${multiplier.toFixed(2)}x! Informing bot.`);
-        //         handleCrash();
-        //     }
-        // }, intervalTime);
-
-         // Enable closing confirmation when game starts
-         WebApp.enableClosingConfirmation();
+        animationFrameId = requestAnimationFrame(gameLoop); // Start loop
     }
 
     function handleCrash() {
-         // Stop the game locally FIRST
-         const crashedMultiplier = multiplier; // Capture multiplier at crash
-         stopGame(); // Stops interval/animation, resets UI variables
+         const crashedMultiplier = multiplier;
+         stopGame(); // Stop animation, reset variables locally FIRST
 
-         // Send 'lost' action to the bot
          const dataToSend = {
-             action: 'lost',
-             session_id: currentSessionId, // ** Send session ID
-             stake: currentStake,
-             token: currentToken,
-             multiplier_at_crash: crashedMultiplier // Optional: for logging on backend
+             action: 'lost', session_id: currentSessionId,
+             stake: currentStake, token: currentToken,
+             multiplier_at_crash: crashedMultiplier
          };
 
-         if(sendBotData(dataToSend)) {
-             logToUI('INFO', `Sent 'lost' signal to bot for session ${currentSessionId}.`);
-             updateStatus(`💥 Crashed at ${crashedMultiplier.toFixed(2)}x! Game Over.`, true);
+         // Don't need to disable MainButton here, stopGame->resetToStartScreen handles it
+         updateStatus(`💥 Crashed at ${crashedMultiplier.toFixed(2)}x! Game Over.`, true);
+
+         if(!sendBotData(dataToSend)) {
+             updateStatus('💥 Crashed! Failed to notify server.', true);
          } else {
-              updateStatus('💥 Crashed! Failed to notify server.', true);
+             logToUI('INFO', `Sent 'lost' signal for session ${currentSessionId}.`);
          }
-         // UI is already reset by stopGame()
     }
 
-
     function stopGame() {
-        logToUI('INFO', 'Stopping game animation/interval.');
+        logToUI('INFO', 'Stopping game animation/state.');
         isGameActive = false;
-        if (gameInterval) { // Clear interval if used
-            clearInterval(gameInterval);
-            gameInterval = null;
-        }
-        // Reset variables (keep last stake/token for display if needed?)
+        if (animationFrameId) { cancelAnimationFrame(animationFrameId); animationFrameId = null; }
+        // Reset potentially sensitive game state vars
+        // currentSessionId = null; // Keep session ID if needed for final message? No, reset.
         // currentStake = 0;
         // currentToken = '';
-        currentSessionId = null; // Clear session ID
         multiplier = 1.0;
 
         resetToStartScreen();
-
-         // Disable closing confirmation when game ends
-         WebApp.disableClosingConfirmation();
+        WebApp.disableClosingConfirmation();
     }
 
      function resetToStartScreen() {
-         logToUI('DEBUG', 'Resetting UI to start screen.');
-         startControls.style.display = 'flex'; // Use flex
+         logToUI('DEBUG', 'Resetting UI to start screen state.');
+         stakeControls.style.display = 'flex'; // Show stake controls again
          gameInterface.style.display = 'none';
-         if(startButton) startButton.disabled = false; // Re-enable start button
-         if(cashoutButton) cashoutButton.disabled = true; // Disable cashout button
-         // Don't reset status message here, let caller set it
+         setupMainButton(); // Reset Main Button to "Start Climbing"
+         // Don't reset status message here, let caller do it
      }
 
-
-    // --- Initialization Trigger ---
-    // Use DOMContentLoaded as a primary trigger, fallback to script load event
-    document.addEventListener('DOMContentLoaded', () => {
-         logToUI('INFO', 'DOM fully loaded.');
-         if (window.Telegram && window.Telegram.WebApp) {
-             if (!isInitialized) initializeWebApp();
-         } else {
-             logToUI('WARN', 'Telegram WebApp SDK not immediately available on DOMContentLoaded, relying on script load.');
-             // The script's async onload will call onWebAppScriptLoaded -> initializeWebApp
-         }
-    });
-
-    // If the script loads *after* DOMContentLoaded (e.g., slow network), this ensures init still happens
-    // Check if the script is already loaded (might happen with caching)
-    if (document.readyState === 'complete' || document.readyState === 'interactive') {
-        if (window.Telegram && window.Telegram.WebApp && !isInitialized) {
-            logToUI('INFO', 'DOM interactive/complete and SDK found, initializing early.');
-            initializeWebApp();
-        }
+    // --- Initial Check ---
+    // Check immediately if SDK exists, useful if script loads very fast
+    if (window.Telegram && window.Telegram.WebApp && !isInitialized) {
+        logToUI('INFO', 'SDK found synchronously, initializing.');
+        initializeWebApp();
+    } else if (!window.Telegram || !window.Telegram.WebApp) {
+         logToUI('INFO', 'SDK not found synchronously, waiting for onload event.');
+         // The onload handler on the script tag will call initializeWebApp
     }
-
-    // **REMOVED Redundant Calls:**
-    // Telegram.WebApp.ready();
-    // Telegram.WebApp.expand();
-    // console.log("WebApp initialized:", Telegram.WebApp.initData);
 
   </script>
 </body>
