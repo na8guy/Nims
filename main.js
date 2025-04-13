@@ -12,6 +12,8 @@ const ctx = canvas.getContext('2d');
 const nims = document.getElementById('nimsCharacter');
 const altitudeDisplay = document.getElementById('altitude');
 const multiplierDisplay = document.getElementById('multiplier');
+const bnbBalance = document.getElementById('bnbBalance');
+const nimsBalance = document.getElementById('nimsBalance');
 const earnedTickets = document.getElementById('earnedTickets');
 const purchasedTickets = document.getElementById('purchasedTickets');
 const leaderboardList = document.getElementById('leaderboardList');
@@ -20,6 +22,7 @@ const tokenSelect = document.getElementById('tokenSelect');
 const stakeButton = document.getElementById('stakeButton');
 const restButton = document.getElementById('restButton');
 const cashoutButton = document.getElementById('cashoutButton');
+const gameControls = document.querySelector('.game-controls');
 const graphSvg = document.getElementById('graphSvg');
 const altitudeLine = document.getElementById('altitudeLine');
 const avalancheOverlay = document.getElementById('avalancheOverlay');
@@ -27,10 +30,16 @@ const errorPopup = document.getElementById('errorPopup');
 let particles = [];
 
 function resizeCanvas() {
-    canvas.width = Math.min(window.innerWidth * 0.9, 500);
-    canvas.height = Math.min(window.innerHeight * 0.7, 700);
-    graphSvg.setAttribute('width', Math.min(window.innerWidth * 0.15, 100));
-    graphSvg.setAttribute('height', canvas.height);
+    const dpr = window.devicePixelRatio || 1;
+    const maxWidth = Math.min(window.innerWidth, 600);
+    const maxHeight = Math.min(window.innerHeight * 0.6, 800);
+    canvas.style.width = `${maxWidth}px`;
+    canvas.style.height = `${maxHeight}px`;
+    canvas.width = maxWidth * dpr;
+    canvas.height = maxHeight * dpr;
+    ctx.scale(dpr, dpr);
+    graphSvg.style.width = `${Math.min(window.innerWidth * 0.15, 100)}px`;
+    graphSvg.style.height = `${maxHeight}px`;
 }
 
 function showError(message) {
@@ -58,6 +67,8 @@ function initGame() {
 
 function updateUI() {
     if (!gameData) return;
+    bnbBalance.textContent = parseFloat(gameData.bnb_balance || 0).toFixed(4);
+    nimsBalance.textContent = parseFloat(gameData.nims_balance || 0).toFixed(4);
     earnedTickets.textContent = gameData.raffle_tickets || 0;
     purchasedTickets.textContent = gameData.purchased_tickets || 0;
     leaderboardList.innerHTML = gameData.leaderboard && gameData.leaderboard.length > 0
@@ -75,10 +86,13 @@ function updateUI() {
         cashoutButton.disabled = false;
         graphPoints = [[0, '100%']];
         lastMilestone = 1000;
+        canvas.classList.remove('hidden');
+        nims.classList.remove('hidden');
+        gameControls.classList.add('active');
         nims.classList.add('climbing');
         startClimbing();
     } else {
-        nims.classList.remove('climbing', 'waving');
+        resetGame();
     }
 }
 
@@ -116,14 +130,14 @@ function updateGame() {
         }, 800);
     }
 
-    const canvasHeight = canvas.height;
+    const canvasHeight = canvas.height / (window.devicePixelRatio || 1);
     const nimsY = canvasHeight - (multiplier - 1) * 80;
     nims.style.bottom = `${Math.max(50, Math.min(canvasHeight - 85, nimsY))}px`;
 
     const graphX = graphPoints[graphPoints.length - 1][0] + delta * 70;
     const graphY = `${100 - (multiplier - 1) * 20}%`;
     graphPoints.push([graphX, graphY]);
-    if (graphX > graphSvg.getAttribute('width')) {
+    if (graphX > parseFloat(graphSvg.style.width)) {
         graphPoints.shift();
         graphPoints = graphPoints.map(([x, y]) => [x - delta * 70, y]);
     }
@@ -139,8 +153,8 @@ function updateGame() {
 function drawWind() {
     if (Math.random() < 0.2) {
         particles.push({
-            x: canvas.width,
-            y: Math.random() * canvas.height,
+            x: canvas.width / (window.devicePixelRatio || 1),
+            y: Math.random() * canvas.height / (window.devicePixelRatio || 1),
             size: 3 + Math.random() * 5,
             speed: 80 + Math.random() * 80,
             type: 'wind'
@@ -167,7 +181,7 @@ function drawParticles() {
             ctx.drawImage(p.image, p.x, p.y, p.size, p.size);
         }
     });
-    particles = particles.filter(p => p.y < canvas.height + p.size);
+    particles = particles.filter(p => p.y < canvas.height / (window.devicePixelRatio || 1) + p.size);
 }
 
 function triggerAvalanche() {
@@ -180,7 +194,7 @@ function triggerAvalanche() {
     snowImage.src = '/assets/snow.png';
     for (let i = 0; i < 100; i++) {
         particles.push({
-            x: Math.random() * canvas.width,
+            x: Math.random() * canvas.width / (window.devicePixelRatio || 1),
             y: -20,
             size: 6 + Math.random() * 12,
             vx: (Math.random() - 0.5) * 60,
@@ -224,7 +238,9 @@ function resetGame() {
     stakeButton.disabled = false;
     restButton.disabled = true;
     cashoutButton.disabled = true;
-    nims.style.bottom = '50px';
+    canvas.classList.add('hidden');
+    nims.classList.add('hidden');
+    gameControls.classList.remove('active');
     nims.classList.remove('climbing', 'waving');
     altitudeDisplay.textContent = altitude;
     multiplierDisplay.textContent = '1.0';
@@ -237,6 +253,10 @@ stakeButton.addEventListener('click', () => {
     const token = tokenSelect.value;
     if (isNaN(stake) || stake < 0.01) {
         showError('Stake must be at least 0.01.');
+        return;
+    }
+    if (parseFloat(gameData[token.toLowerCase() + '_balance']) < stake) {
+        showError(`Insufficient ${token} balance.`);
         return;
     }
     Telegram.WebApp.sendData(JSON.stringify({
