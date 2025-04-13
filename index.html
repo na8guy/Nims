@@ -353,6 +353,19 @@
             closeModal();
         }
 
+        // Assuming raffleDisplay and leaderboardDisplay are HTML elements
+if (gameData) {
+    console.log("Received gameData:", gameData); // Debug log
+    raffleDisplay.textContent = `Earned Tickets: ${gameData.raffle_tickets || 0} | Purchased: ${gameData.purchased_tickets || 0}`;
+    if (gameData.leaderboard && gameData.leaderboard.length > 0) {
+        leaderboardDisplay.innerHTML = gameData.leaderboard.map(entry => 
+            `<li>User ${entry.user_id}: ${entry.highest_cashout.toFixed(4)} NIMS</li>`
+        ).join('');
+    } else {
+        leaderboardDisplay.textContent = "No leaderboard data yet.";
+    }
+}
+
         function buyRaffleTickets() {
             const tickets = parseInt(ticketAmount.value);
             if (!tickets || tickets < 1) {
