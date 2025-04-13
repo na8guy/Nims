@@ -109,17 +109,18 @@
             left: 0;
             width: 100%;
             height: 100%;
-            z-index: 0;
+            z-index: -1;
         }
         #controls {
             grid-area: controls;
             padding: 0.5rem;
-            background: #1e293b;
+            /*background: #1e293b;*/
+            background:rgba( 0,0,0,0.5);
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
             gap: 0.5rem;
-            box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.5);
+            /*box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.5);*/
         }
         #stakeInput, #tokenSelect {
             padding: 0.75rem;
