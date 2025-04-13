@@ -1,0 +1,305 @@
+body {
+    margin: 0;
+    overflow: hidden;
+    background: linear-gradient(to bottom, #ff7f50, #1e3c72);
+    font-family: 'Arial', sans-serif;
+}
+
+.game-container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* Background Layers */
+.background {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
+.mountain-layer {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: bottom;
+}
+
+.layer-1 {
+    background: url('/assets/mountain1.png') repeat-x;
+    z-index: 2;
+    animation: parallax 60s linear infinite;
+}
+
+.layer-2 {
+    background: url('/assets/mountain2.png') repeat-x;
+    z-index: 3;
+    animation: parallax 40s linear infinite;
+}
+
+.layer-3 {
+    background: url('/assets/mountain3.png') repeat-x;
+    z-index: 4;
+    animation: parallax 20s linear infinite;
+}
+
+.cloud-layer {
+    background: url('/assets/clouds.png') repeat-x;
+    z-index: 5;
+    animation: clouds 100s linear infinite;
+}
+
+/* Fallbacks if assets are missing */
+.layer-1:not([style*="mountain1.png"]) {
+    background: linear-gradient(to top, #2f4f4f, transparent 50%);
+}
+
+.layer-2:not([style*="mountain2.png"]) {
+    background: linear-gradient(to top, #696969, transparent 50%);
+}
+
+.layer-3:not([style*="mountain3.png"]) {
+    background: linear-gradient(to top, #8b4513, transparent 50%);
+}
+
+.cloud-layer:not([style*="clouds.png"]) {
+    background: none;
+}
+
+.cloud-layer::before {
+    content: '';
+    position: absolute;
+    width: 150px;
+    height: 50px;
+    background: #f5f5f5;
+    border-radius: 50px;
+    opacity: 0.3;
+    animation: clouds 30s linear infinite;
+}
+
+@keyframes parallax {
+    0% { background-position: 0 100%; }
+    100% { background-position: -2000px 100%; }
+}
+
+@keyframes clouds {
+    0% { transform: translateX(100vw); }
+    100% { transform: translateX(-150px); }
+}
+
+/* Canvas for Particles */
+#gameCanvas {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+}
+
+/* Nims Character */
+.nims {
+    position: absolute;
+    width: 50px;
+    height: 70px;
+    background: url('/assets/nims.png') no-repeat;
+    background-size: 200px 70px;
+    z-index: 15;
+    left: 50%;
+    transform: translateX(-50%);
+    transition: bottom 0.1s;
+}
+
+.nims.climbing {
+    animation: climb 0.6s steps(3) infinite;
+}
+
+.nims.waving {
+    animation: wave 1s steps(1);
+}
+
+@keyframes climb {
+    0% { background-position: 0 0; }
+    100% { background-position: -150px 0; }
+}
+
+@keyframes wave {
+    0% { background-position: -150px 0; }
+    100% { background-position: -150px 0; }
+}
+
+/* Altitude Graph */
+.altitude-graph {
+    position: absolute;
+    right: 10px;
+    top: 0;
+    height: 100%;
+    z-index: 20;
+}
+
+#graphSvg {
+    background: rgba(0, 0, 0, 0.3);
+    border-left: 1px solid #fff;
+}
+
+.altitude-markers {
+    position: absolute;
+    right: 10px;
+    top: 0;
+    height: 100%;
+    color: #fff;
+    font-size: 12px;
+}
+
+.altitude-markers::before {
+    content: '1000m';
+    position: absolute;
+    bottom: 0;
+}
+
+.altitude-markers::after {
+    content: '5000m';
+    position: absolute;
+    top: 0;
+}
+
+/* Altitude Scale */
+.altitude-scale {
+    position: absolute;
+    left: 10px;
+    top: 0;
+    height: 100%;
+    z-index: 20;
+    color: #fff;
+    font-size: 12px;
+}
+
+.marker {
+    position: absolute;
+    left: 0;
+}
+
+/* UI Overlay */
+.ui-overlay {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    right: 120px;
+    z-index: 30;
+    color: #fff;
+    text-shadow: 0 0 5px #000;
+}
+
+.altitude-display, .multiplier-display {
+    font-size: 20px;
+    margin-bottom: 10px;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 5px 10px;
+    border-radius: 5px;
+}
+
+.controls {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+#stakeInput, #tokenSelect, button {
+    padding: 10px;
+    border: none;
+    border-radius: 8px;
+    background: #ffffffcc;
+    color: #000;
+    font-size: 16px;
+    transition: transform 0.2s, background 0.2s;
+}
+
+button {
+    cursor: pointer;
+    background: linear-gradient(to bottom, #00ff88, #00cc66);
+    box-shadow: 0 0 10px #00ff88;
+}
+
+button:disabled {
+    background: #666;
+    box-shadow: none;
+    cursor: not-allowed;
+}
+
+button:hover:not(:disabled) {
+    transform: scale(1.05);
+}
+
+.raffle-display {
+    font-size: 16px;
+    margin-bottom: 10px;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 5px 10px;
+    border-radius: 5px;
+}
+
+.raffle-display span {
+    animation: pop 0.3s ease-out;
+}
+
+@keyframes pop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+.leaderboard {
+    background: rgba(0, 0, 0, 0.7);
+    padding: 10px;
+    border-radius: 8px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.leaderboard h3 {
+    margin: 0 0 5px;
+    font-size: 18px;
+}
+
+#leaderboardList {
+    list-style: none;
+    padding: 0;
+    font-size: 14px;
+}
+
+#leaderboardList li {
+    padding: 3px 0;
+}
+
+/* Avalanche Effect */
+.avalanche {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    z-index: 25;
+    pointer-events: none;
+}
+
+.avalanche.active {
+    background: rgba(255, 255, 255, 0.5);
+    animation: avalancheFade 2.5s forwards;
+}
+
+@keyframes avalancheFade {
+    0% { background: rgba(255, 255, 255, 0); }
+    50% { background: rgba(255, 255, 255, 0.8); }
+    100% { background: rgba(255, 255, 255, 0); }
+}
+
+@keyframes shake {
+    0% { transform: translate(0, 0); }
+    25% { transform: translate(-5px, 5px); }
+    50% { transform: translate(5px, -5px); }
+    75% { transform: translate(-5px, 5px); }
+    100% { transform: translate(0, 0); }
+}
