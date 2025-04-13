@@ -12,7 +12,9 @@
             box-sizing: border-box;
             margin: 0;
             padding: 0;
+            /* Modern font stack */
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            /* Disable text selection and tap highlights for better UX */
             user-select: none;
             -webkit-user-select: none;
             -moz-user-select: none;
@@ -22,43 +24,45 @@
 
         /* --- Body Layout (Grid) --- */
         body {
-            /* Updated background for a richer sky */
+            /* Richer sky gradient */
             background: linear-gradient(to bottom, #1a2a45, #2a3a5a, #4a5a7a);
-            color: #e0e0e0; /* Lighter text color */
+            color: #e0e0e0; /* Light text for contrast */
             min-height: 100vh;
-            height: 100vh; /* Fix height to viewport */
-            overflow: hidden;
+            height: 100vh; /* Fix height to prevent unexpected scrolling */
+            overflow: hidden; /* Hide body scrollbars */
             display: grid;
             grid-template-areas:
                 "header header"
                 "sidebar main"
                 "controls controls";
-            grid-template-columns: minmax(200px, 260px) 1fr; /* Slightly wider sidebar */
-            grid-template-rows: auto 1fr auto;
-            gap: 5px;
+            grid-template-columns: minmax(200px, 260px) 1fr; /* Responsive sidebar width */
+            grid-template-rows: auto 1fr auto; /* Header, Main (flexible), Controls */
+            gap: 5px; /* Small gap between grid areas */
         }
 
         /* --- Header --- */
         #header {
             grid-area: header;
-            background: rgba(22, 33, 62, 0.85); /* Semi-transparent header */
-            backdrop-filter: blur(5px); /* Frosted glass effect */
+            /* Semi-transparent frosted glass effect */
+            background: rgba(22, 33, 62, 0.85);
+            backdrop-filter: blur(5px);
             padding: 0.75rem 1rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
-            z-index: 10;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 10; /* Ensure header is above other elements */
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* Subtle separator */
         }
 
         #balance {
-            font-size: clamp(0.8rem, 2.5vw, 1rem);
+            font-size: clamp(0.8rem, 2.5vw, 1rem); /* Responsive font size */
             text-align: right;
             font-weight: 500;
         }
-        #balance span { /* Style token names */
-             color: #ffc107; /* Gold-like color for BNB/NIMS */
+        /* Style token names for emphasis */
+        #balance span {
+             color: #ffc107; /* Gold-like color */
              font-weight: bold;
         }
 
@@ -66,15 +70,16 @@
         /* --- Sidebar --- */
         #sidebar {
             grid-area: sidebar;
-            background: rgba(15, 52, 96, 0.8); /* Darker, semi-transparent */
+            /* Darker, semi-transparent background */
+            background: rgba(15, 52, 96, 0.8);
             backdrop-filter: blur(5px);
             padding: 0.75rem;
-            overflow-y: auto;
-            max-height: calc(100vh - 100px); /* Adjust based on header/controls height */
-            z-index: 5;
-            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            overflow-y: auto; /* Enable scrolling if content overflows */
+            max-height: calc(100vh - 100px); /* Limit height based on header/controls */
+            z-index: 5; /* Above canvas background, below header/modals */
+            border-right: 1px solid rgba(255, 255, 255, 0.1); /* Subtle separator */
         }
-        /* Custom scrollbar for sidebar */
+        /* Custom scrollbar styling (WebKit browsers) */
         #sidebar::-webkit-scrollbar { width: 6px; }
         #sidebar::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); }
         #sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 3px;}
@@ -85,32 +90,36 @@
             margin-bottom: 0.5rem;
             border-bottom: 1px solid rgba(255, 255, 255, 0.2);
             padding-bottom: 0.3rem;
-            color: #ffca28; /* Header color */
+            color: #ffca28; /* Use a highlight color */
             font-weight: 600;
         }
 
+        /* Styling for buttons within the sidebar */
         #sidebar button, .sidebar-info button {
             width: 100%;
-            padding: 0.7rem 0.5rem; /* Increased padding slightly */
+            padding: 0.7rem 0.5rem;
             margin: 0.4rem 0;
-            background: linear-gradient(145deg, #e94560, #b83048); /* Gradient button */
+            /* Attractive gradient background */
+            background: linear-gradient(145deg, #e94560, #b83048);
             border: none;
             border-radius: 5px;
             color: #fff;
             font-size: clamp(0.85rem, 2.5vw, 0.95rem);
             font-weight: 500;
             cursor: pointer;
-            transition: all 0.2s ease-in-out;
+            transition: all 0.2s ease-in-out; /* Smooth transitions for hover/active states */
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
             text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
-            touch-action: manipulation;
+            touch-action: manipulation; /* Improve touch responsiveness */
         }
-         .sidebar-info button { /* Refresh button style */
-            width: auto;
+        /* Specific styling for smaller buttons like 'Refresh' */
+         .sidebar-info button {
+            width: auto; /* Allow inline size */
             padding: 0.2rem 0.5rem;
             margin-left: 8px;
             font-size: 0.75rem;
             vertical-align: middle;
+            /* Muted background for less important buttons */
             background: rgba(255, 255, 255, 0.2);
              box-shadow: none;
              text-shadow: none;
@@ -119,56 +128,66 @@
             background: rgba(255, 255, 255, 0.3);
         }
 
+        /* Hover and active states for primary sidebar buttons */
         #sidebar button:hover:not(:disabled) {
-            background: linear-gradient(145deg, #ff6b6b, #d44860);
+            background: linear-gradient(145deg, #ff6b6b, #d44860); /* Brighter gradient on hover */
             transform: translateY(-1px); /* Subtle lift effect */
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
         }
          #sidebar button:active:not(:disabled) {
-              transform: translateY(0px);
+              transform: translateY(0px); /* Return to normal position on click */
               box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
          }
-
+         /* Disabled state for sidebar buttons */
          #sidebar button:disabled {
-             background: #5a6268;
+             background: #5a6268; /* Greyed out */
              cursor: not-allowed;
              opacity: 0.7;
              box-shadow: none;
          }
 
+        /* Styling for info boxes (Jackpot, Raffle) */
         .sidebar-info {
             margin: 0.75rem 0;
             font-size: clamp(0.8rem, 2.5vw, 0.9rem);
-            background-color: rgba(22, 33, 62, 0.7); /* Match header */
+            background-color: rgba(22, 33, 62, 0.7); /* Match header transparency */
             padding: 0.6rem 0.8rem;
             border-radius: 4px;
-            border: 1px solid rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.05); /* Subtle border */
         }
 
+        /* Leaderboard styling */
         #leaderboard ul { list-style: none; padding: 0; }
         #leaderboard li {
             padding: 0.4rem 0.2rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* Faint separator */
             font-size: 0.85rem;
             display: flex;
             justify-content: space-between;
+            align-items: center;
         }
         #leaderboard li:last-child { border-bottom: none; }
-        #leaderboard li span:first-child { /* Rank/User ID */
+        /* Style rank/user ID part */
+        #leaderboard li span:first-child {
              opacity: 0.8;
+             white-space: nowrap;
+             overflow: hidden;
+             text-overflow: ellipsis; /* Handle long user IDs */
+             padding-right: 5px;
         }
-         #leaderboard li span:last-child { /* Score */
+        /* Style score part */
+         #leaderboard li span:last-child {
              font-weight: bold;
              color: #ffeb3b; /* Yellow score */
+             flex-shrink: 0; /* Prevent score from shrinking */
          }
 
 
         /* --- Main Game Area (Canvas) --- */
         #game-container {
             grid-area: main;
-            position: relative;
-            overflow: hidden;
-            /* Background gradient moved to body, container is for canvas layers */
+            position: relative; /* For positioning canvas layers */
+            overflow: hidden; /* Clip content outside container */
         }
 
         #gameCanvas {
@@ -177,8 +196,9 @@
             left: 0;
             width: 100%;
             height: 100%;
-            touch-action: none;
-            z-index: 1;
+            touch-action: none; /* Disable default touch actions like pinch-zoom */
+            z-index: 1; /* Base canvas layer */
+            /* Background is handled by body/container */
         }
 
 
@@ -186,33 +206,36 @@
         #controls {
             grid-area: controls;
             padding: 0.6rem 0.8rem;
-            background: rgba(22, 33, 62, 0.85); /* Match header */
+            /* Match header style */
+            background: rgba(22, 33, 62, 0.85);
             backdrop-filter: blur(5px);
             display: flex;
-            flex-wrap: wrap;
+            flex-wrap: wrap; /* Allow wrapping on smaller screens */
             justify-content: center;
-            align-items: center;
+            align-items: center; /* Vertically align items */
             gap: 0.6rem;
-            z-index: 10;
-             border-top: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 10; /* Above game canvas */
+             border-top: 1px solid rgba(255, 255, 255, 0.1); /* Subtle separator */
         }
 
+        /* Input field styling */
         #stakeInput, #tokenSelect {
             padding: 0.7rem;
             border-radius: 4px;
             border: 1px solid #555;
-            background: #f0f0f0;
-            color: #333;
+            background: #f0f0f0; /* Light background for readability */
+            color: #333; /* Dark text */
             font-size: clamp(0.85rem, 2.5vw, 0.95rem);
-            max-width: 130px;
+            max-width: 130px; /* Limit width */
             text-align: center;
             font-weight: 500;
         }
+        /* Remove number input spinners */
         #stakeInput { -moz-appearance: textfield; }
          #stakeInput::-webkit-outer-spin-button,
          #stakeInput::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 
-
+        /* Control button styling */
         #controls button {
             padding: 0.7rem 1.2rem;
             border: none;
@@ -222,13 +245,14 @@
             font-size: clamp(0.9rem, 3vw, 1.05rem);
             font-weight: bold;
             cursor: pointer;
-            transition: all 0.2s ease-in-out;
+            transition: all 0.2s ease-in-out; /* Smooth transitions */
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
             text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
             touch-action: manipulation;
-            flex-grow: 1;
-            max-width: 160px;
+            flex-grow: 1; /* Allow buttons to take available space */
+            max-width: 160px; /* Limit max width */
         }
+        /* Disabled state for control buttons */
         #controls button:disabled {
             background: #5a6268;
             cursor: not-allowed;
@@ -236,9 +260,10 @@
              box-shadow: none;
              text-shadow: none;
         }
+        /* Hover and active states for control buttons */
          #controls button:hover:not(:disabled) {
             background: linear-gradient(145deg, #ff6b6b, #d44860);
-             transform: translateY(-1px); /* Subtle lift effect */
+             transform: translateY(-1px);
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
          }
          #controls button:active:not(:disabled) {
@@ -248,64 +273,67 @@
 
         /* --- Modal --- */
         #modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            display: none; /* Hidden by default */
+            position: fixed; /* Overlay */
+            top: 0; left: 0;
+            width: 100%; height: 100%;
             background: rgba(0, 0, 0, 0.88); /* Darker overlay */
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            backdrop-filter: blur(3px);
+            align-items: center; /* Center vertically */
+            justify-content: center; /* Center horizontally */
+            z-index: 1000; /* Ensure modal is on top */
+            backdrop-filter: blur(3px); /* Blur background */
         }
 
+        /* Modal content box */
         .modal-content {
-            background: #1f2940; /* Dark modal background */
+            background: #1f2940; /* Dark background */
             padding: 1.5rem 2rem;
             border-radius: 8px;
-            width: min(90%, 450px);
+            width: min(90%, 450px); /* Responsive width */
             text-align: center;
             box-shadow: 0 5px 20px rgba(0,0,0,0.4);
             border: 1px solid rgba(255,255,255,0.1);
         }
         .modal-content h2 {
             margin-bottom: 1.5rem;
-            color: #ffca28;
+            color: #ffca28; /* Highlight color title */
             font-weight: 600;
         }
         .modal-content p {
             margin-bottom: 1.5rem;
-            word-wrap: break-word;
-            white-space: pre-wrap;
-            color: #c0c0c0; /* Lighter paragraph text */
+            word-wrap: break-word; /* Wrap long text */
+            white-space: pre-wrap; /* Respect newlines */
+            color: #c0c0c0;
             line-height: 1.5;
         }
-        .modal-content p strong { /* Highlight addresses */
+        /* Style for addresses in modal */
+        .modal-content p strong {
             color: #ffeb3b;
-            word-break: break-all; /* Ensure long addresses break */
+            word-break: break-all; /* Break long addresses */
         }
 
+        /* Input fields inside modal */
         .modal-content input {
             width: 100%;
             padding: 0.8rem;
             margin: 0.7rem 0;
             border-radius: 5px;
             border: 1px solid #444;
-            background-color: #2a3a5a; /* Darker input background */
+            background-color: #2a3a5a;
             color: #e0e0e0;
             font-size: clamp(0.9rem, 3vw, 1rem);
         }
          .modal-content input::placeholder { color: #888; }
 
+        /* Container for modal buttons */
         .modal-buttons {
             margin-top: 1.5rem;
             display: flex;
             gap: 0.8rem;
-            justify-content: center;
+            justify-content: center; /* Center buttons */
         }
 
+        /* Modal button styling */
         .modal-buttons button {
              padding: 0.7rem 1.2rem;
              border: none;
@@ -314,40 +342,44 @@
              font-weight: 500;
              cursor: pointer;
              transition: background 0.2s;
-             background: #4a5a7a; /* Close button color */
+             background: #4a5a7a; /* Default/Close button color */
              color: #e0e0e0;
              box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
+        /* Specific style for submit buttons */
          .modal-buttons button.submit-button {
-            background: #e94560;
+            background: #e94560; /* Primary action color */
             color: white;
          }
          .modal-buttons button.submit-button:hover { background: #ff6b6b; }
          .modal-buttons button:hover { background: #5a6a8a; }
 
 
-        /* --- Notifications --- */
+        /* --- Notifications (Error, Cashout, Rest) --- */
         .notification {
-            position: fixed;
-            top: 75px;
+            position: fixed; /* Position relative to viewport */
+            top: 75px; /* Position below header */
             left: 50%;
-            transform: translateX(-50%);
-            background: rgba(233, 69, 96, 0.9);
+            transform: translateX(-50%); /* Center horizontally */
+            background: rgba(233, 69, 96, 0.9); /* Default (error) color */
             color: white;
             padding: 0.8rem 1.8rem;
             border-radius: 6px;
-            display: none;
-            z-index: 999;
+            display: none; /* Hidden by default */
+            z-index: 999; /* Below modal, above most other elements */
             font-size: clamp(0.9rem, 3vw, 1rem);
             font-weight: 500;
             text-align: center;
             box-shadow: 0 3px 8px rgba(0,0,0,0.3);
             backdrop-filter: blur(3px);
-            animation: fadeInOut 3s ease-in-out forwards; /* Use forwards to keep opacity 0 */
+            /* Animation for fade in/out */
+            animation: fadeInOut 3s ease-in-out forwards;
         }
+        /* Specific colors for different notification types */
         #cashout-message { background: rgba(60, 179, 113, 0.9); } /* Greenish */
         #rest-message { background: rgba(255, 165, 0, 0.9); } /* Orangish */
 
+        /* Fade in/out animation */
         @keyframes fadeInOut {
           0% { opacity: 0; transform: translate(-50%, -20px); }
           15% { opacity: 1; transform: translate(-50%, 0); }
@@ -356,57 +388,65 @@
         }
 
 
-        /* --- Responsive Design --- */
+        /* --- Responsive Design Adjustments --- */
         @media (max-width: 768px) {
             body {
+                /* Switch to vertical layout for smaller screens */
                 grid-template-areas:
                     "header"
                     "main"
                     "controls"
                     "sidebar";
-                grid-template-columns: 1fr;
+                grid-template-columns: 1fr; /* Single column */
+                /* Adjust row heights */
                 grid-template-rows: auto minmax(250px, 1fr) auto auto;
-                overflow-y: auto; /* Allow body scrolling if needed */
-                height: auto; /* Allow content to determine height */
+                overflow-y: auto; /* Allow body scrolling on mobile if needed */
+                height: auto; /* Let content determine height */
                 min-height: 100vh;
             }
             #sidebar {
-                max-height: none;
-                overflow-y: visible;
-                background: #0f3460; /* Make opaque */
-                border-right: none;
-                 border-top: 1px solid rgba(255, 255, 255, 0.1);
+                max-height: none; /* Remove height limit */
+                overflow-y: visible; /* Disable sidebar scrolling */
+                background: #0f3460; /* Make opaque for clarity */
+                border-right: none; /* Remove side border */
+                 border-top: 1px solid rgba(255, 255, 255, 0.1); /* Add top border */
             }
             #controls {
-                flex-direction: column;
-                align-items: stretch;
+                flex-direction: column; /* Stack controls vertically */
+                align-items: stretch; /* Make items full width */
             }
+            /* Ensure inputs and buttons take full width in stacked controls */
             #stakeInput, #tokenSelect, #controls button {
                 max-width: 100%;
             }
         }
 
         @media (max-width: 480px) {
+             /* Further reduce padding/gaps for very small screens */
             #header, #controls { padding: 0.5rem; gap: 0.5rem;}
-            #balance { text-align: center; }
+            #balance { text-align: center; } /* Center balance text */
+            /* Reduce font size and padding for controls/buttons */
             #stakeInput, #tokenSelect, #controls button, #sidebar button {
                  padding: 0.6rem; font-size: 0.9rem;
             }
+            /* Adjust modal padding */
             .modal-content { padding: 1rem 1.2rem; }
             .modal-content h2 { font-size: 1.3rem; margin-bottom: 1rem; }
             .modal-content p { margin-bottom: 1rem; }
             .modal-buttons button { padding: 0.6rem 1rem; font-size: 0.9rem; }
         }
 
-         /* --- Animation --- */
-        @keyframes shake { /* Screen shake */
+         /* --- Animation Keyframes --- */
+        @keyframes shake { /* Screen shake for avalanche */
             0%, 100% { transform: translate(0, 0); }
             10%, 30%, 50%, 70%, 90% { transform: translate(-4px, 2px); }
             20%, 40%, 60%, 80% { transform: translate(4px, -2px); }
         }
+        /* Class to apply shake animation */
         .shake-effect { animation: shake 0.3s linear; }
 
-        @keyframes pulseGlow { /* Subtle glow for multiplier */
+        /* Keyframe for subtle pulsing glow (used on altitude text) */
+        @keyframes pulseGlow {
            0%, 100% { text-shadow: 0 0 5px rgba(255, 255, 255, 0.5); }
            50% { text-shadow: 0 0 15px rgba(255, 255, 255, 0.8); }
         }
@@ -529,7 +569,7 @@
         };
 
         // --- Visual Effects State ---
-        let particles = []; // General purpose particles (wind, maybe crash debris)
+        let particles = []; // General purpose particles (wind, stars, debris)
         let avalancheState = {
             active: false, progress: 0, duration: 1.2, // Slightly longer avalanche
             shakeIntensity: 4
@@ -540,17 +580,15 @@
         // --- Parallax Background State ---
         let parallaxOffset = 0; // How much the background has scrolled
         const parallaxLayers = [
-             // Farthest layer (slowest scroll) - could be distant mountains or sky features
-             { id: 'sky', depth: 0.05, color: '#1a2a45', elements: [] }, // Example: Clouds layer
+             // Farthest layer (slowest scroll) - Stars handled separately now
+             { id: 'sky_features', depth: 0.05, color: '#1a2a45', elements: [] }, // For clouds etc.
              // Mountain Layers
              { id: 'mountain_far', depth: 0.15, color: '#253550', peaks: [] },
              { id: 'mountain_mid', depth: 0.3, color: '#354565', peaks: [] },
              { id: 'mountain_near', depth: 0.5, color: '#4a5a7a', peaks: [] },
-             // Closest layer (fastest scroll) - could be foreground rocks/trees
-             // { id: 'foreground', depth: 0.8, color: '#5a6a8a', elements: [] }
         ];
         // --- Altitude Graph State ---
-        let altitudePath = []; // Array of {multiplier, yPos} points
+        let altitudePath = []; // Array of {x, y, multiplier} points
 
         // --- UI Constants ---
         const GRAPH_EDGE_WIDTH = 40; // Width of the side bars for altitude markers
@@ -560,17 +598,41 @@
         function lerp(a, b, t) { return a + (b - a) * t; } // Linear interpolation
         function clamp(value, min, max) { return Math.max(min, Math.min(value, max)); }
 
-        function getQueryParam(param) { /* ... (same as before) ... */ }
-        function showNotification(element, message) { /* ... (same as before, maybe adjust 'top' style) ... */ }
-        function refreshTickets() { /* ... (same as before) ... */ }
+        function getQueryParam(param) {
+             const urlParams = new URLSearchParams(window.location.search);
+             return urlParams.get(param);
+        }
+
+        function showNotification(element, message) {
+             element.textContent = message;
+             element.style.display = 'block';
+             // Force animation restart
+             element.style.animation = 'none';
+             element.offsetHeight; // Trigger reflow
+             element.style.animation = null;
+             element.style.animation = 'fadeInOut 3s ease-in-out forwards';
+             console.log('Notification:', message); // Log for debugging
+             // Note: hiding is handled by 'forwards' state of animation
+        }
+
+        function refreshTickets() {
+            console.log("Requesting ticket update...");
+            if (tg && tg.sendData) {
+                 tg.sendData(JSON.stringify({ action: 'get_tickets' }));
+            } else {
+                showNotification(errorDisplay, "Telegram connection error.");
+            }
+        }
+
         function showModal(type) {
             modal.style.display = 'flex';
+            // Hide all specific inputs first
             withdrawAmountInput.style.display = 'none';
             withdrawAddressInput.style.display = 'none';
             withdrawSubmitBtn.style.display = 'none';
             ticketAmountInput.style.display = 'none';
             ticketSubmitBtn.style.display = 'none';
-            modalBody.style.whiteSpace = 'pre-wrap'; // Keep this
+            modalBody.style.whiteSpace = 'pre-wrap'; // Ensure newlines are respected
 
             if (!gameData) {
                 modalTitle.textContent = "Error";
@@ -580,39 +642,104 @@
 
             if (type === 'deposit') {
                 modalTitle.textContent = 'Deposit Address (BEP-20)';
-                const bnbAddr = gameData.bnb_address || 'N/A';
-                const nimsAddr = gameData.nims_address || 'N/A';
-                 // Using strong tags for addresses
+                const bnbAddr = gameData.bnb_address || 'N/A - Refresh data';
+                const nimsAddr = gameData.nims_address || 'N/A - Refresh data';
+                // Use innerHTML to allow strong tags
                  modalBody.innerHTML = `Send only <strong>BNB</strong> (BEP-20) to:<br><strong>${bnbAddr}</strong><br><br>Send only <strong>NIMS</strong> (BEP-20) to:<br><strong>${nimsAddr}</strong>`;
             } else if (type === 'withdraw') {
                 modalTitle.textContent = 'Withdraw Funds';
-                 // Update to reflect current token if possible, otherwise generic
-                 let withdrawToken = tokenSelect.value || 'currency';
+                let withdrawToken = tokenSelect.value || 'currency'; // Get current selected token
                  modalBody.textContent = `Withdraw ${withdrawToken} (1% fee applies). Ensure the address is correct! Network: BEP-20.`;
+                // Show relevant inputs/buttons
                 withdrawAmountInput.style.display = 'block';
                 withdrawAddressInput.style.display = 'block';
                 withdrawSubmitBtn.style.display = 'block';
+                // Clear previous values and set placeholder
                 withdrawAmountInput.value = '';
                 withdrawAddressInput.value = '';
                  withdrawAmountInput.placeholder = `Amount of ${withdrawToken}`;
             } else if (type === 'buy_raffle') {
                 modalTitle.textContent = 'Buy Summit Raffle Tickets';
                 modalBody.textContent = 'Enter number of tickets to purchase (1 NIMS each).';
+                // Show relevant inputs/buttons
                 ticketAmountInput.style.display = 'block';
                 ticketSubmitBtn.style.display = 'block';
-                ticketAmountInput.value = '';
+                ticketAmountInput.value = ''; // Clear previous value
             }
         }
-        function closeModal() { /* ... (same as before) ... */ }
-        function submitWithdrawal() { /* ... (same as before, added BEP-20 check) ... */
-             const address = withdrawAddressInput.value.trim();
-             if (!address || !/^0x[a-fA-F0-9]{40}$/.test(address)) { // Stricter BEP-20 format check
-                 showNotification(errorDisplay, 'Invalid BEP-20 address format.');
-                 return;
-             }
-             // ... rest of validation and sending logic ...
+        function closeModal() {
+             modal.style.display = 'none';
+         }
+
+        function submitWithdrawal() {
+            const amount = parseFloat(withdrawAmountInput.value);
+            const address = withdrawAddressInput.value.trim();
+            const selectedToken = tokenSelect.value; // Use current selection
+
+            if (!amount || amount <= 0) {
+                showNotification(errorDisplay, 'Invalid withdrawal amount.'); return;
+            }
+            // Stricter check for 0x prefix and 40 hex chars
+            if (!address || !/^0x[a-fA-F0-9]{40}$/.test(address)) {
+                 showNotification(errorDisplay, 'Invalid BEP-20 address format.'); return;
+            }
+            if (!gameData) {
+                showNotification(errorDisplay, 'Cannot process: missing game data.'); return;
+            }
+
+            // Check balance (including 1% fee)
+            const balance = parseFloat(selectedToken === 'BNB' ? gameData.bnb_balance : gameData.nims_balance);
+            const fee = amount * 0.01;
+            const totalDeduction = amount + fee;
+
+            if (isNaN(balance) || balance < totalDeduction) {
+                showNotification(errorDisplay, `Insufficient ${selectedToken} balance for withdrawal + fee.`); return;
+            }
+
+            console.log(`Requesting withdrawal: ${amount} ${selectedToken} to ${address}`);
+            if (tg && tg.sendData) {
+                tg.sendData(JSON.stringify({
+                    action: 'withdraw',
+                    amount: amount.toFixed(8), // Use sufficient precision
+                    address: address,
+                    token: selectedToken // Send the token being withdrawn
+                }));
+                showNotification(cashoutMessage, 'Withdrawal request sent.');
+                closeModal();
+            } else {
+                 showNotification(errorDisplay, "Telegram connection error.");
+            }
         }
-        function buyRaffleTickets() { /* ... (same as before) ... */ }
+
+        function buyRaffleTickets() {
+            const tickets = parseInt(ticketAmountInput.value);
+            if (!tickets || tickets < 1) {
+                showNotification(errorDisplay, 'Enter at least 1 ticket to buy.'); return;
+            }
+             if (!gameData) {
+                 showNotification(errorDisplay, 'Game data not loaded.'); return;
+             }
+
+             const cost = tickets * 1.0; // Cost in NIMS
+             const nimsBalance = parseFloat(gameData.nims_balance);
+
+             if (isNaN(nimsBalance) || nimsBalance < cost) {
+                 showNotification(errorDisplay, `Insufficient NIMS balance (need ${cost.toFixed(4)} NIMS).`); return;
+             }
+
+            console.log(`Requesting to buy ${tickets} raffle tickets.`);
+            if (tg && tg.sendData) {
+                tg.sendData(JSON.stringify({
+                    action: 'buy_raffle',
+                    tickets: tickets,
+                    token: 'NIMS' // Raffle always uses NIMS
+                }));
+                showNotification(cashoutMessage, 'Ticket purchase request sent.');
+                closeModal();
+            } else {
+                 showNotification(errorDisplay, "Telegram connection error.");
+            }
+        }
 
 
         // --- Canvas Drawing Functions ---
@@ -620,66 +747,80 @@
         function resizeCanvas() {
             const containerWidth = gameContainer.offsetWidth;
             const containerHeight = gameContainer.offsetHeight;
+            // Prevent zero dimensions which can cause errors
+            if (containerWidth <= 0 || containerHeight <= 0) return;
+
             canvas.width = containerWidth;
             canvas.height = containerHeight;
-            initBackgroundElements(); // Regenerate background based on new size
-             altitudePath = []; // Clear altitude path on resize
-            // Reset Nims Y position based on new height and potential edge bars
-            nims.y = canvas.height - nims.size * 1.5;
-            nims.x = GRAPH_EDGE_WIDTH + nims.size; // Start inside left edge bar
 
-            drawFrame(); // Redraw immediately
+            initBackgroundElements(); // Regenerate background based on new size
+            altitudePath = []; // Clear altitude path on resize
+
+            // Reset Nims position based on new height and graph edges
+            nims.y = canvas.height - nims.size * 1.5;
+            nims.x = GRAPH_EDGE_WIDTH + nims.size * 2; // Start inside left edge bar + padding
+
+            console.log(`Canvas resized to: ${canvas.width}x${canvas.height}`);
+            // Redraw immediately after resize ONLY if initialization is complete
+            if (gameData || !animationFrameId) { // Avoid drawing if mid-initialization error
+                 drawFrame();
+            }
         }
 
-        // Initialize/Regenerate Parallax Elements
         function initBackgroundElements() {
-             // Stars (similar to before)
-             particles = particles.filter(p => p.type !== 'star'); // Clear old stars
-             for (let i = 0; i < 150; i++) { // More stars
+             // Stars (stored in main particles array now)
+             particles = particles.filter(p => p.type !== 'star'); // Clear old stars first
+             const numStars = clamp(canvas.width / 10, 50, 200); // Scale stars with width
+             for (let i = 0; i < numStars; i++) {
                  particles.push({
-                     type: 'star',
+                     type: 'star', // Identify particle type
                      x: Math.random() * canvas.width,
-                     y: Math.random() * canvas.height * 0.9,
-                     radius: Math.random() * 1.2 + 0.4,
-                     alpha: Math.random() * 0.6 + 0.2
+                     y: Math.random() * canvas.height * 0.9, // Keep stars mostly in upper sky
+                     radius: Math.random() * 1.2 + 0.4, // Vary size
+                     alpha: Math.random() * 0.6 + 0.2 // Vary brightness
                  });
              }
 
-             // Mountains (regenerate peaks)
+             // Mountains
              parallaxLayers.filter(l => l.id.includes('mountain')).forEach(range => {
                  range.peaks = generateMountainPeaks(range.depth);
              });
 
-             // Clouds
-             const cloudLayer = parallaxLayers.find(l=>l.id === 'sky');
+             // Clouds (if sky_features layer exists)
+             const cloudLayer = parallaxLayers.find(l=>l.id === 'sky_features');
              if (cloudLayer) {
                   cloudLayer.elements = []; // Clear old clouds
-                  for (let i = 0; i < 5; i++) { // Add a few clouds
+                  const numClouds = clamp(canvas.width / 150, 3, 8);
+                  for (let i = 0; i < numClouds; i++) {
                        cloudLayer.elements.push({
-                           x: Math.random() * canvas.width * 1.5 - canvas.width * 0.25, // Start scattered, including off-screen
-                           y: canvas.height * (0.1 + Math.random() * 0.3), // Upper part of sky
-                           width: 100 + Math.random() * 150,
-                           height: 30 + Math.random() * 40,
-                           speed: 5 + Math.random() * 10 // Pixels per second
+                           x: Math.random() * canvas.width * 1.5 - canvas.width * 0.25,
+                           y: canvas.height * (0.1 + Math.random() * 0.3),
+                           width: 80 + Math.random() * (canvas.width / 5), // Scale clouds
+                           height: 25 + Math.random() * 30,
+                           speed: 5 + Math.random() * 10 // Pixels per second horizontal drift
                        });
                   }
              }
          }
 
         function generateMountainPeaks(depth) {
+            // Ensure canvas dimensions are valid before proceeding
+            if (canvas.width <= 0 || canvas.height <= 0) return [];
+
             const peaks = [];
-             // Adjust height based on depth, ensuring higher peaks for closer ranges
             const baseHeight = canvas.height * (0.5 + (1 - depth) * 0.4);
-            const roughness = 0.3 + depth * 0.5; // More jagged for distant ranges
-            const peakWidth = (100 + (1 - depth) * 250);
+            const roughness = 0.3 + depth * 0.5;
+            const peakWidth = clamp(100 + (1 - depth) * (canvas.width / 3), 100, 400); // Scale width
 
             let currentX = -peakWidth; // Start off-screen left
             while (currentX < canvas.width + peakWidth) {
-                const peakHeight = baseHeight - (50 + Math.random() * canvas.height * roughness); // Ensure peaks are below top
-                 peaks.push({ x: currentX, y: clamp(peakHeight, canvas.height * 0.1, canvas.height) }); // Clamp Y
+                // Ensure peak height is calculated correctly and clamped
+                let peakHeight = baseHeight - (50 + Math.random() * canvas.height * roughness);
+                peakHeight = clamp(peakHeight, canvas.height * 0.1, canvas.height * 0.95); // Clamp Y within bounds
+                 peaks.push({ x: currentX, y: peakHeight });
                 currentX += peakWidth * (0.6 + Math.random() * 0.5);
             }
-             // Ensure first and last points cover edges smoothly if needed
+            // Ensure first/last points cover edges if needed (simplified)
              if (peaks.length > 0) {
                   if (peaks[0].x > 0) peaks.unshift({x: -peakWidth*0.5, y: peaks[0].y});
                   if (peaks[peaks.length-1].x < canvas.width) peaks.push({x: canvas.width + peakWidth*0.5, y: peaks[peaks.length-1].y});
@@ -688,391 +829,374 @@
             return peaks;
         }
 
-        // Draw Parallax Background
+        // Draw Parallax Background (Mountains, Clouds)
         function drawBackground(deltaTime) {
-             // Clear with body gradient (or draw gradient here if needed)
-             // ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-             // Update parallax offset based on game progress (e.g., time or multiplier)
+             // Update parallax offset based on game progress
              if (isGameRunning) {
-                  // Scroll faster as multiplier increases
-                  const scrollSpeed = 10 + currentMultiplier * 5;
+                  const scrollSpeed = 10 + currentMultiplier * 5; // Base scroll speed + multiplier effect
                   parallaxOffset += scrollSpeed * deltaTime;
              }
 
-            // Draw Stars (static, or twinkle)
-            particles.filter(p => p.type === 'star').forEach(star => {
-                ctx.fillStyle = `rgba(255, 255, 255, ${star.alpha * (0.8 + Math.sin(performance.now() / (1000 + star.radius * 100)) * 0.2) })`; // Twinkle effect
-                ctx.beginPath();
-                ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
-                ctx.fill();
-            });
-
              // Draw Parallax Layers (back to front)
              parallaxLayers.forEach(layer => {
-                 const offsetX = (parallaxOffset * layer.depth) % canvas.width; // Simple wrap-around might need improvement
+                 // Calculate offset based on depth - IMPROVED WRAPPING
+                 const layerScroll = parallaxOffset * layer.depth;
+                 const numRepeats = Math.ceil(canvas.width / (layer.id.includes('mountain') ? canvas.width : 1)) + 1; // Estimate repeats needed
 
-                 if (layer.id.includes('mountain')) {
-                     ctx.fillStyle = layer.color;
-                     ctx.beginPath();
-                     // Calculate points based on offset - more complex for smooth wrapping
-                     const startX = -offsetX;
-                     ctx.moveTo(startX, canvas.height);
-                     let currentLayerX = startX;
+                 ctx.save();
+                 ctx.translate(-layerScroll % canvas.width, 0); // Translate for seamless wrap
 
-                     // Draw peaks for the current view and the wrapped-around view
-                      for (let wrap = 0; wrap < 2; wrap++) { // Draw twice for wrapping
-                          layer.peaks.forEach((peak, index) => {
-                               const drawX = peak.x + startX + wrap * canvas.width; // WRAPPING IS SIMPLISTIC HERE
-                               if (index === 0) {
-                                   ctx.lineTo(drawX, peak.y);
-                               } else {
-                                   const prevPeak = layer.peaks[index - 1];
-                                    const prevDrawX = prevPeak.x + startX + wrap * canvas.width;
-                                    const cp1x = prevDrawX + (drawX - prevDrawX) * 0.3;
-                                    const cp1y = prevPeak.y;
-                                    const cp2x = drawX - (drawX - prevDrawX) * 0.3;
-                                    const cp2y = peak.y;
-                                    ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, drawX, peak.y);
-                               }
-                               currentLayerX = drawX; // Track last drawn X
-                          });
-                      }
+                 for (let i = -1; i < numRepeats; i++) { // Draw multiple times for wrapping
+                      const currentOffsetX = i * canvas.width;
 
-                     ctx.lineTo(currentLayerX > canvas.width ? currentLayerX : canvas.width, canvas.height); // Extend to bottom right
-                     ctx.lineTo(startX, canvas.height); // Back to start
-                     ctx.closePath();
-                     ctx.fill();
+                     if (layer.id.includes('mountain')) {
+                         ctx.fillStyle = layer.color;
+                         ctx.beginPath();
+                         ctx.moveTo(currentOffsetX, canvas.height); // Start bottom left of this segment
 
-                 } else if (layer.id === 'sky' && layer.elements) { // Draw Clouds
-                      layer.elements.forEach(cloud => {
-                           // Update cloud position
-                           cloud.x -= cloud.speed * deltaTime * layer.depth; // Move based on depth
-                           // Simple wrapping
-                           if (cloud.x + cloud.width < 0) {
-                                cloud.x = canvas.width + Math.random() * 50;
-                                cloud.y = canvas.height * (0.1 + Math.random() * 0.3); // Reset Y slightly
-                           }
+                         layer.peaks.forEach((peak, index) => {
+                             const drawX = peak.x + currentOffsetX;
+                             if (index === 0) {
+                                 ctx.lineTo(drawX, peak.y);
+                             } else {
+                                  // Use bezier curves for smoother transitions between peaks
+                                 const prevPeak = layer.peaks[index - 1];
+                                 const prevDrawX = prevPeak.x + currentOffsetX;
+                                 const cp1x = prevDrawX + (drawX - prevDrawX) * 0.4; // Control point 1 X
+                                 const cp1y = prevPeak.y;                            // Control point 1 Y
+                                 const cp2x = drawX - (drawX - prevDrawX) * 0.4;     // Control point 2 X
+                                 const cp2y = peak.y;                                // Control point 2 Y
+                                 ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, drawX, peak.y);
+                             }
+                         });
+                          // Ensure path extends to the end of the segment and bottom
+                          const lastPeakX = (layer.peaks.length > 0 ? layer.peaks[layer.peaks.length-1].x : canvas.width) + currentOffsetX;
+                          ctx.lineTo(lastPeakX, canvas.height);
+                          ctx.lineTo(currentOffsetX, canvas.height); // Connect back to start bottom left
+                         ctx.closePath();
+                         ctx.fill();
 
-                           // Draw soft cloud shape
-                           ctx.fillStyle = `rgba(255, 255, 255, 0.7)`; // Semi-transparent white
-                           ctx.beginPath();
-                           ctx.ellipse(cloud.x + cloud.width / 2, cloud.y + cloud.height / 2, cloud.width / 2, cloud.height / 2, 0, 0, Math.PI * 2);
-                           ctx.fill();
-                           // Add more ellipses for cloud fluffiness
-                           ctx.ellipse(cloud.x + cloud.width * 0.2, cloud.y + cloud.height * 0.8, cloud.width * 0.3, cloud.height * 0.3, 0, 0, Math.PI*2);
-                           ctx.ellipse(cloud.x + cloud.width * 0.8, cloud.y + cloud.height * 0.7, cloud.width * 0.4, cloud.height * 0.4, 0, 0, Math.PI*2);
-                           ctx.fill();
+                     } else if (layer.id === 'sky_features' && layer.elements) { // Draw Clouds/Other Sky Elements
+                         layer.elements.forEach(cloud => {
+                              // Update cloud position INDEPENDENTLY of parallax offset (they drift)
+                              cloud.x -= cloud.speed * deltaTime;
+                              // Simple wrapping for clouds
+                              if (cloud.x + cloud.width < -layerScroll % canvas.width) { // Check against translated boundary
+                                   cloud.x = (i + 1) * canvas.width - layerScroll % canvas.width + Math.random() * 50;
+                                   cloud.y = canvas.height * (0.1 + Math.random() * 0.3); // Reset Y slightly
+                              }
 
-                      });
-                 }
-                 // Add drawing for other layer types ('foreground') if needed
+                              // Draw soft cloud shape using multiple ellipses
+                              ctx.fillStyle = `rgba(255, 255, 255, 0.7)`;
+                              const cloudDrawX = cloud.x + currentOffsetX; // Apply offset here
+                              ctx.beginPath();
+                              ctx.ellipse(cloudDrawX + cloud.width / 2, cloud.y + cloud.height / 2, cloud.width / 2, cloud.height / 2, 0, 0, Math.PI * 2);
+                              ctx.fill();
+                              ctx.ellipse(cloudDrawX + cloud.width * 0.2, cloud.y + cloud.height * 0.8, cloud.width * 0.3, cloud.height * 0.3, 0, 0, Math.PI*2);
+                              ctx.ellipse(cloudDrawX + cloud.width * 0.8, cloud.y + cloud.height * 0.7, cloud.width * 0.4, cloud.height * 0.4, 0, 0, Math.PI*2);
+                              ctx.fill();
+                         });
+                     }
+                 } // End repeat loop for wrapping
+                 ctx.restore(); // Restore translation
              });
         }
 
 
-        // --- Path & Nims Position Calculation ---
+        // Calculate Nims' position and angle based on multiplier
         function getClimbPosition(multiplierValue) {
+            if (canvas.width <= 0 || canvas.height <= 0) return { x: 50, y: 500, angle: 0 }; // Default if no canvas
+
             // Non-linear progress: faster climb at higher multipliers
-            // Example: progress proportional to log(multiplier) initially, then accelerates
-            let progress = Math.log(Math.max(1, multiplierValue)) / Math.log(20); // Normalizing factor (adjust 20 as needed)
-             progress = Math.pow(progress, 0.8) + Math.pow(Math.max(0, multiplierValue - 1.5), 1.2) * 0.05; // Accelerate after 1.5x
+            let progress = Math.log1p(Math.max(0, multiplierValue - 1)) / Math.log1p(19); // Normalize using log1p, adjust divisor (19 => target ~20x)
+            progress = Math.pow(progress, 0.9) + Math.pow(Math.max(0, multiplierValue - 1), 1.1) * 0.01; // Add acceleration term
 
-            const climbHeight = canvas.height * 0.85; // Max climb area height
-            const climbWidth = canvas.width - GRAPH_EDGE_WIDTH * 2 - nims.size * 2; // Available width
+            const climbHeight = canvas.height * 0.90; // Use more vertical space
+            const climbWidth = canvas.width - GRAPH_EDGE_WIDTH * 2 - nims.size * 2;
 
-            // Zigzag pattern or curved path
-             let pathX = GRAPH_EDGE_WIDTH + nims.size + (climbWidth / 2) * (1 + Math.sin(progress * Math.PI * 2) * 0.8); // Sin wave horizontal movement
-             let pathY = canvas.height - nims.size * 1.5 - progress * climbHeight;
+            // Smoother curved path using cosine for horizontal movement
+            let pathX = GRAPH_EDGE_WIDTH + nims.size + (climbWidth / 2) * (1 - Math.cos(progress * Math.PI * 1.5)); // Cosine curve for X
+            let pathY = canvas.height - nims.size * 1.5 - progress * climbHeight; // Y based on progress
 
-             // Clamp Y position
-             pathY = clamp(pathY, nims.size * 2, canvas.height - nims.size * 1.5);
-             // Clamp X position within the edges
-             pathX = clamp(pathX, GRAPH_EDGE_WIDTH + nims.size, canvas.width - GRAPH_EDGE_WIDTH - nims.size);
+            // Clamp Y position
+            pathY = clamp(pathY, nims.size * 2, canvas.height - nims.size * 1.5);
+            // Clamp X position within the edges
+            pathX = clamp(pathX, GRAPH_EDGE_WIDTH + nims.size, canvas.width - GRAPH_EDGE_WIDTH - nims.size);
 
+            // Calculate angle based on derivative of path (approximation)
+            let angle = 0;
+            if (progress > 0.01) { // Avoid division by zero at start
+                 const prevMultiplier = Math.max(1, multiplierValue * 0.995);
+                 const prevPos = getClimbPosition(prevMultiplier); // Recursive call (careful!) - Alternatively, calculate derivative mathematically
+                 let dx = pathX - prevPos.x;
+                 let dy = pathY - prevPos.y;
+                 angle = Math.atan2(dy, dx) + Math.PI / 2; // Angle perpendicular to movement + 90 deg
+            }
 
-            // Calculate angle based on change (more robustly)
-            const prevMultiplier = Math.max(1, multiplierValue * 0.99); // Check slightly behind
-            const prevPos = getClimbPosition(prevMultiplier); // Simplified - avoid infinite recursion in real use
-            let dx = pathX - prevPos.x;
-            let dy = pathY - prevPos.y; // Note: dy is negative for upward movement
-            let angle = Math.atan2(dy, dx) + Math.PI / 2; // Angle perpendicular to movement + offset for climbing up
-
-            // Add slight wobble/sway
-            angle += Math.sin(performance.now() / 300) * 0.05;
+            // Add subtle sway
+            angle += Math.sin(performance.now() / 350) * 0.06;
 
             return { x: pathX, y: pathY, angle: angle };
         }
 
-        // Draw Altitude Graph Curve
+        // Draw Altitude Graph Curve alongside Nims' path
         function drawAltitudeGraph() {
-            if (!altitudePath.length) return;
+            if (!altitudePath.length || altitudePath.length < 2) return; // Need at least 2 points
 
             ctx.beginPath();
             ctx.strokeStyle = 'rgba(255, 255, 0, 0.7)'; // Yellowish graph line
             ctx.lineWidth = 3;
             ctx.lineJoin = 'round';
             ctx.lineCap = 'round';
+            // Apply subtle glow to the whole path
+            ctx.shadowColor = 'rgba(255, 255, 0, 0.5)';
+            ctx.shadowBlur = 5;
 
-            const startPoint = altitudePath[0];
-            ctx.moveTo(startPoint.x, startPoint.y);
+            ctx.moveTo(altitudePath[0].x, altitudePath[0].y);
 
-            altitudePath.forEach(point => {
-                ctx.lineTo(point.x, point.y);
-            });
+            // Draw smooth curve through points if possible, or line segments
+            for (let i = 1; i < altitudePath.length; i++) {
+                 ctx.lineTo(altitudePath[i].x, altitudePath[i].y);
+            }
             ctx.stroke();
+            ctx.shadowBlur = 0; // Reset shadow
 
-            // Optional: Add glowing effect to the head of the graph line
+            // Draw glowing head
             const lastPoint = altitudePath[altitudePath.length - 1];
             if (lastPoint) {
-                ctx.fillStyle = 'rgba(255, 255, 0, 0.8)';
-                ctx.shadowColor = 'yellow';
-                ctx.shadowBlur = 10;
-                ctx.beginPath();
-                ctx.arc(lastPoint.x, lastPoint.y, 5, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.shadowBlur = 0; // Reset shadow
+                ctx.fillStyle = 'rgba(255, 255, 0, 0.9)';
+                ctx.shadowColor = 'yellow'; ctx.shadowBlur = 12;
+                ctx.beginPath(); ctx.arc(lastPoint.x, lastPoint.y, 6, 0, Math.PI * 2); ctx.fill();
+                ctx.shadowBlur = 0;
             }
         }
 
-        // Draw Altitude Markers on Edges
+        // Draw Graph Edges with Altitude Markers
         function drawGraphEdges() {
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.3)'; // Semi-transparent background for edges
+            // Draw semi-transparent edge backgrounds
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
             ctx.fillRect(0, 0, GRAPH_EDGE_WIDTH, canvas.height);
             ctx.fillRect(canvas.width - GRAPH_EDGE_WIDTH, 0, GRAPH_EDGE_WIDTH, canvas.height);
 
+            // Draw inner border lines
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
             ctx.lineWidth = 1;
             ctx.beginPath();
-            ctx.moveTo(GRAPH_EDGE_WIDTH, 0);
-            ctx.lineTo(GRAPH_EDGE_WIDTH, canvas.height);
-            ctx.moveTo(canvas.width - GRAPH_EDGE_WIDTH, 0);
-            ctx.lineTo(canvas.width - GRAPH_EDGE_WIDTH, canvas.height);
+            ctx.moveTo(GRAPH_EDGE_WIDTH, 0); ctx.lineTo(GRAPH_EDGE_WIDTH, canvas.height);
+            ctx.moveTo(canvas.width - GRAPH_EDGE_WIDTH, 0); ctx.lineTo(canvas.width - GRAPH_EDGE_WIDTH, canvas.height);
             ctx.stroke();
 
             // Add Altitude Markers
-            const maxAltitude = (crashPoint || 10) * ALTITUDE_FACTOR; // Estimate max based on crash or typical max
+            const maxVisibleAltitude = Math.max(currentMultiplier * ALTITUDE_FACTOR * 1.1, 5000); // Show markers slightly above current altitude
             const step = 1000; // Marker every 1000m
             ctx.fillStyle = '#ffeb3b'; // Yellow marker text
             ctx.font = 'bold 11px Arial';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
 
-            for (let alt = step; alt <= maxAltitude; alt += step) {
+            for (let alt = step; alt <= maxVisibleAltitude; alt += step) {
                  const multiplierEquiv = alt / ALTITUDE_FACTOR;
-                 // Only draw markers below the current crash point if known
-                 if (crashPoint > 0 && multiplierEquiv > crashPoint * 1.1) continue;
+                 // Don't draw markers way above crash point if known
+                 if (crashPoint > 0 && multiplierEquiv > crashPoint * 1.2) continue;
 
                  const pos = getClimbPosition(multiplierEquiv); // Get Y position for this altitude
 
-                 // Draw marker line and text on both sides
-                 if (pos.y < canvas.height - 10 && pos.y > 10) { // Only if on screen
+                 // Draw marker only if it's within reasonable Y bounds
+                 if (pos.y < canvas.height - 20 && pos.y > 20) {
                      ctx.strokeStyle = 'rgba(255, 235, 59, 0.5)'; // Yellowish line
-                      ctx.lineWidth = 1;
-                      ctx.beginPath();
-                      ctx.moveTo(GRAPH_EDGE_WIDTH - 5, pos.y);
-                      ctx.lineTo(GRAPH_EDGE_WIDTH, pos.y);
-                      ctx.moveTo(canvas.width - GRAPH_EDGE_WIDTH, pos.y);
-                      ctx.lineTo(canvas.width - GRAPH_EDGE_WIDTH + 5, pos.y);
+                     ctx.lineWidth = 1;
+                     ctx.beginPath();
+                      // Lines from edge inwards
+                      ctx.moveTo(0, pos.y); ctx.lineTo(GRAPH_EDGE_WIDTH - 5, pos.y);
+                      ctx.moveTo(canvas.width - GRAPH_EDGE_WIDTH + 5, pos.y); ctx.lineTo(canvas.width, pos.y);
                       ctx.stroke();
 
-                      ctx.fillText(`${alt}m`, GRAPH_EDGE_WIDTH / 2, pos.y);
-                      ctx.fillText(`${alt}m`, canvas.width - GRAPH_EDGE_WIDTH / 2, pos.y);
+                      // Text labels inside the edge bars
+                      ctx.fillText(`${alt / 1000}k`, GRAPH_EDGE_WIDTH / 2, pos.y); // Use 'k' for thousands
+                      ctx.fillText(`${alt / 1000}k`, canvas.width - GRAPH_EDGE_WIDTH / 2, pos.y);
                  }
-
             }
         }
 
-        // Draw Nims Character (Enhanced)
+        // Draw Nims Character (Enhanced with states)
         function drawNims(deltaTime) {
+            // Skip drawing if completely idle/reset
             if (nims.state === NIMS_STATE.IDLE && !isGameRunning && !hasCrashed) return;
 
             const pos = getClimbPosition(currentMultiplier);
-            nims.x = pos.x; // Update position directly for falling state
-            nims.y = pos.y;
-            nims.angle = pos.angle;
 
-            // Update Nims state based on game state
+            // --- Update Nims State ---
             if (hasCrashed && nims.state !== NIMS_STATE.FALLING) {
                 nims.state = NIMS_STATE.FALLING;
-                nims.fallSpeedY = 0; // Start falling
+                nims.fallSpeedY = -50; // Initial upward pop before falling
+                nims.angle = Math.random() * Math.PI - Math.PI/2; // Random initial tumble angle
             } else if (isGameRunning) {
-                if (nims.state === NIMS_STATE.IDLE || nims.state === NIMS_STATE.FALLING) {
-                    nims.state = NIMS_STATE.CLIMBING;
-                    nims.frameTimer = 0;
-                }
-                // Check for waving milestones
-                 if (nims.state !== NIMS_STATE.WAVING) {
-                     if (Math.abs(currentMultiplier - 2.0) < 0.05 || Math.abs(currentMultiplier - 5.0) < 0.05) {
-                          nims.state = NIMS_STATE.WAVING;
-                          nims.waveTimer = 0;
-                     }
+                 if (nims.state === NIMS_STATE.IDLE || nims.state === NIMS_STATE.FALLING) {
+                     nims.state = NIMS_STATE.CLIMBING; nims.frameTimer = 0;
                  }
-            } else if (!hasCrashed) {
-                 nims.state = NIMS_STATE.IDLE;
+                 // Check for waving milestones (only if currently climbing)
+                 if (nims.state === NIMS_STATE.CLIMBING) {
+                     if (Math.abs(currentMultiplier - 2.0) < 0.05 || Math.abs(currentMultiplier - 5.0) < 0.05 || Math.abs(currentMultiplier - 10.0) < 0.05) {
+                          nims.state = NIMS_STATE.WAVING; nims.waveTimer = 0;
+                     }
+                 } else if (nims.state === NIMS_STATE.WAVING) {
+                      nims.waveTimer += deltaTime * 1000;
+                      if (nims.waveTimer >= nims.waveDuration) {
+                          nims.state = NIMS_STATE.CLIMBING; // Go back to climbing
+                      }
+                 }
+            } else if (!hasCrashed && nims.state !== NIMS_STATE.IDLE) {
+                  // If game stopped (cashout/rest) but not crashed, return to idle pose
+                  nims.state = NIMS_STATE.IDLE;
+                  // Lerp position back to start smoothly? Optional. For now, just snap.
+                  nims.x = GRAPH_EDGE_WIDTH + nims.size * 2;
+                  nims.y = canvas.height - nims.size * 1.5;
+                  nims.angle = 0;
             }
 
+            // --- Update Position & Animation ---
+            if (nims.state !== NIMS_STATE.FALLING) {
+                 // Smoothly interpolate position for non-falling states for smoother visuals
+                 const lerpFactor = clamp(deltaTime * 10, 0, 1); // Adjust lerp speed
+                 nims.x = lerp(nims.x, pos.x, lerpFactor);
+                 nims.y = lerp(nims.y, pos.y, lerpFactor);
+                 nims.angle = lerp(nims.angle, pos.angle, lerpFactor);
+            }
 
-            // --- Animation Logic ---
-            nims.frameTimer += deltaTime * 1000; // Timer in ms
-
+            nims.frameTimer += deltaTime * 1000;
             if (nims.state === NIMS_STATE.CLIMBING) {
                 if (nims.frameTimer >= nims.frameDelay) {
-                    nims.climbFrame = 1 - nims.climbFrame; // Toggle climb frame
-                    nims.frameTimer = 0;
+                    nims.climbFrame = 1 - nims.climbFrame; nims.frameTimer = 0;
                 }
-            } else if (nims.state === NIMS_STATE.WAVING) {
-                 nims.waveTimer += deltaTime * 1000;
-                 if (nims.waveTimer >= nims.waveDuration) {
-                     nims.state = NIMS_STATE.CLIMBING; // Go back to climbing
-                 }
             } else if (nims.state === NIMS_STATE.FALLING) {
-                 // Apply gravity
-                 nims.fallSpeedY += 9.81 * 50 * deltaTime; // Adjust gravity factor
+                 const gravity = 9.81 * 70; // Stronger gravity effect
+                 nims.fallSpeedY += gravity * deltaTime;
                  nims.y += nims.fallSpeedY * deltaTime;
-                 nims.angle += 5 * deltaTime; // Spin while falling
+                 nims.angle += 8 * deltaTime * (nims.fallSpeedY > 0 ? 1 : -1); // Spin faster while falling
             }
 
-            // --- Drawing Logic ---
+
+            // --- Drawing Nims ---
             ctx.save();
             ctx.translate(nims.x, nims.y);
             ctx.rotate(nims.angle);
 
-            // Nims Colors
-            const headColor = '#f0c0a0';
-            const bodyColor = '#d04040'; // Red suit
-            const limbColor = '#a03030'; // Darker limbs
+            // Colors
+            const headColor = '#ffdba1'; // Skin tone
+            const bodyColor = '#e63946'; // Bright Red suit
+            const limbColor = '#a8202c'; // Darker Red limbs
+            const helmetColor = '#457b9d'; // Blue helmet
 
-            // Draw Body Parts
-            ctx.fillStyle = bodyColor;
-            ctx.beginPath();
-            // Torso (simple rectangle)
-            ctx.rect(-nims.size * 0.3, -nims.size * 0.4, nims.size * 0.6, nims.size * 0.8);
-            ctx.fill();
-
-            // Head (circle on top)
-            ctx.fillStyle = headColor;
-            ctx.beginPath();
-            ctx.arc(0, -nims.size * 0.6, nims.size * 0.4, 0, Math.PI * 2);
-            ctx.fill();
-            // Simple eye
-            ctx.fillStyle = '#333';
-            ctx.beginPath();
-            ctx.arc(nims.size * 0.15, -nims.size * 0.65, nims.size * 0.08, 0, Math.PI * 2);
-            ctx.fill();
-
-
-            // Limbs
+            // Draw Limbs (behind body)
             ctx.strokeStyle = limbColor;
-            ctx.lineWidth = nims.size * 0.2;
+            ctx.lineWidth = nims.size * 0.25; // Thicker limbs
             ctx.lineCap = 'round';
+            let armAngle1=0, armAngle2=0, legAngle1=0, legAngle2=0;
 
             if (nims.state === NIMS_STATE.CLIMBING) {
-                const armAngle1 = nims.climbFrame === 0 ? -0.5 : 0.8;
-                const armAngle2 = nims.climbFrame === 0 ? 0.6 : -0.7;
-                const legAngle1 = nims.climbFrame === 0 ? 1.8 : 2.5;
-                const legAngle2 = nims.climbFrame === 0 ? 2.8 : 1.5;
-
-                // Draw Arms
-                ctx.beginPath();
-                ctx.moveTo(0, -nims.size * 0.2); // Shoulder
-                ctx.lineTo(Math.cos(armAngle1) * nims.size * 0.6, -nims.size * 0.2 + Math.sin(armAngle1) * nims.size * 0.6);
-                ctx.moveTo(0, -nims.size * 0.2); // Shoulder
-                ctx.lineTo(Math.cos(armAngle2) * nims.size * 0.6, -nims.size * 0.2 + Math.sin(armAngle2) * nims.size * 0.6);
-                ctx.stroke();
-
-                // Draw Legs
-                ctx.beginPath();
-                ctx.moveTo(0, nims.size * 0.4); // Hip
-                ctx.lineTo(Math.cos(legAngle1) * nims.size * 0.7, nims.size * 0.4 + Math.sin(legAngle1) * nims.size * 0.7);
-                ctx.moveTo(0, nims.size * 0.4); // Hip
-                ctx.lineTo(Math.cos(legAngle2) * nims.size * 0.7, nims.size * 0.4 + Math.sin(legAngle2) * nims.size * 0.7);
-                ctx.stroke();
-
+                 armAngle1 = nims.climbFrame === 0 ? -0.6 : 1.0; armAngle2 = nims.climbFrame === 0 ? 0.7 : -0.8;
+                 legAngle1 = nims.climbFrame === 0 ? 1.9 : 2.7; legAngle2 = nims.climbFrame === 0 ? 2.9 : 1.7;
             } else if (nims.state === NIMS_STATE.WAVING) {
-                 // Waving arm animation
-                 const waveAngle = -0.5 + Math.sin(nims.waveTimer / 100) * 0.5; // Simple back and forth
-                 ctx.beginPath();
-                 ctx.moveTo(0, -nims.size * 0.2); // Shoulder
-                 ctx.lineTo(Math.cos(waveAngle) * nims.size * 0.6, -nims.size * 0.2 + Math.sin(waveAngle) * nims.size * 0.6);
-                 // Other limbs static or slightly different pose
-                 ctx.moveTo(0, -nims.size * 0.2); ctx.lineTo(0.5 * nims.size * 0.6, -nims.size * 0.2 + 0.8 * nims.size * 0.6);
-                 ctx.moveTo(0, nims.size * 0.4); ctx.lineTo(Math.cos(2.0) * nims.size * 0.7, nims.size * 0.4 + Math.sin(2.0) * nims.size * 0.7);
-                 ctx.moveTo(0, nims.size * 0.4); ctx.lineTo(Math.cos(2.5) * nims.size * 0.7, nims.size * 0.4 + Math.sin(2.5) * nims.size * 0.7);
-                 ctx.stroke();
+                 armAngle1 = -0.5 + Math.sin(nims.waveTimer / 100) * 0.6; // Waving arm
+                 armAngle2 = 0.8; legAngle1 = 2.1; legAngle2 = 2.6; // Other limbs static
             } else if (nims.state === NIMS_STATE.FALLING) {
-                 // Limbs flailing while falling
-                 const flailAngle = Math.sin(performance.now() / 50) * 0.5;
-                 ctx.beginPath();
-                 ctx.moveTo(0, -nims.size * 0.2); ctx.lineTo(Math.cos(-0.5 + flailAngle) * nims.size * 0.6, -nims.size * 0.2 + Math.sin(-0.5+flailAngle) * nims.size * 0.6);
-                 ctx.moveTo(0, -nims.size * 0.2); ctx.lineTo(Math.cos(0.5 - flailAngle) * nims.size * 0.6, -nims.size * 0.2 + Math.sin(0.5-flailAngle) * nims.size * 0.6);
-                 ctx.moveTo(0, nims.size * 0.4); ctx.lineTo(Math.cos(2.0 + flailAngle) * nims.size * 0.7, nims.size * 0.4 + Math.sin(2.0+flailAngle) * nims.size * 0.7);
-                 ctx.moveTo(0, nims.size * 0.4); ctx.lineTo(Math.cos(2.5 - flailAngle) * nims.size * 0.7, nims.size * 0.4 + Math.sin(2.5-flailAngle) * nims.size * 0.7);
-                 ctx.stroke();
+                  const flail = Math.sin(performance.now() / 60) * 0.7; // Flailing motion
+                  armAngle1 = -0.5 + flail; armAngle2 = 0.5 - flail; legAngle1 = 2.0 + flail; legAngle2 = 2.5 - flail;
+            } else { // Idle state
+                 armAngle1 = 0.8; armAngle2 = -0.8; legAngle1 = 1.8; legAngle2 = 2.8; // Relaxed pose
+            }
+             // Draw Arms
+             ctx.beginPath(); ctx.moveTo(0, -nims.size * 0.1); ctx.lineTo(Math.cos(armAngle1) * nims.size * 0.6, -nims.size * 0.1 + Math.sin(armAngle1) * nims.size * 0.6); ctx.stroke();
+             ctx.beginPath(); ctx.moveTo(0, -nims.size * 0.1); ctx.lineTo(Math.cos(armAngle2) * nims.size * 0.6, -nims.size * 0.1 + Math.sin(armAngle2) * nims.size * 0.6); ctx.stroke();
+             // Draw Legs
+             ctx.beginPath(); ctx.moveTo(0, nims.size * 0.3); ctx.lineTo(Math.cos(legAngle1) * nims.size * 0.7, nims.size * 0.3 + Math.sin(legAngle1) * nims.size * 0.7); ctx.stroke();
+             ctx.beginPath(); ctx.moveTo(0, nims.size * 0.3); ctx.lineTo(Math.cos(legAngle2) * nims.size * 0.7, nims.size * 0.3 + Math.sin(legAngle2) * nims.size * 0.7); ctx.stroke();
+
+
+            // Draw Body (simple rounded rect)
+            ctx.fillStyle = bodyColor;
+            ctx.beginPath();
+            ctx.roundRect(-nims.size * 0.35, -nims.size * 0.4, nims.size * 0.7, nims.size * 0.9, nims.size * 0.1);
+            ctx.fill();
+
+            // Draw Head (helmet)
+            ctx.fillStyle = helmetColor;
+            ctx.beginPath();
+            ctx.arc(0, -nims.size * 0.5, nims.size * 0.4, 0, Math.PI * 2);
+            ctx.fill();
+            // Helmet visor/highlight
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+            ctx.beginPath();
+            ctx.arc(nims.size*0.1, -nims.size * 0.6, nims.size * 0.3, -0.5, 1.0);
+            ctx.fill();
+
+
+            // Draw Altitude Text near Nims (only if climbing/waving)
+            if (nims.state === NIMS_STATE.CLIMBING || nims.state === NIMS_STATE.WAVING) {
+                ctx.fillStyle = '#FFFFFF';
+                ctx.font = 'bold 14px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'bottom';
+                // Apply subtle pulse animation via text shadow
+                const pulse = Math.sin(performance.now() / 250) * 4 + 8; // Glow radius oscillates
+                ctx.shadowColor = 'rgba(255, 255, 255, 0.7)';
+                ctx.shadowBlur = pulse;
+                ctx.fillText(`Alt: ${(currentMultiplier * ALTITUDE_FACTOR).toFixed(0)}m`, 0, -nims.size);
+                ctx.shadowBlur = 0; // Reset shadow
             }
 
-
-            // Draw Altitude Text near Nims (only if not falling)
-             if (nims.state !== NIMS_STATE.FALLING) {
-                  ctx.fillStyle = '#FFFFFF';
-                  ctx.font = 'bold 14px Arial';
-                  ctx.textAlign = 'center';
-                  ctx.textBaseline = 'bottom';
-                  // Apply subtle pulse animation via text shadow
-                  const pulse = Math.sin(performance.now() / 200) * 3 + 7; // Glow radius oscillates
-                  ctx.shadowColor = 'rgba(255, 255, 255, 0.7)';
-                  ctx.shadowBlur = pulse;
-                  ctx.fillText(`Alt: ${(currentMultiplier * ALTITUDE_FACTOR).toFixed(0)}m`, 0, -nims.size); // Position above head
-                  ctx.shadowBlur = 0; // Reset shadow
-             }
-
-            ctx.restore();
+            ctx.restore(); // Restore transform
         }
 
-        // Draw Particles (Wind, Debris)
+        // Draw Particles (Stars, Wind, Debris)
         function drawParticles(deltaTime) {
-             // Update Wind Gust Timer
-             windGustTimer += deltaTime;
-             if (windGustTimer >= nextWindGust) {
-                 // Trigger a wind gust
-                 for (let i = 0; i < 20; i++) { // Add gust particles
-                     particles.push({
-                         type: 'wind',
-                         x: -10, // Start from left edge
-                         y: Math.random() * canvas.height,
-                         radius: Math.random() * 1.5 + 0.5,
-                         speedX: 150 + Math.random() * 100,
-                         speedY: (Math.random() - 0.5) * 20,
-                         alpha: Math.random() * 0.3 + 0.2,
-                         life: 2 // seconds
-                     });
-                 }
-                 windGustTimer = 0;
-                 nextWindGust = Math.random() * 8 + 5; // Reset timer for next gust
+             // --- Update Particle Logic ---
+
+             // Wind Gust Trigger
+             if (isGameRunning) { // Only trigger wind when climbing
+                  windGustTimer += deltaTime;
+                  if (windGustTimer >= nextWindGust) {
+                      const numGustParticles = 20 + Math.random() * 15;
+                      for (let i = 0; i < numGustParticles; i++) {
+                          particles.push({
+                              type: 'wind',
+                              x: -10 - Math.random() * 20, // Start from left edge
+                              y: Math.random() * canvas.height,
+                              radius: Math.random() * 1.5 + 0.5,
+                              speedX: 180 + Math.random() * 120, // Faster gusts
+                              speedY: (Math.random() - 0.5) * 30, // Slight vertical drift
+                              alpha: Math.random() * 0.3 + 0.3,
+                              life: 1.5 + Math.random() * 1.0 // Lifetime
+                          });
+                      }
+                      windGustTimer = 0;
+                      nextWindGust = Math.random() * 6 + 4; // Reset timer for next gust
+                  }
              }
 
-             // Update and draw all particles
+             // --- Draw Particles ---
              for (let i = particles.length - 1; i >= 0; i--) {
                  const p = particles[i];
+                 // Update position
                  p.x += (p.speedX || 0) * deltaTime;
                  p.y += (p.speedY || 0) * deltaTime;
                  p.life -= deltaTime;
 
-                 if (p.life <= 0 || p.x > canvas.width + 10 || p.x < -10 || p.y > canvas.height + 10 || p.y < -10) {
-                     particles.splice(i, 1); // Remove dead or off-screen particles
-                 } else {
-                     if (p.type === 'wind') {
-                          ctx.fillStyle = `rgba(200, 200, 220, ${p.alpha * (p.life / 2)})`; // Fade out as life decreases
-                          ctx.beginPath();
-                          ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-                          ctx.fill();
-                     } else if (p.type === 'avalanche') {
-                          ctx.fillStyle = `rgba(255, 255, 255, ${p.alpha})`;
-                          ctx.beginPath();
-                          ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-                          ctx.fill();
-                     }
-                     // Draw other particle types ('star' handled in drawBackground)
+                 // Remove dead or off-screen particles (except stars)
+                 if ((p.type !== 'star' && p.life <= 0) || p.x > canvas.width + 20 || p.x < -20 || p.y > canvas.height + 20 || p.y < -20) {
+                     particles.splice(i, 1);
+                     continue; // Skip drawing removed particle
+                 }
+
+                 // Draw based on type
+                 if (p.type === 'star') {
+                      // Handled in drawBackground for twinkle effect
+                 } else if (p.type === 'wind') {
+                      ctx.fillStyle = `rgba(200, 200, 220, ${p.alpha * clamp(p.life * 2, 0, 1)})`; // Fade out based on life
+                      ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2); ctx.fill();
+                 } else if (p.type === 'avalanche') {
+                      ctx.fillStyle = `rgba(255, 255, 255, ${p.alpha})`;
+                      ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2); ctx.fill();
                  }
              }
         }
@@ -1085,48 +1209,54 @@
             avalancheState.progress += deltaTime / avalancheState.duration;
             avalancheState.progress = Math.min(avalancheState.progress, 1);
 
-            // 1. Screen Shake
-            const shakeX = (Math.random() - 0.5) * 2 * avalancheState.shakeIntensity * (1 - avalancheState.progress);
-            const shakeY = (Math.random() - 0.5) * 2 * avalancheState.shakeIntensity * (1 - avalancheState.progress);
-            ctx.translate(shakeX, shakeY); // Apply shake globally for this frame
+            // 1. Screen Shake (Apply translation transformation)
+            const shakeFactor = 1 - avalancheState.progress; // Shake intensity decreases over time
+            const shakeX = (Math.random() - 0.5) * 2 * avalancheState.shakeIntensity * shakeFactor;
+            const shakeY = (Math.random() - 0.5) * 2 * avalancheState.shakeIntensity * shakeFactor;
+            ctx.translate(shakeX, shakeY);
 
-            // 2. Avalanche Particles
-            if (avalancheState.progress < 1) {
-                 for (let i = 0; i < 15; i++) { // More particles
+            // 2. Avalanche Particles (Spawn more aggressively)
+            if (avalancheState.progress < 0.9) { // Spawn for most of the duration
+                 const spawnRate = 25; // Particles per frame (adjust based on performance)
+                 for (let i = 0; i < spawnRate * deltaTime * 60; i++) { // Scale with frame rate approximation
                      particles.push({
                          type: 'avalanche',
                          x: Math.random() * canvas.width,
-                         y: -10, // Start above screen
-                         radius: Math.random() * 4 + 2, // Larger snow chunks
-                         speedY: 200 + Math.random() * 200, // Faster
-                         speedX: (Math.random() - 0.5) * 80,
+                         y: -10 - Math.random() * 20, // Start above screen
+                         radius: Math.random() * 5 + 2, // Slightly larger chunks
+                         speedY: 250 + Math.random() * 250, // High downward speed
+                         speedX: (Math.random() - 0.5) * 100, // Horizontal spread
                          alpha: Math.random() * 0.6 + 0.4,
-                         life: 1.5
+                         life: 1.0 + Math.random() * 0.5 // Shorter lifespan for effect
                      });
                  }
             }
              // Particle drawing happens in drawParticles()
 
-            // 3. White Overlay / Fog
-            ctx.fillStyle = `rgba(220, 220, 235, ${avalancheState.progress * 0.6})`; // More opaque, slightly blueish white fog
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            // 3. White Overlay / Fog (More opaque)
+            ctx.fillStyle = `rgba(230, 230, 245, ${avalancheState.progress * 0.7})`; // Increased opacity, slightly lavender white
+            ctx.fillRect(-shakeX, -shakeY, canvas.width, canvas.height); // Fill rect needs to counter shake translation
 
-            // 4. "AVALANCHE!" Text (Larger, more impactful)
-            if (avalancheState.progress > 0.1) {
-                 ctx.font = `bold ${clamp(60 * avalancheState.progress, 20, 60)}px Arial Black, sans-serif`; // Grow text size
-                 ctx.fillStyle = 'rgba(180, 0, 0, 0.85)';
+            // 4. "AVALANCHE!" Text (Impactful)
+            if (avalancheState.progress > 0.05) {
+                 const textSize = clamp(80 * avalancheState.progress, 20, 70); // Scale text size
+                 ctx.font = `bold ${textSize}px 'Impact', sans-serif`; // Impactful font
+                 ctx.fillStyle = 'rgba(160, 0, 0, 0.9)'; // Darker red
                  ctx.textAlign = 'center';
                  ctx.textBaseline = 'middle';
-                 ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
-                 ctx.shadowBlur = 5;
-                 ctx.shadowOffsetX = 2;
-                 ctx.shadowOffsetY = 2;
-                 ctx.fillText('AVALANCHE!', canvas.width / 2, canvas.height / 2);
+                 // Add subtle text shaking/jitter
+                 const textShakeX = (Math.random() - 0.5) * 4 * shakeFactor;
+                 const textShakeY = (Math.random() - 0.5) * 4 * shakeFactor;
+                 // Drop shadow for depth
+                 ctx.shadowColor = 'rgba(0, 0, 0, 0.6)'; ctx.shadowBlur = 8;
+                 ctx.shadowOffsetX = 3; ctx.shadowOffsetY = 3;
+                 ctx.fillText('AVALANCHE!', canvas.width / 2 + textShakeX, canvas.height / 2 + textShakeY);
                  ctx.shadowBlur = 0; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0; // Reset shadow
             }
 
             // Check for animation end condition
-            if (avalancheState.progress >= 1 && particles.filter(p => p.type === 'avalanche').length === 0) {
+            // End when progress is done AND avalanche particles are mostly gone
+            if (avalancheState.progress >= 1 && particles.filter(p => p.type === 'avalanche').length < 5) {
                 avalancheState.active = false;
                 resetGameVisuals(); // Reset visuals AFTER animation fully completes
                 startButton.disabled = false; // Re-enable start button AFTER crash sequence
@@ -1137,12 +1267,14 @@
 
         // --- Game Logic ---
 
-        function updateLeaderboard() { /* ... (same as before, maybe add rank #) ... */
+        function updateLeaderboard() {
              leaderboardList.innerHTML = ''; // Clear previous entries
             if (gameData && gameData.leaderboard && Array.isArray(gameData.leaderboard) && gameData.leaderboard.length > 0) {
                 gameData.leaderboard.slice(0, 7).forEach((entry, index) => { // Show top 7
                     const li = document.createElement('li');
-                    const rankSpan = `<span>#${index + 1} U:${entry.user_id}</span>`;
+                    // Format user ID for display (e.g., show last 4 digits)
+                    const displayUserId = entry.user_id ? `...${String(entry.user_id).slice(-4)}` : 'User?';
+                    const rankSpan = `<span>#${index + 1} ${displayUserId}</span>`;
                     const scoreSpan = `<span>${parseFloat(entry.highest_cashout || 0).toFixed(2)}x</span>`;
                     li.innerHTML = rankSpan + scoreSpan;
                     leaderboardList.appendChild(li);
@@ -1154,257 +1286,443 @@
 
         // Main game loop function
         function gameLoop(timestamp) {
-             if (!isGameRunning && !avalancheState.active && nims.state !== NIMS_STATE.FALLING) {
-                 animationFrameId = null; lastTimestamp = 0; return; // Stop loop if idle
+             // Determine if the loop should continue
+             const shouldContinue = isGameRunning || avalancheState.active || nims.state === NIMS_STATE.FALLING;
+             if (!shouldContinue) {
+                 animationFrameId = null; lastTimestamp = 0; return; // Stop loop if truly idle
              }
 
+            // Calculate delta time, capping it to prevent large jumps
             const deltaTime = lastTimestamp ? (timestamp - lastTimestamp) / 1000 : 0;
             lastTimestamp = timestamp;
-             // Cap delta time to prevent huge jumps if tabbed away
-             const dt = Math.min(deltaTime, 0.1);
+            const dt = Math.min(deltaTime, 0.1); // Cap at 0.1s (10 FPS equivalent)
 
             if (isGameRunning) {
                  timeElapsed += dt;
-                 // Adjust multiplier growth - slightly faster curve
-                 const baseRate = 0.3;
-                 const acceleration = 0.05; // How much the rate increases over time/multiplier
-                 const currentRate = baseRate + Math.log1p(Math.max(0, currentMultiplier - 1)) * acceleration;
-                 currentMultiplier += currentRate * dt * currentMultiplier * 0.5; // Multiplier affects its own growth rate
+                 // Refined multiplier growth - adjust constants for desired feel
+                 const baseRate = 0.25;        // Initial growth rate factor
+                 const acceleration = 0.08;       // How much rate increases with multiplier
+                 const timeFactor = 0.1;        // How much rate increases over time
+                 const currentRate = baseRate + Math.log1p(Math.max(0, currentMultiplier - 1)) * acceleration + timeElapsed * timeFactor;
+                 // Apply growth based on current multiplier and rate
+                 currentMultiplier += currentRate * dt * (1 + currentMultiplier * 0.1); // Growth accelerates faster
                  currentMultiplier = Math.max(1.0, currentMultiplier);
 
                  // Add current position to altitude graph path
                  const currentPos = getClimbPosition(currentMultiplier);
-                 altitudePath.push({ x: currentPos.x, y: currentPos.y, multiplier: currentMultiplier });
-                 // Optional: Limit path length for performance
-                 // if (altitudePath.length > 500) altitudePath.shift();
+                 // Only add point if it moved significantly (optimization)
+                 if (!altitudePath.length || Math.abs(currentPos.x - altitudePath[altitudePath.length-1].x) > 1 || Math.abs(currentPos.y - altitudePath[altitudePath.length-1].y) > 1) {
+                      altitudePath.push({ x: currentPos.x, y: currentPos.y, multiplier: currentMultiplier });
+                 }
+                 // Limit path length for performance
+                 if (altitudePath.length > 600) altitudePath.shift();
 
 
                  // Check for crash
                  if (crashPoint > 0 && currentMultiplier >= crashPoint) {
                      console.log(`Crash condition met: Multiplier ${currentMultiplier.toFixed(4)} >= Crash Point ${crashPoint}`);
-                     triggerCrash();
+                     triggerCrash(); // This sets isGameRunning = false, starts avalanche
                  } else {
-                     // Update button states
+                     // Update button states only if game is still running
                      cashoutButton.disabled = false;
-                      // Enable rest button if near ANY safety zone
-                      restButton.disabled = !safetyZones.some(zone => Math.abs(currentMultiplier - zone) < 0.15); // Slightly larger tolerance
+                     restButton.disabled = !safetyZones.some(zone => Math.abs(currentMultiplier - zone) < 0.15); // Enable rest near zones
                  }
             }
 
              // Draw everything for the frame
              drawFrame(dt);
 
-            // Request next frame
-            animationFrameId = requestAnimationFrame(gameLoop);
+            // Request next frame ONLY if the loop should continue
+            if (shouldContinue) {
+                 animationFrameId = requestAnimationFrame(gameLoop);
+            } else {
+                 animationFrameId = null; // Ensure it's null if stopped
+            }
         }
 
         // Combined drawing function
         function drawFrame(deltaTime = 0) {
+             // Clear previous frame
              ctx.clearRect(0, 0, canvas.width, canvas.height);
-             ctx.save(); // Save clean state
+             ctx.save(); // Save default state
 
-             // Draw Parallax Background
+             // Draw background layers (parallax)
              drawBackground(deltaTime);
 
-             // Draw Graph Edges and Markers
+             // Draw graph edges (altitude markers)
              drawGraphEdges();
 
-             // Draw Altitude Graph Curve
+             // Draw the altitude graph curve
              drawAltitudeGraph();
 
-             // Draw Particles (Wind, Debris)
+             // Draw all active particles (wind, avalanche debris, etc.)
              drawParticles(deltaTime);
 
-             // Draw Nims Character
+             // Draw the main character
              drawNims(deltaTime);
 
-             // Draw Avalanche Effect (if active) - this also applies screen shake
+             // Draw avalanche overlay and text (if active) - includes screen shake transform
              if (avalancheState.active) {
-                 drawAvalanche(deltaTime);
+                 drawAvalanche(deltaTime); // Note: This function uses ctx.translate for shake
              }
 
-             ctx.restore(); // Restore clean state (removes shake if applied)
+             ctx.restore(); // Restore to state before potential shake
         }
 
-
+        // Function to handle the crash event
         function triggerCrash() {
-            if (hasCrashed) return;
+            if (hasCrashed) return; // Prevent multiple triggers
             console.log('Triggering crash...');
             hasCrashed = true;
-            isGameRunning = false;
-            currentMultiplier = crashPoint; // Lock multiplier visually
+            isGameRunning = false; // Stop game logic progression
+            currentMultiplier = crashPoint; // Lock multiplier visually at the exact crash point
 
-            // Disable controls
+            // Disable gameplay buttons immediately
             cashoutButton.disabled = true;
             restButton.disabled = true;
-            startButton.disabled = true; // Keep start disabled during animation
+            startButton.disabled = true; // Keep start disabled until animation ends
 
-            // Start avalanche animation
+            // Start avalanche visual effects
             avalancheState.active = true;
             avalancheState.progress = 0;
-            // Particles added within drawAvalanche
+            // Particles are spawned within drawAvalanche
 
-            // Send 'lost' message
-            if (tg && sessionId) { /* ... (same as before) ... */ }
+            // Send 'lost' message to backend
+            if (tg && tg.sendData && sessionId) {
+                 tg.sendData(JSON.stringify({
+                     action: 'lost',
+                     session_id: sessionId,
+                     stake: String(currentStake), // Ensure stake is stringified if needed by backend
+                     token: currentToken
+                 }));
+            } else {
+                 console.error("Cannot send lost data: Telegram API or session ID missing.");
+                 // If backend communication fails, still proceed with local animation
+            }
 
-             // Ensure loop continues for animation
-            if (!animationFrameId) { animationFrameId = requestAnimationFrame(gameLoop); }
+            // Ensure the animation loop continues to render the crash effect
+            if (!animationFrameId) {
+                 console.log("Restarting loop for crash animation.");
+                 animationFrameId = requestAnimationFrame(gameLoop);
+            }
         }
 
 
-        // Reset game state and visuals
+        // Reset game state and visuals back to the initial idle state
         function resetGameVisuals() {
             console.log('Resetting game visuals to idle state...');
             if (animationFrameId) { cancelAnimationFrame(animationFrameId); animationFrameId = null; }
 
+            // Reset core game state flags
             isGameRunning = false; hasCrashed = false;
             currentMultiplier = 1.0; timeElapsed = 0; lastTimestamp = 0;
-            sessionId = null; crashPoint = 0;
-            altitudePath = []; // Clear graph path
-            particles = particles.filter(p => p.type === 'star'); // Keep stars, clear others
+            sessionId = null; crashPoint = 0; // Clear session-specific data
 
-            // Reset Nims
+            // Clear dynamic visual elements
+            altitudePath = [];
+            particles = particles.filter(p => p.type === 'star'); // Keep stars, clear others
+            windGustTimer = 0; nextWindGust = Math.random() * 5 + 3; // Reset wind timer
+
+            // Reset Nims character state and position
             nims.state = NIMS_STATE.IDLE;
             nims.y = canvas.height - nims.size * 1.5;
-            nims.x = GRAPH_EDGE_WIDTH + nims.size;
+            nims.x = GRAPH_EDGE_WIDTH + nims.size * 2; // Reset to start position
             nims.angle = 0; nims.climbFrame = 0; nims.frameTimer = 0; nims.waveTimer = 0; nims.fallSpeedY = 0;
 
-            // Reset Buttons
+            // Reset Button States to default (ready to start)
             stakeInput.disabled = false; tokenSelect.disabled = false;
             startButton.disabled = false; cashoutButton.disabled = true; restButton.disabled = true;
 
              // Ensure avalanche state is fully off
             avalancheState.active = false; avalancheState.progress = 0;
 
-            // Redraw the initial idle frame
-            drawFrame();
+            // Redraw the clean, initial idle frame
+            // Ensure canvas is valid before drawing
+             if (canvas.width > 0 && canvas.height > 0) {
+                  drawFrame();
+             } else {
+                  console.warn("Skipping initial draw in reset as canvas dimensions are invalid.");
+             }
         }
 
-        function validateStake() { /* ... (same as before) ... */ }
+        // Validate the stake input value
+        function validateStake() {
+            const value = parseFloat(stakeInput.value);
+            // TODO: Fetch min/max from gameData if provided by backend?
+            const minStake = 0.1;
+            const maxStake = 10.0;
+            if (isNaN(value) || value < minStake || value > maxStake) {
+                showNotification(errorDisplay, `Stake must be between ${minStake} and ${maxStake}`);
+                return false;
+            }
+            return true;
+        }
 
         // --- Event Listeners ---
 
-        startButton.addEventListener('click', () => { /* ... (same as before, ensure resetGameVisuals() is called first) ... */
+        startButton.addEventListener('click', () => {
             if (!validateStake()) return;
-            if (!gameData) { /* ... error ... */ return; }
+            if (!gameData) {
+                showNotification(errorDisplay, "Game data not loaded. Cannot start."); return;
+            }
+
             currentStake = parseFloat(stakeInput.value);
             currentToken = tokenSelect.value;
-            // ... (balance check logic as before) ...
+
+             // Client-side balance check before sending request
+            const balance = parseFloat(currentToken === 'BNB' ? gameData.bnb_balance : gameData.nims_balance);
+            const fee = currentStake * 0.03; // Assuming 3% fee, adjust if needed
+            const totalCost = currentStake + fee;
+
+            if (isNaN(balance) || balance < totalCost) {
+                 showNotification(errorDisplay, `Insufficient ${currentToken} balance for stake + fee.`); return;
+            }
 
             console.log(`Requesting start: Stake=${currentStake}, Token=${currentToken}`);
-             resetGameVisuals(); // Ensure clean state before sending request
+             resetGameVisuals(); // Reset visuals to clean state before potential start
 
-            // Disable controls
+            // Disable controls immediately
             startButton.disabled = true; stakeInput.disabled = true; tokenSelect.disabled = true;
             cashoutButton.disabled = true; restButton.disabled = true;
 
-             if (tg) { /* ... sendData 'start_game' ... */ }
-             else { /* ... error, resetGameVisuals() ... */ }
+             if (tg && tg.sendData) {
+                 tg.sendData(JSON.stringify({
+                     action: 'start_game',
+                     token: currentToken,
+                     stake: currentStake.toFixed(8) // Send with precision
+                 }));
+                 // IMPORTANT: Actual game start (setting isGameRunning=true, starting loop)
+                 // should happen in initializeApp when NEW gameData with 'game_started' is received.
+                 console.log("Start request sent. Waiting for backend confirmation...");
+
+             } else {
+                 showNotification(errorDisplay, "Telegram connection error. Cannot start game.");
+                 resetGameVisuals(); // Re-enable controls if TG fails
+             }
         });
 
         cashoutButton.addEventListener('click', () => {
-            if (!isGameRunning || !sessionId) return;
+            if (!isGameRunning || !sessionId) return; // Can only cash out if running
             console.log(`Requesting cashout: Mult=${currentMultiplier.toFixed(4)}, Sess=${sessionId}`);
 
-            isGameRunning = false; // Stop game logic
+            // Stop game logic, disable buttons
+            isGameRunning = false;
             cashoutButton.disabled = true; restButton.disabled = true; startButton.disabled = true;
 
-             showNotification(cashoutMessage, `Cashed out at ${currentMultiplier.toFixed(2)}x!`); // Provide immediate feedback
+            // Show immediate feedback
+            showNotification(cashoutMessage, `Cashed out at ${currentMultiplier.toFixed(2)}x!`);
 
-            if (tg) { /* ... sendData 'cashout' ... */ }
-            else { /* ... error, resetGameVisuals() ... */ }
+            if (tg && tg.sendData) {
+                tg.sendData(JSON.stringify({
+                    action: 'cashout',
+                    session_id: sessionId,
+                    stake: String(currentStake),
+                    token: currentToken,
+                    multiplier: currentMultiplier.toFixed(4) // Send precise multiplier
+                }));
+                 // Backend confirms, updates balance, and likely sends new state via URL reload/update.
+                 // Stop the local loop; visual reset happens on reload/new data.
+                 if (animationFrameId) { cancelAnimationFrame(animationFrameId); animationFrameId = null; }
+                 // Update Nims to idle state visually after cashout
+                 nims.state = NIMS_STATE.IDLE;
+                 drawFrame(); // Draw the idle frame once
 
-            // Don't reset visuals immediately, wait for backend update / next game start
-            if (animationFrameId) { cancelAnimationFrame(animationFrameId); animationFrameId = null; } // Stop loop
-             // Draw one last frame showing the cashed-out state? Optional.
-             // drawFrame();
+            } else {
+                 showNotification(errorDisplay, "Telegram connection error. Cashout failed.");
+                 // If TG fails, ideally we should re-enable buttons or reflect the error state
+                 // For simplicity, reset visuals, but this might desync state.
+                 resetGameVisuals();
+            }
         });
 
         restButton.addEventListener('click', () => {
-            if (!isGameRunning || !sessionId) return;
-             // ... (Find closest targetZone as before) ...
-             if (targetZone === 0) { /* ... error ... */ return; }
+             if (!isGameRunning || !sessionId) return; // Can only rest if running
 
-             console.log(`Requesting rest: Zone=${targetZone}x, Sess=${sessionId}`);
-             isGameRunning = false; // Stop game logic
+             // Find the closest safety zone the player is near
+             let targetZone = 0;
+             let minDiff = Infinity;
+             safetyZones.forEach(zone => {
+                 const diff = Math.abs(currentMultiplier - zone);
+                 if (diff < 0.15 && diff < minDiff) { // Use tolerance
+                     targetZone = zone;
+                     minDiff = diff;
+                 }
+             });
+
+             if (targetZone === 0) {
+                 showNotification(errorDisplay, 'Not close enough to a rest zone (1.5x, 3x, 5x).'); return;
+             }
+
+             console.log(`Requesting rest at zone: ${targetZone}x, Sess=${sessionId}`);
+             // Stop game logic, disable buttons
+             isGameRunning = false;
              cashoutButton.disabled = true; restButton.disabled = true; startButton.disabled = true;
 
-             showNotification(restMessage, `Resting at ${targetZone}x...`); // Use dedicated rest message
+             // Show feedback
+             showNotification(restMessage, `Resting at ${targetZone}x...`);
 
-             if (tg) { /* ... sendData 'rest' ... */ }
-             else { /* ... error, resetGameVisuals() ... */ }
+             if (tg && tg.sendData) {
+                 tg.sendData(JSON.stringify({
+                     action: 'rest',
+                     session_id: sessionId,
+                     token: currentToken,
+                     // Send the exact multiplier of the zone, not currentMultiplier
+                     multiplier: targetZone.toFixed(4)
+                 }));
+                 // Backend handles rest logic. Stop local loop. Reset happens on reload/new data.
+                 if (animationFrameId) { cancelAnimationFrame(animationFrameId); animationFrameId = null; }
+                 nims.state = NIMS_STATE.IDLE; // Update Nims state visually
+                 drawFrame(); // Draw idle frame
 
-             if (animationFrameId) { cancelAnimationFrame(animationFrameId); animationFrameId = null; } // Stop loop
+             } else {
+                 showNotification(errorDisplay, "Telegram connection error. Rest failed.");
+                 resetGameVisuals(); // Reset locally on failure
+             }
         });
 
+        // Handle window resize events
         window.addEventListener('resize', resizeCanvas);
 
 
-        // --- Initialization ---
+        // --- Initialization Function (Revised for Robustness) ---
         function initializeApp() {
             console.log('Initializing Nims Climb Ascent...');
+            // Ensure Telegram API is available
+            if (!tg || !tg.initData) {
+                console.error("Telegram WebApp API not ready or initData missing!");
+                showNotification(errorDisplay, "Initialization failed: Cannot connect to Telegram.");
+                startButton.disabled = true; stakeInput.disabled = true; tokenSelect.disabled = true;
+                cashoutButton.disabled = true; restButton.disabled = true;
+                return;
+            }
+            // Inform Telegram the app is ready
             tg.ready();
+            console.log('tg.ready() called.');
 
-             // Setup initial resize and draw
-             resizeCanvas(); // This now also initializes background elements
-
+            // Get raw data from URL parameter
             const rawData = getQueryParam('data');
-            if (!rawData) { /* ... error handling ... */ return; }
+            console.log('Raw data parameter from getQueryParam:', rawData ? rawData.substring(0, 100)+'...' : 'null');
 
+            if (!rawData) {
+                showNotification(errorDisplay, 'Initialization failed: No game data in URL.');
+                console.error('No game data found in URL parameter "data".');
+                // Perform initial resize and draw default idle state even without data
+                try { resizeCanvas(); resetGameVisuals(); } catch(e) { console.error("Error during initial setup without data:", e); }
+                return;
+            }
+
+            // --- Try Parsing Data ---
+            let parsedGameData = null;
             try {
-                gameData = JSON.parse(decodeURIComponent(rawData));
-                console.log('Initial game data received:', gameData);
+                console.log('Attempting to decode data length:', rawData.length);
+                const decodedData = decodeURIComponent(rawData);
+                console.log('Attempting to parse decoded data (first 500 chars):', decodedData.substring(0, 500));
+                parsedGameData = JSON.parse(decodedData);
+                console.log('Successfully Parsed gameData:', parsedGameData);
+                // Assign to global gameData only AFTER successful parsing
+                gameData = parsedGameData;
 
-                // Update static UI elements
-                balanceDisplay.innerHTML = `<span>BNB:</span> ${parseFloat(gameData.bnb_balance || 0).toFixed(8)} | <span>NIMS:</span> ${parseFloat(gameData.nims_balance || 0).toFixed(4)}`;
-                jackpotDisplay.textContent = `Community Jackpot: ${parseFloat(gameData.jackpot || 0).toFixed(4)} NIMS`;
-                raffleDisplay.firstChild.textContent = `Earned Tickets: ${gameData.raffle_tickets || 0} | Purchased: ${gameData.purchased_tickets || 0} `;
-                updateLeaderboard();
+            } catch (e) {
+                showNotification(errorDisplay, `Initialization error: ${e.message}`);
+                console.error('Failed to parse initial game data:', e);
+                console.error('Data causing the error (first 500 chars):', rawData.substring(0,500));
+                // Attempt to reset and draw default frame even on error
+                try { resizeCanvas(); resetGameVisuals(); } catch(re) { console.error("Error during setup after parse error:", re); }
+                return; // Stop initialization
+            }
 
-                 // --- Game Start/Resume Logic ---
-                 if (gameData.game_started && gameData.game_started.session_id) {
-                     const startedInfo = gameData.game_started;
-                     console.log('Game start/resume detected:', startedInfo);
+            // --- Data Parsed - Update UI and Game State ---
+            try {
+                console.log('Updating static UI elements...');
+                // Use optional chaining and default values for safety
+                balanceDisplay.innerHTML = `<span>BNB:</span> ${parseFloat(gameData?.bnb_balance || 0).toFixed(8)} | <span>NIMS:</span> ${parseFloat(gameData?.nims_balance || 0).toFixed(4)}`;
+                jackpotDisplay.textContent = `Community Jackpot: ${parseFloat(gameData?.jackpot || 0).toFixed(4)} NIMS`;
+                raffleDisplay.firstChild.textContent = `Earned Tickets: ${gameData?.raffle_tickets || 0} | Purchased: ${gameData?.purchased_tickets || 0} `;
+                updateLeaderboard(); // Ensure this handles potential missing gameData.leaderboard
+                console.log('Static UI elements updated.');
 
-                     // ... (assign sessionId, currentStake, currentToken, crashPoint as before) ...
-                     sessionId = startedInfo.session_id;
-                     currentStake = parseFloat(startedInfo.stake);
-                     currentToken = startedInfo.token;
-                     crashPoint = parseFloat(startedInfo.crash_point);
+                // --- Check for Active Game Session ---
+                if (gameData.game_started && gameData.game_started.session_id) {
+                    const startedInfo = gameData.game_started;
+                    console.log('Game start/resume detected:', startedInfo);
 
-                     if (!sessionId || isNaN(currentStake) || !currentToken || isNaN(crashPoint)) {
-                         throw new Error('Incomplete or invalid game_started data.');
-                     }
+                    // Assign game state variables safely
+                    sessionId = startedInfo.session_id;
+                    currentStake = parseFloat(startedInfo.stake);
+                    currentToken = startedInfo.token;
+                    crashPoint = parseFloat(startedInfo.crash_point);
 
-                     // Set controls
-                     stakeInput.value = currentStake.toFixed(2); tokenSelect.value = currentToken;
-                     stakeInput.disabled = true; tokenSelect.disabled = true;
-                     startButton.disabled = true; cashoutButton.disabled = false; restButton.disabled = true;
+                    // Validate game start data
+                    if (!sessionId || isNaN(currentStake) || !currentToken || isNaN(crashPoint) || crashPoint <= 0) {
+                        console.error('Incomplete or invalid game_started data:', startedInfo);
+                        throw new Error('Invalid game session data received.');
+                    }
 
-                     // Start the game loop
-                     isGameRunning = true; hasCrashed = false;
-                     currentMultiplier = 1.0; timeElapsed = 0; lastTimestamp = 0;
-                     altitudePath = []; // Clear path for new game
+                    // Set controls state for active game
+                    stakeInput.value = currentStake.toFixed(2);
+                    tokenSelect.value = currentToken;
+                    stakeInput.disabled = true; tokenSelect.disabled = true;
+                    startButton.disabled = true; cashoutButton.disabled = false; restButton.disabled = true;
 
-                     if (animationFrameId) cancelAnimationFrame(animationFrameId);
-                     animationFrameId = requestAnimationFrame(gameLoop);
-                     console.log(`Game loop started. Session: ${sessionId}, Crash Point: ${crashPoint}`);
+                    // Start the game loop state
+                    isGameRunning = true; hasCrashed = false;
+                    currentMultiplier = 1.0; timeElapsed = 0; lastTimestamp = 0;
+                    altitudePath = []; // Clear path for new game
 
-                 } else {
-                     console.log('No active game session. Resetting to idle.');
-                     resetGameVisuals(); // Ensure idle state visually
-                 }
+                    console.log('Attempting to start game loop...');
+                    if (animationFrameId) cancelAnimationFrame(animationFrameId);
+                    animationFrameId = requestAnimationFrame(gameLoop);
+                    console.log(`Game loop started. Session: ${sessionId}, Crash Point: ${crashPoint}`);
 
-            } catch (e) { /* ... error handling, call resetGameVisuals() ... */ }
+                } else {
+                    // No active game session, ensure idle state
+                    console.log('No active game session detected. Resetting visuals to idle.');
+                    resetGameVisuals(); // This calls drawFrame()
+                }
 
-             // Final draw after initialization
-             drawFrame();
+            } catch (uiError) {
+                console.error("Error during UI update or game start logic:", uiError);
+                showNotification(errorDisplay, `Error processing game data: ${uiError.message}`);
+                try { resetGameVisuals(); } catch(re) { console.error("Error during reset after UI error:", re); }
+            }
+
+            // Call resizeCanvas AFTER data processing and potential reset/game start
+            console.log('Calling final resizeCanvas...');
+            try {
+                resizeCanvas();
+            } catch (finalResizeError){
+                console.error("Error during final resize call:", finalResizeError);
+                showNotification(errorDisplay, `Error drawing initial screen: ${finalResizeError.message}`);
+            }
+            console.log('Initialization complete.');
         }
 
-        // --- Start the App ---
-        if (tg && tg.initData) {
-             initializeApp();
-        } else { /* ... Fallback/Retry logic ... */ }
+        // --- Start the Application ---
+        // Wait for the DOM to be fully loaded before initializing
+        window.addEventListener('load', () => {
+             console.log("Window loaded. Checking for Telegram API...");
+             if (tg && tg.initData) {
+                  initializeApp();
+             } else {
+                  console.warn("Telegram WebApp API not found on load. Retrying in 0.5s...");
+                  // Fallback/Retry logic
+                  setTimeout(() => {
+                      if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) {
+                          console.log("Telegram WebApp API found on retry.");
+                          initializeApp();
+                      } else {
+                          console.error("Telegram WebApp API still not available after retry.");
+                          showNotification(errorDisplay, "Cannot connect to Telegram App.");
+                          // Disable controls as the app is likely non-functional
+                          startButton.disabled = true; stakeInput.disabled = true; tokenSelect.disabled = true;
+                          cashoutButton.disabled = true; restButton.disabled = true;
+                      }
+                  }, 500); // Shorter retry delay
+             }
+        });
+
+        /* Current date/time: Sunday, April 13, 2025 at 10:00:26 PM BST */
+        /* Location context: Winchester, England, United Kingdom */
 
     </script>
 </body>
