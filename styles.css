@@ -1,8 +1,14 @@
-body {
+* {
+    box-sizing: border-box;
     margin: 0;
+    padding: 0;
+}
+
+body {
     overflow: hidden;
     background: linear-gradient(to bottom, #ff7f50, #1e3c72);
-    font-family: 'Arial', sans-serif;
+    font-family: Arial, sans-serif;
+    font-size: 16px;
 }
 
 .game-container {
@@ -12,7 +18,7 @@ body {
     overflow: hidden;
 }
 
-/* Background Layers */
+/* Background */
 .background {
     position: absolute;
     width: 100%;
@@ -31,29 +37,25 @@ body {
 
 .layer-1 {
     background: url('/assets/mountain1.png') repeat-x;
-    z-index: 2;
-    animation: parallax 60s linear infinite;
+    animation: parallax 80s linear infinite;
 }
 
 .layer-2 {
     background: url('/assets/mountain2.png') repeat-x;
-    z-index: 3;
-    animation: parallax 40s linear infinite;
+    animation: parallax 50s linear infinite;
 }
 
 .layer-3 {
     background: url('/assets/mountain3.png') repeat-x;
-    z-index: 4;
-    animation: parallax 20s linear infinite;
+    animation: parallax 30s linear infinite;
 }
 
 .cloud-layer {
     background: url('/assets/clouds.png') repeat-x;
-    z-index: 5;
-    animation: clouds 100s linear infinite;
+    animation: clouds 120s linear infinite;
 }
 
-/* Fallbacks if assets are missing */
+/* Fallbacks */
 .layer-1:not([style*="mountain1.png"]) {
     background: linear-gradient(to top, #2f4f4f, transparent 50%);
 }
@@ -73,84 +75,94 @@ body {
 .cloud-layer::before {
     content: '';
     position: absolute;
-    width: 150px;
-    height: 50px;
+    width: 20vw;
+    height: 5vh;
     background: #f5f5f5;
-    border-radius: 50px;
+    border-radius: 5vw;
     opacity: 0.3;
-    animation: clouds 30s linear infinite;
+    animation: clouds 40s linear infinite;
 }
 
 @keyframes parallax {
     0% { background-position: 0 100%; }
-    100% { background-position: -2000px 100%; }
+    100% { background-position: -200vw 100%; }
 }
 
 @keyframes clouds {
     0% { transform: translateX(100vw); }
-    100% { transform: translateX(-150px); }
+    100% { transform: translateX(-20vw); }
 }
 
-/* Canvas for Particles */
+/* Canvas */
 #gameCanvas {
     position: absolute;
     left: 50%;
     transform: translateX(-50%);
     z-index: 10;
+    width: 90vw;
+    max-width: 500px;
+    height: 70vh;
+    max-height: 700px;
 }
 
-/* Nims Character */
+/* Nims */
 .nims {
     position: absolute;
-    width: 50px;
-    height: 70px;
+    width: 12vw;
+    max-width: 60px;
+    height: 17vw;
+    max-height: 85px;
     background: url('/assets/nims.png') no-repeat;
-    background-size: 200px 70px;
+    background-size: 400% 100%;
     z-index: 15;
     left: 50%;
     transform: translateX(-50%);
-    transition: bottom 0.1s;
+    transition: bottom 0.15s ease-out;
 }
 
 .nims.climbing {
-    animation: climb 0.6s steps(3) infinite;
+    animation: climb 0.5s steps(3) infinite;
 }
 
 .nims.waving {
-    animation: wave 1s steps(1);
+    animation: wave 0.8s steps(1);
 }
 
 @keyframes climb {
     0% { background-position: 0 0; }
-    100% { background-position: -150px 0; }
+    100% { background-position: -300% 0; }
 }
 
 @keyframes wave {
-    0% { background-position: -150px 0; }
-    100% { background-position: -150px 0; }
+    0% { background-position: -300% 0; }
+    100% { background-position: -300% 0; }
 }
 
 /* Altitude Graph */
 .altitude-graph {
     position: absolute;
-    right: 10px;
+    right: 1vw;
     top: 0;
+    width: 15vw;
+    max-width: 100px;
     height: 100%;
     z-index: 20;
 }
 
 #graphSvg {
+    width: 100%;
+    height: 100%;
     background: rgba(0, 0, 0, 0.3);
     border-left: 1px solid #fff;
 }
 
 .altitude-markers {
     position: absolute;
-    right: 10px;
+    right: 1vw;
     top: 0;
     height: 100%;
     color: #fff;
-    font-size: 12px;
+    font-size: clamp(10px, 2vw, 12px);
 }
 
 .altitude-markers::before {
@@ -168,58 +180,84 @@ body {
 /* Altitude Scale */
 .altitude-scale {
     position: absolute;
-    left: 10px;
+    left: 1vw;
     top: 0;
     height: 100%;
     z-index: 20;
     color: #fff;
-    font-size: 12px;
+    font-size: clamp(10px, 2vw, 12px);
 }
 
 .marker {
     position: absolute;
     left: 0;
+    transform: translateY(50%);
 }
 
-/* UI Overlay */
+/* UI */
 .ui-overlay {
     position: absolute;
-    top: 10px;
-    left: 10px;
-    right: 120px;
+    top: 1vh;
+    left: 1vw;
+    right: 1vw;
     z-index: 30;
+    display: grid;
+    gap: 1vh;
+    grid-template-columns: minmax(0, 1fr);
+    padding: 1vw;
     color: #fff;
     text-shadow: 0 0 5px #000;
 }
 
+.status {
+    display: flex;
+    gap: 2vw;
+    flex-wrap: wrap;
+}
+
 .altitude-display, .multiplier-display {
-    font-size: 20px;
-    margin-bottom: 10px;
-    background: rgba(0, 0, 0, 0.5);
-    padding: 5px 10px;
-    border-radius: 5px;
+    font-size: clamp(16px, 4vw, 20px);
+    background: rgba(0, 0, 0, 0.6);
+    padding: 0.5em 1em;
+    border-radius: 0.5em;
+    white-space: nowrap;
 }
 
 .controls {
     display: flex;
-    gap: 8px;
-    margin-bottom: 10px;
+    gap: 1vw;
+    flex-wrap: wrap;
 }
 
 #stakeInput, #tokenSelect, button {
-    padding: 10px;
+    padding: 0.8em;
     border: none;
-    border-radius: 8px;
+    border-radius: 0.5em;
     background: #ffffffcc;
     color: #000;
-    font-size: 16px;
-    transition: transform 0.2s, background 0.2s;
+    font-size: clamp(14px, 3vw, 16px);
+    flex: 1;
+    min-width: 80px;
+    touch-action: manipulation;
+}
+
+#stakeInput {
+    max-width: 150px;
+}
+
+#stakeInput:invalid {
+    border: 2px solid #ff4444;
+}
+
+#tokenSelect {
+    max-width: 100px;
 }
 
 button {
     cursor: pointer;
     background: linear-gradient(to bottom, #00ff88, #00cc66);
     box-shadow: 0 0 10px #00ff88;
+    transition: transform 0.2s, background 0.2s;
 }
 
 button:disabled {
@@ -228,16 +266,15 @@ button:disabled {
     cursor: not-allowed;
 }
 
-button:hover:not(:disabled) {
-    transform: scale(1.05);
+button:active:not(:disabled) {
+    transform: scale(0.95);
 }
 
 .raffle-display {
-    font-size: 16px;
-    margin-bottom: 10px;
-    background: rgba(0, 0, 0, 0.5);
-    padding: 5px 10px;
-    border-radius: 5px;
+    font-size: clamp(14px, 3vw, 16px);
+    background: rgba(0, 0, 0, 0.6);
+    padding: 0.5em 1em;
+    border-radius: 0.5em;
 }
 
 .raffle-display span {
@@ -252,28 +289,52 @@ button:hover:not(:disabled) {
 
 .leaderboard {
     background: rgba(0, 0, 0, 0.7);
-    padding: 10px;
-    border-radius: 8px;
-    max-height: 200px;
+    padding: 1em;
+    border-radius: 0.5em;
+    max-height: 30vh;
     overflow-y: auto;
 }
 
 .leaderboard h3 {
-    margin: 0 0 5px;
-    font-size: 18px;
+    font-size: clamp(16px, 4vw, 18px);
+    margin: 0 0 0.5em;
 }
 
 #leaderboardList {
     list-style: none;
     padding: 0;
-    font-size: 14px;
+    font-size: clamp(12px, 2.5vw, 14px);
 }
 
-#leaderboardList li {
-    padding: 3px 0;
+.error-popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #ff4444;
+    color: #fff;
+    padding: 1em 2em;
+    border-radius: 0.5em;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    display: none;
+    font-size: clamp(14px, 3vw, 16px);
+    max-width: 80vw;
+    text-align: center;
 }
 
-/* Avalanche Effect */
+.error-popup.active {
+    display: block;
+    animation: fadeInOut 3s forwards;
+}
+
+@keyframes fadeInOut {
+    0% { opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+/* Avalanche */
 .avalanche {
     position: absolute;
     top: 0;
@@ -287,19 +348,65 @@ button:hover:not(:disabled) {
 
 .avalanche.active {
     background: rgba(255, 255, 255, 0.5);
-    animation: avalancheFade 2.5s forwards;
+    animation: avalancheFade 3s forwards;
 }
 
 @keyframes avalancheFade {
     0% { background: rgba(255, 255, 255, 0); }
-    50% { background: rgba(255, 255, 255, 0.8); }
+    50% { background: rgba(255, 255, 255, 0.9); }
     100% { background: rgba(255, 255, 255, 0); }
 }
 
 @keyframes shake {
     0% { transform: translate(0, 0); }
-    25% { transform: translate(-5px, 5px); }
-    50% { transform: translate(5px, -5px); }
-    75% { transform: translate(-5px, 5px); }
+    25% { transform: translate(-8px, 8px); }
+    50% { transform: translate(8px, -8px); }
+    75% { transform: translate(-8px, 8px); }
     100% { transform: translate(0, 0); }
+}
+
+/* Media Queries */
+@media (max-width: 600px) {
+    .ui-overlay {
+        grid-template-columns: 1fr;
+        padding: 2vw;
+    }
+
+    .controls {
+        flex-direction: column;
+        gap: 2vw;
+    }
+
+    #stakeInput, #tokenSelect, button {
+        min-width: 100%;
+    }
+
+    .nims {
+        width: 15vw;
+        height: 21vw;
+    }
+
+    .altitude-graph {
+        width: 20vw;
+    }
+
+    .status {
+        flex-direction: column;
+        gap: 1vh;
+    }
+}
+
+@media (min-width: 1200px) {
+    #gameCanvas {
+        width: 80vw;
+        max-width: 600px;
+        height: 75vh;
+        max-height: 800px;
+    }
+
+    .ui-overlay {
+        max-width: 800px;
+        left: 50%;
+        transform: translateX(-50%);
+    }
 }
