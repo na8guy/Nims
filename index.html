@@ -115,12 +115,12 @@
             grid-area: controls;
             padding: 0.5rem;
             /*background: #1e293b;*/
-            background:rgba(0,0,0,0.5);
+            background:rgba(0, 0, 0, 0.5);
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
             gap: 0.5rem;
-            /*box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.5);*/
+           /* box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.5);*/
         }
         #stakeInput, #tokenSelect {
             padding: 0.75rem;
@@ -337,13 +337,13 @@
         let multiplier = 1;
         let timeElapsed = 0;
         let isGameRunning = false;
-        let nims = { x: 100, y: 0, frame: 0, state: 'climbing' };
+        let nims = { x: 0, y: 0, frame: 0, state: 'climbing' };
         let pathProgress = 0;
         let cameraOffset = { x: 0, y: 0 };
         let clouds = [];
         let particles = [];
         let shakeOffset = { x: 0, y: 0 };
-        const baseAltitude = 8848; // Base for scaling altitude
+        const baseAltitude = 8848;
 
         function getQueryParam(param) {
             const urlParams = new URLSearchParams(window.location.search);
@@ -492,7 +492,8 @@
             gameCanvas.height = gameCanvas.offsetHeight;
             bgCanvas.width = bgCanvas.offsetWidth;
             bgCanvas.height = bgCanvas.offsetHeight;
-            nims.y = gameCanvas.height - 50;
+            nims.x = gameCanvas.width / 2;
+            nims.y = gameCanvas.height / 2;
         }
 
         function drawBackground() {
@@ -527,7 +528,7 @@
             clouds.forEach(cloud => {
                 bgCtx.fillStyle = `rgba(255, 255, 255, ${cloud.opacity})`;
                 bgCtx.beginPath();
-                bgCtx.arc(cloud.x - cameraOffset.x, cloud.y, cloud.size, 0, Math.PI * 2);
+                bgCtx.arc(cloud.x - cameraOffset.x, cloud.y + cameraOffset.y, cloud.size, 0, Math.PI * 2);
                 bgCtx.fill();
             });
         }
@@ -537,7 +538,7 @@
             if (Math.random() < 0.05) {
                 clouds.push({
                     x: cameraOffset.x + bgCanvas.width,
-                    y: Math.random() * bgCanvas.height * 0.3,
+                    y: Math.random() * bgCanvas.height * 0.3 - cameraOffset.y,
                     size: 20 + Math.random() * 30,
                     speed: 0.5 + Math.random(),
                     opacity: 0.5 + Math.random() * 0.3
@@ -550,20 +551,20 @@
 
         function drawNims() {
             gameCtx.save();
-            gameCtx.translate(nims.x + shakeOffset.x - cameraOffset.x, nims.y + shakeOffset.y - cameraOffset.y);
+            gameCtx.translate(nims.x + shakeOffset.x, nims.y + shakeOffset.y);
             gameCtx.rotate(nims.angle || 0);
             gameCtx.fillStyle = '#facc15';
             gameCtx.beginPath();
             gameCtx.arc(0, -20, 10, 0, Math.PI * 2);
             gameCtx.rect(-10, -10, 20, 30);
             gameCtx.moveTo(-10, -10);
-            gameCtx.lineTo(-20, 10);
+            gameCtx.lineTo(-20 - Math.sin(nims.frame) * 5, 10);
             gameCtx.moveTo(10, -10);
-            gameCtx.lineTo(20, 10);
+            gameCtx.lineTo(20 + Math.sin(nims.frame) * 5, 10);
             gameCtx.moveTo(-5, 20);
-            gameCtx.lineTo(-10, 40);
+            gameCtx.lineTo(-10 - Math.cos(nims.frame) * 5, 40);
             gameCtx.moveTo(5, 20);
-            gameCtx.lineTo(10, 40);
+            gameCtx.lineTo(10 + Math.cos(nims.frame) * 5, 40);
             gameCtx.fill();
             gameCtx.strokeStyle = '#1e293b';
             gameCtx.lineWidth = 2;
@@ -578,11 +579,11 @@
             const points = [];
             const startX = 100;
             const startY = gameCanvas.height;
-            gameCtx.moveTo(startX - cameraOffset.x, startY - cameraOffset.y);
+            gameCtx.moveTo(startX - cameraOffset.x, startY + cameraOffset.y);
             for (let t = 0; t <= pathProgress; t += 0.01) {
-                const x = startX + t * 500; // Extended path
-                const y = startY - t * 800 * multiplier; // Scale with multiplier
-                gameCtx.lineTo(x - cameraOffset.x, y - cameraOffset.y);
+                const x = startX + t * 500;
+                const y = startY - t * 800 * multiplier;
+                gameCtx.lineTo(x - cameraOffset.x, y + cameraOffset.y);
                 points.push({ x, y });
             }
             gameCtx.stroke();
@@ -603,7 +604,7 @@
 
             [1.5, 3.0, 5.0].forEach(zone => {
                 const t = (zone - 1) / (multiplier - 1);
-                if (t <= pathProgress) {
+                if (t <= pathProgress && t >= 0) {
                     const idx = Math.floor(t / 0.01);
                     if (points[idx]) {
                         gameCtx.beginPath();
@@ -619,13 +620,13 @@
             particles.forEach(p => {
                 gameCtx.fillStyle = `rgba(255, 255, 255, ${p.opacity})`;
                 gameCtx.beginPath();
-                gameCtx.arc(p.x + shakeOffset.x - cameraOffset.x, p.y + shakeOffset.y - cameraOffset.y, p.size, 0, Math.PI * 2);
+                gameCtx.arc(p.x - cameraOffset.x + shakeOffset.x, p.y + cameraOffset.y + shakeOffset.y, p.size, 0, Math.PI * 2);
                 gameCtx.fill();
             });
         }
 
         function updateAvalanche() {
-            particles = particles.filter(p => p.y < gameCanvas.height + cameraOffset.y && p.opacity > 0);
+            particles = particles.filter(p => p.y + cameraOffset.y < gameCanvas.height && p.opacity > 0);
             if (particles.length > 0) {
                 particles.forEach(p => {
                     p.y += p.vy;
@@ -643,7 +644,7 @@
             for (let i = 0; i < 100; i++) {
                 particles.push({
                     x: cameraOffset.x + Math.random() * gameCanvas.width,
-                    y: cameraOffset.y - 10,
+                    y: -cameraOffset.y,
                     size: 2 + Math.random() * 5,
                     vx: (Math.random() - 0.5) * 2,
                     vy: 5 + Math.random() * 5,
@@ -682,13 +683,12 @@
             if (!isGameRunning) return;
             timeElapsed += 0.016;
             multiplier = 1 + timeElapsed * 0.03;
-            pathProgress = timeElapsed / 10; // No cap
+            pathProgress = timeElapsed / 10;
 
-            nims.x = 100 + pathProgress * 500;
-            nims.y = gameCanvas.height - pathProgress * 800 * multiplier;
-            cameraOffset.x = Math.max(0, nims.x - gameCanvas.width / 2);
-            cameraOffset.y = Math.max(0, nims.y - gameCanvas.height / 2);
+            cameraOffset.x = pathProgress * 500;
+            cameraOffset.y = -pathProgress * 800 * multiplier;
             nims.angle = Math.atan2(-800 * multiplier, 500) * Math.min(pathProgress, 1);
+            nims.frame += 0.1;
 
             const altitude = Math.floor(multiplier * baseAltitude);
             altitudeDisplay.textContent = `Altitude: ${altitude}m`;
@@ -737,7 +737,7 @@
             timeElapsed = 0;
             pathProgress = 0;
             cameraOffset = { x: 0, y: 0 };
-            nims = { x: 100, y: gameCanvas.height - 50, frame: 0, state: 'climbing' };
+            nims = { x: gameCanvas.width / 2, y: gameCanvas.height / 2, frame: 0, state: 'climbing' };
             multiplierDisplay.textContent = '1.00x';
             altitudeDisplay.textContent = 'Altitude: 0m';
             cashoutButton.disabled = true;
