@@ -34,7 +34,6 @@
             justify-content: space-between;
             align-items: center;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
-            position: relative;
             z-index: 10;
         }
         #balance {
@@ -101,6 +100,7 @@
             max-height: calc(100vh - 160px);
             background: transparent;
             position: relative;
+            z-index: 1;
             touch-action: none;
         }
         #backgroundCanvas {
@@ -109,7 +109,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            z-index: -1;
+            z-index: 0;
         }
         #controls {
             grid-area: controls;
@@ -280,7 +280,7 @@
         <button id="restButton" disabled>Rest</button>
     </div>
     <div id="modal">
-        <div class="_md-content">
+        <div class="modal-content">
             <h2 id="modal-title"></h2>
             <p id="modal-body"></p>
             <input id="withdraw-amount" type="number" placeholder="Amount" style="display: none;">
@@ -316,7 +316,8 @@
         const modalTitle = document.getElementById('modal-title');
         const modalBody = document.getElementById('modal-body');
         const withdrawAmount = document.getElementById('withdraw-amount');
-        const withdrawAddress = document.getElementfeet withdrawSubmit = document.getElementById('withdraw-submit');
+        const withdrawAddress = document.getElementById('withdraw-address');
+        const withdrawSubmit = document.getElementById('withdraw-submit');
         const ticketAmount = document.getElementById('ticket-amount');
         const ticketSubmit = document.getElementById('ticket-submit');
 
@@ -343,7 +344,7 @@
         function showError(message) {
             errorDisplay.textContent = message;
             errorDisplay.style.display = 'block';
-            Telegram.WebApp.HapticFeedback.notificationOccurred('error');
+            if (Telegram.WebApp) Telegram.WebApp.HapticFeedback.notificationOccurred('error');
             setTimeout(() => errorDisplay.style.display = 'none', 3000);
             console.error('Error:', message);
         }
@@ -351,12 +352,16 @@
         function showCashout(message) {
             cashoutMessage.textContent = message;
             cashoutMessage.style.display = 'block';
-            Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+            if (Telegram.WebApp) Telegram.WebApp.HapticFeedback.notificationOccurred('success');
             setTimeout(() => cashoutMessage.style.display = 'none', 3000);
         }
 
         function refreshTickets() {
-            Telegram.WebApp.sendData(JSON.stringify({ action: 'get_tickets' }));
+            if (Telegram.WebApp) {
+                Telegram.WebApp.sendData(JSON.stringify({ action: 'get_tickets' }));
+            } else {
+                showError('Telegram WebApp not available');
+            }
         }
 
         function showModal(type) {
@@ -369,7 +374,9 @@
             modalBody.style.whiteSpace = 'pre-wrap';
             if (type === 'deposit') {
                 modalTitle.textContent = 'Deposit Address';
-                modalBody.textContent = `BNB: ${gameData.bnb_address || 'N/A'}\nNIMS: ${gameData.nims_address || 'N/A'}`;
+                modalBody.textContent = gameData
+                    ? `BNB: ${gameData.bnb_address || 'N/A'}\nNIMS: ${gameData.nims_address || 'N/A'}`
+                    : 'No address data available';
             } else if (type === 'withdraw') {
                 modalTitle.textContent = 'Withdraw Funds';
                 modalBody.textContent = 'Enter amount and address:';
@@ -395,14 +402,18 @@
                 showError('Invalid amount or address');
                 return;
             }
-            Telegram.WebApp.sendData(JSON.stringify({
-                action: 'withdraw',
-                amount: amount.toFixed(8),
-                address,
-                token: tokenSelect.value
-            }));
-            showError('Withdrawal request sent');
-            closeModal();
+            if (Telegram.WebApp) {
+                Telegram.WebApp.sendData(JSON.stringify({
+                    action: 'withdraw',
+                    amount: amount.toFixed(8),
+                    address,
+                    token: tokenSelect.value
+                }));
+                showError('Withdrawal request sent');
+                closeModal();
+            } else {
+                showError('Telegram WebApp not available');
+            }
         }
 
         function buyRaffleTickets() {
@@ -411,13 +422,17 @@
                 showError('Enter at least 1 ticket');
                 return;
             }
-            Telegram.WebApp.sendData(JSON.stringify({
-                action: 'buy_raffle',
-                tickets,
-                token: 'NIMS'
-            }));
-            showError('Ticket purchase requested');
-            closeModal();
+            if (Telegram.WebApp) {
+                Telegram.WebApp.sendData(JSON.stringify({
+                    action: 'buy_raffle',
+                    tickets,
+                    token: 'NIMS'
+                }));
+                showError('Ticket purchase requested');
+                closeModal();
+            } else {
+                showError('Telegram WebApp not available');
+            }
         }
 
         function resizeCanvas() {
@@ -435,7 +450,6 @@
             bgCtx.fillStyle = gradient;
             bgCtx.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
 
-            // Mountains
             bgCtx.fillStyle = '#334155';
             bgCtx.beginPath();
             bgCtx.moveTo(0, bgCanvas.height);
@@ -447,7 +461,6 @@
             bgCtx.closePath();
             bgCtx.fill();
 
-            // Far Mountains (Parallax)
             bgCtx.fillStyle = '#475569';
             bgCtx.beginPath();
             bgCtx.moveTo(0, bgCanvas.height);
@@ -459,7 +472,6 @@
             bgCtx.closePath();
             bgCtx.fill();
 
-            // Clouds
             clouds.forEach(cloud => {
                 bgCtx.fillStyle = `rgba(255, 255, 255, ${cloud.opacity})`;
                 bgCtx.beginPath();
@@ -486,20 +498,16 @@
 
         function drawNims() {
             gameCtx.save();
-            gameCtx.translate(nims.x, nims.y);
+            gameCtx.translate(nims.x + shakeOffset.x, nims.y + shakeOffset.y);
             gameCtx.rotate(nims.angle || 0);
             gameCtx.fillStyle = '#facc15';
             gameCtx.beginPath();
-            // Head
             gameCtx.arc(0, -20, 10, 0, Math.PI * 2);
-            // Body
             gameCtx.rect(-10, -10, 20, 30);
-            // Arms
             gameCtx.moveTo(-10, -10);
             gameCtx.lineTo(-20, 10);
             gameCtx.moveTo(10, -10);
             gameCtx.lineTo(20, 10);
-            // Legs
             gameCtx.moveTo(-5, 20);
             gameCtx.lineTo(-10, 40);
             gameCtx.moveTo(5, 20);
@@ -539,7 +547,6 @@
             });
             gameCtx.stroke();
 
-            // Safety Zone Markers
             [1.5, 3.0, 5.0].forEach(zone => {
                 const t = (zone - 1) / 4;
                 if (t <= pathProgress) {
@@ -593,15 +600,28 @@
 
         function updateLeaderboard() {
             leaderboardList.innerHTML = '';
-            if (gameData.leaderboard && Array.isArray(gameData.leaderboard)) {
+            if (gameData && gameData.leaderboard && Array.isArray(gameData.leaderboard)) {
                 gameData.leaderboard.slice(0, 5).forEach((entry, index) => {
                     const li = document.createElement('li');
-                    li.textContent = `#${index + 1} User ${entry.user_id}: ${entry.highest_cashout.toFixed(2)}x`;
+                    li.textContent = `#${index + 1} User ${entry.user_id || 'Unknown'}: ${entry.highest_cashout ? entry.highest_cashout.toFixed(2) : '0.00'}x`;
                     leaderboardList.appendChild(li);
                 });
             } else {
-                leaderboardList.textContent = 'No leaderboard data';
+                leaderboardList.innerHTML = '<li>No leaderboard data</li>';
             }
+        }
+
+        function updateUI() {
+            if (!gameData) {
+                balanceDisplay.textContent = 'BNB: 0 | NIMS: 0';
+                jackpotDisplay.textContent = 'Community Jackpot: 0 NIMS';
+                raffleDisplay.textContent = 'Earned Tickets: 0 | Purchased: 0';
+                return;
+            }
+            balanceDisplay.textContent = `BNB: ${parseFloat(gameData.bnb_balance || 0).toFixed(8)} | NIMS: ${parseFloat(gameData.nims_balance || 0).toFixed(4)}`;
+            jackpotDisplay.textContent = `Community Jackpot: ${parseFloat(gameData.jackpot || 0).toFixed(4)} NIMS`;
+            raffleDisplay.textContent = `Earned Tickets: ${gameData.raffle_tickets || 0} | Purchased: ${gameData.purchased_tickets || 0}`;
+            updateLeaderboard();
         }
 
         function updateGame() {
@@ -632,17 +652,19 @@
                 isGameRunning = false;
                 multiplierDisplay.textContent = 'Avalanche!';
                 triggerAvalanche();
-                Telegram.WebApp.HapticFeedback.impactOccurred('heavy');
+                if (Telegram.WebApp) Telegram.WebApp.HapticFeedback.impactOccurred('heavy');
                 setTimeout(() => {
                     cashoutButton.disabled = true;
                     restButton.disabled = true;
                     startButton.disabled = false;
-                    Telegram.WebApp.sendData(JSON.stringify({
-                        action: 'lost',
-                        session_id: sessionId,
-                        stake: stake.toString(),
-                        token
-                    }));
+                    if (Telegram.WebApp) {
+                        Telegram.WebApp.sendData(JSON.stringify({
+                            action: 'lost',
+                            session_id: sessionId,
+                            stake: stake.toString(),
+                            token
+                        }));
+                    }
                     resetGame();
                 }, 2000);
             } else {
@@ -669,6 +691,7 @@
             shakeOffset = { x: 0, y: 0 };
             gameCtx.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
             drawBackground();
+            updateUI();
             console.log('Game reset');
         }
 
@@ -677,40 +700,47 @@
             return value >= 0.1 && value <= 10 && !isNaN(value);
         }
 
-        try {
-            const rawData = getQueryParam('data');
-            if (!rawData) throw new Error('No game data provided');
-            gameData = JSON.parse(decodeURIComponent(rawData));
-            console.log('Game data:', gameData);
-            balanceDisplay.textContent = `BNB: ${parseFloat(gameData.bnb_balance).toFixed(8)} | NIMS: ${parseFloat(gameData.nims_balance).toFixed(4)}`;
-            jackpotDisplay.textContent = `Community Jackpot: ${parseFloat(gameData.jackpot || 0).toFixed(4)} NIMS`;
-            raffleDisplay.textContent = `Earned Tickets: ${gameData.raffle_tickets || 0} | Purchased: ${gameData.purchased_tickets || 0}`;
-            updateLeaderboard();
-            if (gameData.game_started) {
-                sessionId = gameData.game_started.session_id;
-                stake = parseFloat(gameData.game_started.stake);
-                token = gameData.game_started.token;
-                crashPoint = parseFloat(gameData.game_started.crash_point);
-                console.log('Game started:', { sessionId, stake, token, crashPoint });
-                if (!sessionId || !stake || !token || !crashPoint) {
-                    throw new Error('Incomplete game_started data');
+        function initializeGame() {
+            try {
+                const rawData = getQueryParam('data');
+                if (!rawData) {
+                    throw new Error('No game data provided in URL');
                 }
-                isGameRunning = true;
-                startButton.disabled = true;
-                cashoutButton.disabled = false;
-                restButton.disabled = false;
-                stakeInput.value = stake;
-                tokenSelect.value = token;
-                stakeInput.disabled = true;
-                tokenSelect.disabled = true;
-                requestAnimationFrame(updateGame);
+                gameData = JSON.parse(decodeURIComponent(rawData));
+                console.log('Parsed game data:', gameData);
+
+                updateUI();
+
+                if (gameData.game_started) {
+                    sessionId = gameData.game_started.session_id;
+                    stake = parseFloat(gameData.game_started.stake);
+                    token = gameData.game_started.token;
+                    crashPoint = parseFloat(gameData.game_started.crash_point);
+                    console.log('Game started:', { sessionId, stake, token, crashPoint });
+                    if (!sessionId || !stake || !token || !crashPoint) {
+                        throw new Error('Incomplete game_started data');
+                    }
+                    isGameRunning = true;
+                    startButton.disabled = true;
+                    cashoutButton.disabled = false;
+                    restButton.disabled = false;
+                    stakeInput.value = stake;
+                    tokenSelect.value = token;
+                    stakeInput.disabled = true;
+                    tokenSelect.disabled = true;
+                    requestAnimationFrame(updateGame);
+                }
+            } catch (e) {
+                showError(`Failed to load game data: ${e.message}`);
+                console.error('Initialization error:', e);
+                resetGame();
             }
-        } catch (e) {
-            showError(`Failed to load game: ${e.message}`);
-            resetGame();
         }
 
-        window.addEventListener('resize', resizeCanvas);
+        window.addEventListener('resize', () => {
+            resizeCanvas();
+            drawBackground();
+        });
         resizeCanvas();
         drawBackground();
 
@@ -725,30 +755,39 @@
             startButton.disabled = true;
             stakeInput.disabled = true;
             tokenSelect.disabled = true;
-            Telegram.WebApp.sendData(JSON.stringify({
-                action: 'start_game',
-                token,
-                stake: stakeValue
-            }));
-            Telegram.WebApp.HapticFeedback.impactOccurred('medium');
+            if (Telegram.WebApp) {
+                Telegram.WebApp.sendData(JSON.stringify({
+                    action: 'start_game',
+                    token,
+                    stake: stakeValue
+                }));
+                Telegram.WebApp.HapticFeedback.impactOccurred('medium');
+            } else {
+                showError('Telegram WebApp not available');
+            }
         });
 
         cashoutButton.addEventListener('click', () => {
             if (!isGameRunning) return;
             isGameRunning = false;
             cashoutButton.disabled = true;
+            restButton.disabled = true;
             showCashout('Cashing out...');
             console.log('Cashout:', { sessionId, stake, token, multiplier });
-            Telegram.WebApp.sendData(JSON.stringify({
-                action: 'cashout',
-                session_id: sessionId,
-                stake: stake.toString(),
-                token,
-                multiplier: multiplier.toFixed(4)
-            }));
-            Telegram.WebApp.HapticFeedback.notificationOccurred('success');
-            showCashout(`Cashed out ${multiplier.toFixed(2)}x!`);
-            resetGame();
+            if (Telegram.WebApp) {
+                Telegram.WebApp.sendData(JSON.stringify({
+                    action: 'cashout',
+                    session_id: sessionId,
+                    stake: stake.toString(),
+                    token,
+                    multiplier: multiplier.toFixed(4)
+                }));
+                Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+                showCashout(`Cashed out ${multiplier.toFixed(2)}x!`);
+                resetGame();
+            } else {
+                showError('Telegram WebApp not available');
+            }
         });
 
         restButton.addEventListener('click', () => {
@@ -759,17 +798,33 @@
                 return;
             }
             isGameRunning = false;
-            Telegram.WebApp.sendData(JSON.stringify({
-                action: 'rest',
-                session_id: sessionId,
-                token,
-                multiplier: multiplier.toFixed(4)
-            }));
-            Telegram.WebApp.HapticFeedback.impactOccurred('light');
-            resetGame();
+            if (Telegram.WebApp) {
+                Telegram.WebApp.sendData(JSON.stringify({
+                    action: 'rest',
+                    session_id: sessionId,
+                    token,
+                    multiplier: multiplier.toFixed(4)
+                }));
+                Telegram.WebApp.HapticFeedback.impactOccurred('light');
+                resetGame();
+            } else {
+                showError('Telegram WebApp not available');
+            }
+        });
+
+        Telegram.WebApp.onEvent('webAppData', (data) => {
+            console.log('Received new WebApp data:', data);
+            try {
+                gameData = JSON.parse(data);
+                updateUI();
+            } catch (e) {
+                showError('Failed to parse new data');
+                console.error('WebApp data error:', e);
+            }
         });
 
         Telegram.WebApp.ready();
+        initializeGame();
         console.log('WebApp initialized');
     </script>
 </body>
