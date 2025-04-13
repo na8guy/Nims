@@ -217,7 +217,7 @@
         <button onclick="showModal('withdraw')">Withdraw Funds</button>
         <button onclick="showModal('buy_raffle')">Buy Raffle Tickets</button>
         <div id="jackpot">Community Jackpot: 0 NIMS</div>
-        <div id="raffle">Earned Tickets: 0 | Purchased: 0</div>
+       <div id="raffle">Earned Tickets: 0 | Purchased: 0 <button onclick="refreshTickets()">Refresh</button></div>
         <div id="leaderboard">
             <h3>Leaderboard</h3>
             <ul id="leaderboard-list"></ul>
@@ -302,6 +302,10 @@
             cashoutMessage.style.display = 'block';
             setTimeout(() => cashoutMessage.style.display = 'none', 3000);
         }
+
+        function refreshTickets() {
+    Telegram.WebApp.sendData(JSON.stringify({ action: 'get_tickets' }));
+}
 
         function showModal(type) {
             modal.style.display = 'flex';
