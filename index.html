@@ -114,13 +114,12 @@
         #controls {
             grid-area: controls;
             padding: 0.5rem;
-            /*background: #1e293b;*/
-            background:rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.5);
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
             gap: 0.5rem;
-           /* box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.5);*/
+            
         }
         #stakeInput, #tokenSelect {
             padding: 0.75rem;
@@ -182,24 +181,37 @@
             color: #fff;
             font-size: clamp(0.9rem, 3vw, 1rem);
         }
-        .address-container {
+        .address-wrapper {
             display: flex;
-            align-items: center;
-            gap: 0.5rem;
+            flex-direction: row;
+            gap: 1rem;
+            justify-content: center;
+            align-items: flex-start;
             margin: 0.5rem 0;
         }
-        .address {
+        .address-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
             flex: 1;
+            max-width: 45%;
+        }
+        .address {
             font-size: clamp(0.8rem, 2.5vw, 0.9rem);
-            word-break: break-all;
             background: #334155;
             padding: 0.5rem;
             border-radius: 8px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            width: 100%;
         }
         .copy-button {
             padding: 0.5rem;
             font-size: 0.8rem;
             background: #10b981;
+            width: 100%;
         }
         .copy-button.copied {
             background: #059669;
@@ -248,6 +260,13 @@
             }
             #stakeInput, #tokenSelect, button {
                 width: 100%;
+                max-width: 100%;
+            }
+            .address-wrapper {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .address-container {
                 max-width: 100%;
             }
         }
@@ -337,7 +356,7 @@
         let multiplier = 1;
         let timeElapsed = 0;
         let isGameRunning = false;
-        let nims = { x: 0, y: 0, frame: 0, state: 'climbing' };
+        let nims = { x: 100, y: 0, frame: 0, state: 'climbing' };
         let pathProgress = 0;
         let cameraOffset = { x: 0, y: 0 };
         let clouds = [];
@@ -398,9 +417,12 @@
             if (type === 'deposit') {
                 modalTitle.textContent = 'Deposit Address';
                 if (gameData) {
-                    const bnbDiv = document.createElement('div');
-                    bnbDiv.className = 'address-container';
-                    bnbDiv.innerHTML = `<span class="address">BNB: ${gameData.bnb_address || 'N/A'}</span>`;
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'address-wrapper';
+
+                    const bnbContainer = document.createElement('div');
+                    bnbContainer.className = 'address-container';
+                    bnbContainer.innerHTML = `<span class="address">BNB: ${gameData.bnb_address || 'N/A'}</span>`;
                     const bnbCopy = document.createElement('button');
                     bnbCopy.className = 'copy-button';
                     bnbCopy.textContent = 'Copy';
@@ -409,11 +431,11 @@
                     } else {
                         bnbCopy.disabled = true;
                     }
-                    bnbDiv.appendChild(bnbCopy);
+                    bnbContainer.appendChild(bnbCopy);
 
-                    const nimsDiv = document.createElement('div');
-                    nimsDiv.className = 'address-container';
-                    nimsDiv.innerHTML = `<span class="address">NIMS: ${gameData.nims_address || 'N/A'}</span>`;
+                    const nimsContainer = document.createElement('div');
+                    nimsContainer.className = 'address-container';
+                    nimsContainer.innerHTML = `<span class="address">NIMS: ${gameData.nims_address || 'N/A'}</span>`;
                     const nimsCopy = document.createElement('button');
                     nimsCopy.className = 'copy-button';
                     nimsCopy.textContent = 'Copy';
@@ -422,10 +444,11 @@
                     } else {
                         nimsCopy.disabled = true;
                     }
-                    nimsDiv.appendChild(nimsCopy);
+                    nimsContainer.appendChild(nimsCopy);
 
-                    modalBody.appendChild(bnbDiv);
-                    modalBody.appendChild(nimsDiv);
+                    wrapper.appendChild(bnbContainer);
+                    wrapper.appendChild(nimsContainer);
+                    modalBody.appendChild(wrapper);
                 } else {
                     modalBody.textContent = 'No address data available';
                 }
@@ -492,8 +515,8 @@
             gameCanvas.height = gameCanvas.offsetHeight;
             bgCanvas.width = bgCanvas.offsetWidth;
             bgCanvas.height = bgCanvas.offsetHeight;
-            nims.x = gameCanvas.width / 2;
-            nims.y = gameCanvas.height / 2;
+            nims.x = 100;
+            nims.y = gameCanvas.height;
         }
 
         function drawBackground() {
@@ -528,7 +551,7 @@
             clouds.forEach(cloud => {
                 bgCtx.fillStyle = `rgba(255, 255, 255, ${cloud.opacity})`;
                 bgCtx.beginPath();
-                bgCtx.arc(cloud.x - cameraOffset.x, cloud.y + cameraOffset.y, cloud.size, 0, Math.PI * 2);
+                bgCtx.arc(cloud.x - cameraOffset.x, cloud.y - cameraOffset.y, cloud.size, 0, Math.PI * 2);
                 bgCtx.fill();
             });
         }
@@ -538,7 +561,7 @@
             if (Math.random() < 0.05) {
                 clouds.push({
                     x: cameraOffset.x + bgCanvas.width,
-                    y: Math.random() * bgCanvas.height * 0.3 - cameraOffset.y,
+                    y: cameraOffset.y + Math.random() * bgCanvas.height * 0.3,
                     size: 20 + Math.random() * 30,
                     speed: 0.5 + Math.random(),
                     opacity: 0.5 + Math.random() * 0.3
@@ -551,7 +574,7 @@
 
         function drawNims() {
             gameCtx.save();
-            gameCtx.translate(nims.x + shakeOffset.x, nims.y + shakeOffset.y);
+            gameCtx.translate(nims.x - cameraOffset.x + shakeOffset.x, nims.y - cameraOffset.y + shakeOffset.y);
             gameCtx.rotate(nims.angle || 0);
             gameCtx.fillStyle = '#facc15';
             gameCtx.beginPath();
@@ -579,11 +602,12 @@
             const points = [];
             const startX = 100;
             const startY = gameCanvas.height;
-            gameCtx.moveTo(startX - cameraOffset.x, startY + cameraOffset.y);
-            for (let t = 0; t <= pathProgress; t += 0.01) {
+            const startT = Math.max(0, pathProgress - 0.5); // Show last 50% of path
+            gameCtx.moveTo(startX - cameraOffset.x, startY - cameraOffset.y);
+            for (let t = startT; t <= pathProgress; t += 0.01) {
                 const x = startX + t * 500;
                 const y = startY - t * 800 * multiplier;
-                gameCtx.lineTo(x - cameraOffset.x, y + cameraOffset.y);
+                gameCtx.lineTo(x - cameraOffset.x, y - cameraOffset.y);
                 points.push({ x, y });
             }
             gameCtx.stroke();
@@ -604,8 +628,8 @@
 
             [1.5, 3.0, 5.0].forEach(zone => {
                 const t = (zone - 1) / (multiplier - 1);
-                if (t <= pathProgress && t >= 0) {
-                    const idx = Math.floor(t / 0.01);
+                if (t <= pathProgress && t >= pathProgress - 0.5 && t >= 0) {
+                    const idx = Math.floor((t - (pathProgress - 0.5)) / 0.01);
                     if (points[idx]) {
                         gameCtx.beginPath();
                         gameCtx.arc(20 + (points[idx].x - 100) * 0.1, gameCanvas.height - 20 - (gameCanvas.height - points[idx].y) * 0.05, 5, 0, Math.PI * 2);
@@ -620,13 +644,13 @@
             particles.forEach(p => {
                 gameCtx.fillStyle = `rgba(255, 255, 255, ${p.opacity})`;
                 gameCtx.beginPath();
-                gameCtx.arc(p.x - cameraOffset.x + shakeOffset.x, p.y + cameraOffset.y + shakeOffset.y, p.size, 0, Math.PI * 2);
+                gameCtx.arc(p.x - cameraOffset.x + shakeOffset.x, p.y - cameraOffset.y + shakeOffset.y, p.size, 0, Math.PI * 2);
                 gameCtx.fill();
             });
         }
 
         function updateAvalanche() {
-            particles = particles.filter(p => p.y + cameraOffset.y < gameCanvas.height && p.opacity > 0);
+            particles = particles.filter(p => p.y - cameraOffset.y < gameCanvas.height && p.opacity > 0);
             if (particles.length > 0) {
                 particles.forEach(p => {
                     p.y += p.vy;
@@ -643,8 +667,8 @@
         function triggerAvalanche() {
             for (let i = 0; i < 100; i++) {
                 particles.push({
-                    x: cameraOffset.x + Math.random() * gameCanvas.width,
-                    y: -cameraOffset.y,
+                    x: nims.x + (Math.random() - 0.5) * gameCanvas.width * 0.5,
+                    y: nims.y - 50,
                     size: 2 + Math.random() * 5,
                     vx: (Math.random() - 0.5) * 2,
                     vy: 5 + Math.random() * 5,
@@ -685,10 +709,15 @@
             multiplier = 1 + timeElapsed * 0.03;
             pathProgress = timeElapsed / 10;
 
-            cameraOffset.x = pathProgress * 500;
-            cameraOffset.y = -pathProgress * 800 * multiplier;
-            nims.angle = Math.atan2(-800 * multiplier, 500) * Math.min(pathProgress, 1);
+            // Position Nims at the tip of the path
+            nims.x = 100 + pathProgress * 500;
+            nims.y = gameCanvas.height - pathProgress * 800 * multiplier;
+            nims.angle = Math.atan2(-800 * multiplier, 500);
             nims.frame += 0.1;
+
+            // Center camera on Nims (path tip)
+            cameraOffset.x = nims.x - gameCanvas.width / 2;
+            cameraOffset.y = nims.y - gameCanvas.height / 2;
 
             const altitude = Math.floor(multiplier * baseAltitude);
             altitudeDisplay.textContent = `Altitude: ${altitude}m`;
@@ -737,7 +766,7 @@
             timeElapsed = 0;
             pathProgress = 0;
             cameraOffset = { x: 0, y: 0 };
-            nims = { x: gameCanvas.width / 2, y: gameCanvas.height / 2, frame: 0, state: 'climbing' };
+            nims = { x: 100, y: gameCanvas.height, frame: 0, state: 'climbing' };
             multiplierDisplay.textContent = '1.00x';
             altitudeDisplay.textContent = 'Altitude: 0m';
             cashoutButton.disabled = true;
